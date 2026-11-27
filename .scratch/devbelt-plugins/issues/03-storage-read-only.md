@@ -4,14 +4,14 @@
 
 **Blocked by:** 02 (Redaction primitive)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/README.md`; see ADR 0003 for the write gate and the Glossary for vocabulary.
 
-- [ ] The Window lists entries from all three stores, grouped by store
-- [ ] `devbelt:*` keys are hidden
-- [ ] The UI states that HttpOnly cookies cannot be seen
-- [ ] Redacted values are never rendered, returned by the Agent tool, or written to the Debug bundle
-- [ ] Debug bundle lists key names and sizes; values only with `includeValuesInBundle`
-- [ ] Not part of `defaultPlugins()`; added by name
-- [ ] Tests for listing, hiding, redaction and bundle output; a short docs section
+- [x] The Window lists entries from all three stores, grouped by store
+- [x] `devbelt:*` keys are hidden
+- [x] The UI states that HttpOnly cookies cannot be seen
+- [x] Redacted values are never rendered, returned by the Agent tool, or written to the Debug bundle
+- [x] Debug bundle lists key names and sizes; values only with `includeValuesInBundle`
+- [x] Not part of `defaultPlugins()`; added by name
+- [x] Tests for listing, hiding, redaction and bundle output; a short docs section

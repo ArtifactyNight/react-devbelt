@@ -12,7 +12,13 @@ export { consolePlugin } from "./console";
 export { display, type DisplayOptions } from "./display";
 export { grab, setGrabbing } from "./grab";
 export { network } from "./network";
+export { storage, type StorageOptions } from "./storage";
 export { viewport } from "./viewport";
+export {
+  switcher,
+  type SwitcherConfig,
+  type SwitcherOption,
+} from "./switcher";
 
 /** Viewport, Grab, Network, Console, Display and Copy debug bundle, in toolbar order. */
 export function defaultPlugins(): DevBeltPlugin[] {

@@ -4,12 +4,12 @@
 
 **Blocked by:** 03 (Storage read-only Window), 01 (write gate)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/README.md`; see ADR 0003 for the write gate and the Glossary for vocabulary.
 
-- [ ] Edit, delete and clear work for localStorage, sessionStorage and readable cookies
-- [ ] Redacted values can be replaced or deleted without ever being revealed
-- [ ] Clearing never touches `devbelt:*` keys
-- [ ] The write Agent tools are off by default and on with `agent: { write: true }`
-- [ ] Tests cover each action and the gate
+- [x] Edit, delete and clear work for localStorage, sessionStorage and readable cookies
+- [x] Redacted values can be replaced or deleted without ever being revealed
+- [x] Clearing never touches `devbelt:*` keys
+- [x] The write Agent tools are off by default and on with `agent: { write: true }`
+- [x] Tests cover each action and the gate
