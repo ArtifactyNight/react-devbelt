@@ -1,6 +1,7 @@
 // The framework-free half: capture, formatting and storage. No React in here.
 export {
   clampLimit,
+  errorResult,
   exposedAgentTools,
   markUntrusted,
   registerAgentTools,
