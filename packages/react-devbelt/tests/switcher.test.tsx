@@ -1,11 +1,23 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { switcher } from "../src/plugins/switcher";
 
 const reload = vi.fn();
+
+HTMLElement.prototype.showPopover = function () {};
+HTMLElement.prototype.hidePopover = function () {};
+Element.prototype.getAnimations = () => [];
+Element.prototype.scrollIntoView = function () {};
+Element.prototype.checkVisibility = () => true;
+document.head.append(
+  Object.assign(document.createElement("style"), {
+    textContent: "[popover] { display: block !important }",
+  }),
+);
 
 beforeEach(() => {
   reload.mockReset();
@@ -14,6 +26,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
   vi.unstubAllGlobals();
 });
 
@@ -207,4 +220,123 @@ test("two Switchers for the same Axis are rejected when installed together", asy
   const a = setup().plugin;
   const b = setup().plugin;
   expect(() => installPlugins([a, b])).toThrow(/switcher-role/);
+});
+
+test("the toolbar Item shows the Axis name and the current Option", async () => {
+  const { default: Toolbar } = await import("../src/ui/toolbar");
+  const { plugin } = setup({ name: "Role" });
+  render(<Toolbar plugins={[plugin]} isolation="none" />);
+  const item = screen.getByRole("button", { name: /Role/ });
+  expect(item.textContent).toMatch(/Viewer/);
+});
+
+test("picking an Option updates the Item after apply and checks that Option", async () => {
+  const { default: Toolbar } = await import("../src/ui/toolbar");
+  const { plugin, apply } = setup({ name: "Role", reload: false });
+  render(<Toolbar plugins={[plugin]} isolation="none" />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: /Role/ }));
+  expect(screen.getByRole("menuitemradio", { name: /Viewer/ }).getAttribute("aria-checked")).toBe("true");
+  expect(screen.getByRole("menuitemradio", { name: /Admin/ }).getAttribute("aria-checked")).toBe("false");
+  expect(screen.getByText("Full access")).toBeTruthy();
+  await user.click(screen.getByRole("menuitemradio", { name: /Admin/ }));
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: /Role/ }).textContent).toMatch(/Admin/),
+  );
+  expect(apply).toHaveBeenCalledWith("admin");
+  expect(reload).not.toHaveBeenCalled();
+});
+
+test("further picks are ignored while a switch is in progress", async () => {
+  const { default: Toolbar } = await import("../src/ui/toolbar");
+  let value = "viewer";
+  let release: () => void = () => {};
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const apply = vi.fn(
+    (id: string) =>
+      pending.then(() => {
+        value = id;
+      }),
+  );
+  const plugin = switcher({
+    id: "role",
+    name: "Role",
+    reload: false,
+    options: [
+      { id: "admin", label: "Admin" },
+      { id: "viewer", label: "Viewer" },
+      { id: "editor", label: "Editor" },
+    ],
+    apply,
+    current: () => value,
+  });
+  render(<Toolbar plugins={[plugin]} isolation="none" />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: /Role/ }));
+  await user.click(screen.getByRole("menuitemradio", { name: "Admin" }));
+  expect(screen.getByRole("button", { name: /Role/ }).getAttribute("aria-busy")).toBe("true");
+  expect(screen.getByRole("status").textContent).toMatch(/Switching/);
+  await user.click(screen.getByRole("menuitemradio", { name: "Editor" }));
+  expect(apply).toHaveBeenCalledTimes(1);
+  expect(apply).toHaveBeenCalledWith("admin");
+  expect(screen.getByRole("button", { name: /Role/ }).textContent).toMatch(/Viewer/);
+  release();
+  await waitFor(() =>
+    expect(screen.getByRole("menuitemradio", { name: "Admin" }).getAttribute("aria-checked")).toBe(
+      "true",
+    ),
+  );
+  expect(screen.getByRole("button", { name: /Role/ }).textContent).toMatch(/Admin/);
+});
+
+test("a failed apply shows the error, keeps the current Option, and can be retried", async () => {
+  const { default: Toolbar } = await import("../src/ui/toolbar");
+  let fail = true;
+  let value = "viewer";
+  const apply = vi.fn((id: string) => {
+    if (fail) return Promise.reject(new Error("sign-in failed"));
+    value = id;
+  });
+  const plugin = switcher({
+    id: "role",
+    name: "Role",
+    reload: false,
+    options: roles,
+    apply,
+    current: () => value,
+  });
+  render(<Toolbar plugins={[plugin]} isolation="none" />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: /Role/ }));
+  await user.click(screen.getByRole("menuitemradio", { name: /Admin/ }));
+  await waitFor(() =>
+    expect(screen.getByRole("alert").textContent).toMatch(/sign-in failed/),
+  );
+  expect(screen.getByRole("button", { name: /Role/ }).textContent).toMatch(/sign-in failed/);
+  expect(screen.getByRole("menuitemradio", { name: /Viewer/ }).getAttribute("aria-checked")).toBe(
+    "true",
+  );
+  expect(reload).not.toHaveBeenCalled();
+  fail = false;
+  await user.click(screen.getByRole("menuitemradio", { name: /Admin/ }));
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: /Role/ }).textContent).toMatch(/Admin/),
+  );
+  expect(apply).toHaveBeenCalledTimes(2);
+  expect(screen.queryByRole("alert")).toBeNull();
+});
+
+test("a Switcher is pinned when added and can be unpinned", async () => {
+  const { default: Toolbar } = await import("../src/ui/toolbar");
+  const { plugin } = setup({ name: "Role" });
+  render(<Toolbar plugins={[plugin]} isolation="none" />);
+  expect(screen.getByRole("button", { name: /Role/ })).toBeTruthy();
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: "More tools" }));
+  const pin = screen.getByRole("menuitemcheckbox", { name: "Role" });
+  expect(pin.getAttribute("aria-checked")).toBe("true");
+  await user.click(pin);
+  expect(screen.queryByRole("button", { name: /Role/ })).toBeNull();
 });

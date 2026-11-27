@@ -1,10 +1,25 @@
 "use client";
 
-import { useReducer, useRef, useState } from "react";
-import { ArrowLeftRightIcon } from "lucide-react";
+import { useEffect, useReducer, useRef, useState } from "react";
+import {
+  Menu,
+  MenuContent,
+  MenuItemIndicator,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuTrigger,
+} from "@ui-sdk/react/menu";
+import { ToolbarButton } from "@ui-sdk/react/toolbar";
+import { ArrowLeftRightIcon, CheckIcon } from "lucide-react";
 
 import { errorResult, text, type AgentTool } from "../../core/agent-tools";
 import { definePlugin, type ToolbarApi } from "../../plugin";
+import { menuIndicatorClass, menuItemClass } from "../../ui/more-menu";
+import { toolbarItemClass } from "../../ui/styles";
+
+const menuContentClass =
+  "m-0 min-w-56 rounded-xl border border-white/10 bg-neutral-950 p-1 text-xs text-white shadow-2xl";
+const FLASH_MS = 1_500;
 
 const PLUGIN_ID_PREFIX = "switcher-";
 
@@ -164,11 +179,90 @@ export function switcher(config: SwitcherConfig) {
     return <span className="px-2 text-white">{labelOf(read())}</span>;
   }
 
+  function SwitcherItem() {
+    const [, refresh] = useReducer((n: number) => n + 1, 0);
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [flash, setFlash] = useState<string | null>(null);
+    const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const current = read();
+    useEffect(
+      () => () => {
+        if (flashTimer.current !== null) clearTimeout(flashTimer.current);
+      },
+      [],
+    );
+    return (
+      <Menu>
+        <ToolbarButton
+          render={<MenuTrigger />}
+          className={toolbarItemClass}
+          aria-busy={busy || undefined}
+        >
+          <span>{name}</span>
+          <span>{flash ?? labelOf(current)}</span>
+        </ToolbarButton>
+        <MenuContent side="top" sideOffset={10} className={menuContentClass}>
+          {busy ? <p role="status">Switching…</p> : null}
+          {error ? (
+            <p role="alert" className="px-2 py-1.5 text-red-300">
+              Switching failed: {error}
+            </p>
+          ) : null}
+          <MenuRadioGroup
+            aria-label={name}
+            value={current.ok ? (current.id ?? null) : null}
+            onValueChange={(id) => {
+              if (busy || (current.ok && id === current.id)) return;
+              setBusy(true);
+              void choose(id).then((problem) => {
+                setBusy(false);
+                setError(problem);
+                if (problem) {
+                  if (flashTimer.current !== null) clearTimeout(flashTimer.current);
+                  setFlash(`Switching failed: ${problem}`);
+                  flashTimer.current = setTimeout(() => {
+                    flashTimer.current = null;
+                    setFlash(null);
+                  }, FLASH_MS);
+                } else {
+                  if (flashTimer.current !== null) clearTimeout(flashTimer.current);
+                  setFlash(null);
+                }
+                refresh();
+              });
+            }}
+          >
+            {list().map((option) => (
+              <MenuRadioItem
+                key={option.id}
+                value={option.id}
+                disabled={busy}
+                className={menuItemClass}
+              >
+                <MenuItemIndicator keepMounted className={menuIndicatorClass}>
+                  <CheckIcon className="size-3.5" aria-hidden="true" />
+                </MenuItemIndicator>
+                <span className="flex flex-col">
+                  <span>{option.label}</span>
+                  {option.description ? (
+                    <span className="text-white/60">{option.description}</span>
+                  ) : null}
+                </span>
+              </MenuRadioItem>
+            ))}
+          </MenuRadioGroup>
+        </MenuContent>
+      </Menu>
+    );
+  }
+
   return definePlugin({
     id: `${PLUGIN_ID_PREFIX}${config.id}`,
     name,
-    pinned: false,
+    pinned: true,
     icon: <ArrowLeftRightIcon className="size-4" aria-hidden="true" />,
+    Item: SwitcherItem,
     Status: SwitcherStatus,
     agentTools: [listTool, switchTool],
     debugContext: () => {
