@@ -107,6 +107,18 @@ Create the array once at module level, not inside a component. With your own lis
 | | `fetch` | Also record `fetch`. Default `true` |
 | `display()` | `darkClass` | Class toggled on `<html>` for dark mode. Default `"dark"`; `false` hides the switch |
 | | `locale` | `{ cookie, options, default? }` adds a language switch that sets a cookie and reloads |
+| `breakpoint()` | `breakpoints` | Name to minimum width (px number or `"48rem"`/`"768px"`). Default: Tailwind v4's `sm 40rem`, `md 48rem`, `lg 64rem`, `xl 80rem`, `2xl 96rem` |
+
+### Breakpoint indicator (opt-in)
+
+`breakpoint()` is not in the defaults. Add it to your own list to show the current breakpoint and width at the end of the toolbar (e.g. `md · 812px`), updating as you resize. While the Viewport frame is active it reports the frame's width, not the window's. The Debug bundle gets a `Breakpoint` line. Below your smallest breakpoint it shows `base`.
+
+```tsx
+import { breakpoint } from "react-devbelt/plugins";
+
+breakpoint(); // Tailwind v4 breakpoints
+breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 } });
+```
 
 ## `<DevBelt>` props
 
