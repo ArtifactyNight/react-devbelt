@@ -4,13 +4,13 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/README.md`; see ADR 0003 for the write gate and the Glossary for vocabulary.
 
-- [ ] A Plugin can mark an Agent tool as writing; unmarked tools are read-only
-- [ ] Writing tools are not exposed to agents by default and appear once `agent: { write: true }` is set on that Plugin
-- [ ] Data returned from the page by any Agent tool is marked untrusted
-- [ ] The existing `set_viewport` tool keeps working as before (framing only, stays on)
-- [ ] The plugin API stays `apiVersion: 1`, additive changes only
-- [ ] Tests cover default-off, opt-in on, and the untrusted marker; the plugin docs describe the option
+- [x] A Plugin can mark an Agent tool as writing; unmarked tools are read-only
+- [x] Writing tools are not exposed to agents by default and appear once `agent: { write: true }` is set on that Plugin
+- [x] Data returned from the page by any Agent tool is marked untrusted
+- [x] The existing `set_viewport` tool keeps working as before (framing only, stays on)
+- [x] The plugin API stays `apiVersion: 1`, additive changes only
+- [x] Tests cover default-off, opt-in on, and the untrusted marker; the plugin docs describe the option

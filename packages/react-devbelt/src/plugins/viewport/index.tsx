@@ -307,6 +307,7 @@ export function viewport() {
           },
           required: ["viewport"],
         },
+        // Changes only the framing of the page, so it is not gated (ADR 0003).
         annotations: { readOnlyHint: false },
         run: (input) => {
           const target = VIEWPORTS.find((v) => v.id === input.viewport);

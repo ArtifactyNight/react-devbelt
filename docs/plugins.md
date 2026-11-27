@@ -34,7 +34,8 @@ Use it: `<DevBelt plugins={[...defaults, counter()]} />`. Build the list once at
 | `MenuSection` | Extra section in the More tools menu (use ui-sdk `Menu*` parts) |
 | `Status`, `ChipStatus` | Text at the end of the toolbar / in the collapsed chip |
 | `install()` | Runs once per frame, including the viewport iframe. Patch globals, register shortcuts, return a cleanup |
-| `agentTools` | Tools for browser agents (WebMCP) and `window.devbelt` |
+| `agentTools` | Tools for browser agents (WebMCP) and `window.devbelt`. Mark a tool that changes state with `writes: true` |
+| `agent` | Set by the app: `agent: { write: true }` turns on this plugin's writing Agent tools |
 | `debugContext()` / `debugSections()` | Lines and Markdown sections for "Copy debug bundle" |
 | `styles` | CSS for your own markup (see below) |
 | `pinned`, `separatorAfter`, `label`, `description` | Toolbar placement and accessible names |
@@ -55,6 +56,16 @@ Inside any plugin component, `useToolbar()` gives you `openWindow(id)`, `closeWi
 ## Sharing state and capturing early
 
 Keep a plugin's state in a module-level store read with `useSyncExternalStore`. Capture that must start before the app runs (patching `fetch`, listening for errors) goes in `install()`, and `installDevBelt(plugins)` runs it early. State that should survive a reload and be shared with the viewport iframe can use `createHostStore` from `react-devbelt/core`, which lives on the top window and persists to `sessionStorage`.
+
+## Agent tools that write
+
+Agent tools only read by default. A tool that changes state (edits storage, applies an option, invalidates a query) must say so with `writes: true`. Writing tools are not offered to browser agents, in WebMCP or on `window.devbelt`, until the app opts in on that plugin:
+
+```tsx
+<DevBelt plugins={[...defaults, { ...counter(), agent: { write: true } }]} />
+```
+
+A plugin can also set `agent` itself when it is built, but the app decides. Tools that only change how the page is framed, like `devbelt_set_viewport`, are not gated. Everything an Agent tool returns is marked untrusted: the text starts with `[untrusted page content: ...]` and the result carries `_meta: { "devbelt/untrusted": true }`. Return page data as it is; the toolbar adds the marker, so don't add your own.
 
 ## Errors and compatibility
 

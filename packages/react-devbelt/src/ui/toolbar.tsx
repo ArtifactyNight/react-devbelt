@@ -16,7 +16,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui-sdk/react/tooltip";
 import { ChevronDownIcon, GripVerticalIcon } from "lucide-react";
 
-import { registerAgentTools } from "../core/agent-tools";
+import { exposedAgentTools, registerAgentTools } from "../core/agent-tools";
 import type { DebugEntry } from "../core/debug-bundle";
 import { readString, writeString } from "../core/storage";
 import { installPlugins } from "../install-plugins";
@@ -109,7 +109,7 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
   );
 
   // Tools for the browser's agent, from every plugin.
-  const toolKey = plugins.map((p) => p.id).join("|");
+  const toolKey = plugins.map((p) => `${p.id}:${p.agent?.write === true}`).join("|");
   const apiRef = useRef(api);
   useEffect(() => {
     apiRef.current = api;
@@ -117,7 +117,7 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
   useEffect(
     () =>
       registerAgentTools(
-        plugins.flatMap((p) => p.agentTools ?? []),
+        exposedAgentTools(plugins),
         () => apiRef.current as ToolbarApi,
       ),
     [toolKey], // eslint-disable-line react-hooks/exhaustive-deps
