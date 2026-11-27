@@ -149,7 +149,7 @@ Each has its own section below, except TanStack Query, which is documented in [i
 
 ### Breakpoint indicator (opt-in)
 
-`breakpoint()` is not in the defaults. Add it to your own list to show the current breakpoint and width at the end of the toolbar (e.g. `md · 812px`), updating as you resize. While the Viewport frame is active it reports the frame's width, not the window's. The Debug bundle gets a `Breakpoint` line. Below your smallest breakpoint it shows `base`.
+`breakpoint()` is not in the defaults. Add it to your own list to show the current breakpoint and width at the end of the toolbar (e.g. `md · 812px`), updating as you resize. While a Frame is active it reports the Frame's width, not the window's. The Debug bundle gets a `Breakpoint` line. Below your smallest breakpoint it shows `base`.
 
 ```tsx
 import { breakpoint } from "react-devbelt/plugins";
