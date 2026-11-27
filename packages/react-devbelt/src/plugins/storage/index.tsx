@@ -4,9 +4,14 @@ import { DatabaseIcon } from "lucide-react";
 
 import { text } from "../../core/agent-tools";
 import {
+  clearStorageStore,
+  deleteStorageEntry,
   formatStorageBundleSection,
   formatStorageForAgent,
   readStorageEntries,
+  setStorageEntry,
+  STORAGE_STORES,
+  type StorageStore,
 } from "../../core/storage-view";
 import { definePlugin } from "../../plugin";
 import { StoragePanel } from "./panel";
@@ -18,9 +23,28 @@ export type StorageOptions = {
   includeValuesInBundle?: boolean;
 };
 
+const storeProp = {
+  type: "string",
+  enum: STORAGE_STORES,
+  description: "localStorage, sessionStorage or cookies",
+};
+
+function storeOf(input: Record<string, unknown>): StorageStore {
+  if (!STORAGE_STORES.includes(input.store as StorageStore)) {
+    throw new Error(`store must be one of: ${STORAGE_STORES.join(", ")}`);
+  }
+  return input.store as StorageStore;
+}
+
+function keyOf(input: Record<string, unknown>): string {
+  if (typeof input.key !== "string" || input.key === "") throw new Error("key must be a non-empty string");
+  return input.key;
+}
+
 /**
- * localStorage, sessionStorage and readable cookies, read-only. Opt-in: add it
- * by name. Hides its own `devbelt:*` keys; HttpOnly cookies are invisible.
+ * localStorage, sessionStorage and readable cookies: view, edit, delete and
+ * clear. Opt-in: add it by name. The Agent tools that change state need
+ * `agent: { write: true }`. Hides its own `devbelt:*` keys; HttpOnly cookies are invisible.
  */
 export function storage(options: StorageOptions = {}) {
   const { redact: pattern, includeValuesInBundle = false } = options;
@@ -48,6 +72,57 @@ export function storage(options: StorageOptions = {}) {
         inputSchema: { type: "object", properties: {} },
         annotations: { readOnlyHint: true, untrustedContentHint: true },
         run: () => text(formatStorageForAgent(readStorageEntries(), { pattern })),
+      },
+      {
+        name: "devbelt_set_storage_item",
+        description:
+          "Set or replace one value in localStorage, sessionStorage or the cookies. Works on secret keys too without revealing the old value. Keys starting with devbelt: are refused.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            store: storeProp,
+            key: { type: "string" },
+            value: { type: "string" },
+          },
+          required: ["store", "key", "value"],
+        },
+        writes: true,
+        run: async (input) => {
+          const store = storeOf(input);
+          const key = keyOf(input);
+          if (typeof input.value !== "string") throw new Error("value must be a string");
+          setStorageEntry(store, key, input.value);
+          return text(`Set "${key}" in ${store}.`);
+        },
+      },
+      {
+        name: "devbelt_delete_storage_item",
+        description:
+          "Delete one entry from localStorage, sessionStorage or the cookies. Keys starting with devbelt: are refused.",
+        inputSchema: {
+          type: "object",
+          properties: { store: storeProp, key: { type: "string" } },
+          required: ["store", "key"],
+        },
+        writes: true,
+        run: async (input) => {
+          const store = storeOf(input);
+          const key = keyOf(input);
+          deleteStorageEntry(store, key);
+          return text(`Deleted "${key}" from ${store}.`);
+        },
+      },
+      {
+        name: "devbelt_clear_storage",
+        description:
+          "Delete every entry of one store (localStorage, sessionStorage or cookies). Keys starting with devbelt: are kept.",
+        inputSchema: { type: "object", properties: { store: storeProp }, required: ["store"] },
+        writes: true,
+        run: async (input) => {
+          const store = storeOf(input);
+          clearStorageStore(store);
+          return text(`Cleared ${store}.`);
+        },
       },
     ],
   });

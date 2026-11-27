@@ -124,7 +124,7 @@ breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 } });
 
 ### Storage (opt-in)
 
-`storage()` is not in the default list; add it by name: `[...defaultPlugins(), storage()]`. Its Window shows localStorage, sessionStorage and readable cookies, read-only, grouped by store. It hides its own `devbelt:*` keys and says that HttpOnly cookies cannot be seen. Values whose key matches the `redact` pattern show only their name and length, in the Window, in the `devbelt_get_storage` Agent tool and in the Debug bundle. The bundle lists key names and sizes; values appear only with `includeValuesInBundle`, and Redacted ones never do.
+`storage()` is not in the default list; add it by name: `[...defaultPlugins(), storage()]`. Its Window shows localStorage, sessionStorage and readable cookies, grouped by store, and lets you edit a value, delete an entry or clear a store (Redacted values can be replaced or deleted without being shown; `devbelt:*` keys are never touched). The write Agent tools (`devbelt_set_storage_item`, `devbelt_delete_storage_item`, `devbelt_clear_storage`) are off until you set `agent: { write: true }` on the plugin. It hides its own `devbelt:*` keys and says that HttpOnly cookies cannot be seen. Values whose key matches the `redact` pattern show only their name and length, in the Window, in the `devbelt_get_storage` Agent tool and in the Debug bundle. The bundle lists key names and sizes; values appear only with `includeValuesInBundle`, and Redacted ones never do.
 
 ## `<DevBelt>` props
 

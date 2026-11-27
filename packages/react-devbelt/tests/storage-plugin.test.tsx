@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test } from "vitest";
 
 import { defaultPlugins, storage } from "../src/plugins";
+import ToolbarImpl from "../src/ui/toolbar";
 import { stubApi, StubToolbar } from "./helpers";
 
 const SECRET = "eyJhbGciOi-very-secret";
@@ -18,6 +19,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  delete (window as unknown as Record<string, unknown>).devbelt;
   localStorage.clear();
   sessionStorage.clear();
 });
@@ -30,10 +32,114 @@ test("is opt-in: not in the default plugins, added by name", () => {
   expect(storage().id).toBe("storage");
 });
 
-test("offers only read Agent tools", () => {
+test("the read tool is read-only and the write tools are marked writes", () => {
   const tools = storage().agentTools!;
-  expect(tools.map((t) => t.name)).toEqual(["devbelt_get_storage"]);
-  for (const tool of tools) expect(tool.annotations?.readOnlyHint).toBe(true);
+  expect(tools.map((t) => t.name)).toEqual([
+    "devbelt_get_storage",
+    "devbelt_set_storage_item",
+    "devbelt_delete_storage_item",
+    "devbelt_clear_storage",
+  ]);
+  expect(tools[0].annotations?.readOnlyHint).toBe(true);
+  for (const tool of tools.slice(1)) expect(tool.writes).toBe(true);
+});
+
+type Tools = Record<string, (input?: object) => Promise<unknown> | unknown>;
+const exposed = () =>
+  Object.keys((window as unknown as { devbelt?: Tools }).devbelt ?? {}).sort();
+
+test("write Agent tools are off by default and on with agent: { write: true }", () => {
+  const off = render(<ToolbarImpl plugins={[storage()]} isolation="none" />);
+  expect(exposed()).toEqual(["devbelt_get_storage"]);
+  off.unmount();
+  delete (window as unknown as Record<string, unknown>).devbelt;
+  render(<ToolbarImpl plugins={[{ ...storage(), agent: { write: true } }]} isolation="none" />);
+  expect(exposed()).toEqual([
+    "devbelt_clear_storage",
+    "devbelt_delete_storage_item",
+    "devbelt_get_storage",
+    "devbelt_set_storage_item",
+  ]);
+});
+
+const tool = (name: string) => storage().agentTools!.find((t) => t.name === name)!;
+
+test("set tool edits a value, including a redacted one, without echoing values", async () => {
+  const a = await tool("devbelt_set_storage_item").run(
+    { store: "localStorage", key: "theme", value: "light" },
+    stubApi(),
+  );
+  expect(localStorage.getItem("theme")).toBe("light");
+  const b = await tool("devbelt_set_storage_item").run(
+    { store: "localStorage", key: "authToken", value: "fresh-secret" },
+    stubApi(),
+  );
+  expect(localStorage.getItem("authToken")).toBe("fresh-secret");
+  expect(JSON.stringify([a, b])).not.toMatch(/fresh-secret|SECRET/);
+});
+
+test("delete tool removes an entry; clear tool spares devbelt:* keys", async () => {
+  await tool("devbelt_delete_storage_item").run({ store: "localStorage", key: "authToken" }, stubApi());
+  expect(localStorage.getItem("authToken")).toBeNull();
+  await tool("devbelt_clear_storage").run({ store: "localStorage" }, stubApi());
+  expect(localStorage.getItem("theme")).toBeNull();
+  expect(localStorage.getItem("devbelt:layout")).toBe("{}");
+});
+
+test("write tools reject a bad store and devbelt:* keys", async () => {
+  await expect(
+    tool("devbelt_set_storage_item").run({ store: "nope", key: "a", value: "b" }, stubApi()),
+  ).rejects.toThrow();
+  await expect(
+    tool("devbelt_delete_storage_item").run({ store: "localStorage", key: "devbelt:layout" }, stubApi()),
+  ).rejects.toThrow();
+});
+
+const mountWindow = () => {
+  const { Component } = storage().window!;
+  render(
+    <StubToolbar>
+      <Component />
+    </StubToolbar>,
+  );
+};
+
+test("Window: edit a value", () => {
+  mountWindow();
+  fireEvent.click(screen.getByRole("button", { name: "Edit theme" }));
+  fireEvent.change(screen.getByRole("textbox", { name: "Value for theme" }), {
+    target: { value: "light" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save theme" }));
+  expect(localStorage.getItem("theme")).toBe("light");
+  expect(screen.getByText("light")).toBeTruthy();
+});
+
+test("Window: a redacted value is replaced without being revealed", () => {
+  mountWindow();
+  fireEvent.click(screen.getByRole("button", { name: "Edit authToken" }));
+  const input = screen.getByRole("textbox", { name: "Value for authToken" }) as HTMLInputElement;
+  expect(input.value).toBe("");
+  expect(document.body.innerHTML).not.toContain(SECRET);
+  fireEvent.change(input, { target: { value: "replacement" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save authToken" }));
+  expect(localStorage.getItem("authToken")).toBe("replacement");
+  expect(document.body.innerHTML).not.toContain("replacement");
+});
+
+test("Window: delete an entry, including a redacted one", () => {
+  mountWindow();
+  fireEvent.click(screen.getByRole("button", { name: "Delete authToken" }));
+  expect(localStorage.getItem("authToken")).toBeNull();
+  expect(screen.queryByText("authToken")).toBeNull();
+});
+
+test("Window: clear a store leaves devbelt:* keys", () => {
+  mountWindow();
+  fireEvent.click(screen.getByRole("button", { name: "Clear localStorage" }));
+  expect(localStorage.getItem("theme")).toBeNull();
+  expect(localStorage.getItem("devbelt:layout")).toBe("{}");
+  expect(sessionStorage.getItem("step")).toBe("2");
 });
 
 test("the read Agent tool returns the redacted view without devbelt:* keys", async () => {
