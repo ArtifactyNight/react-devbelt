@@ -4,12 +4,12 @@
 
 **Blocked by:** Review-fixes branch (`fix/devbelt-review-findings`) merged
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/storage.md` (follow-up from the code review of `spec/devbelt-plugins`); ADR 0003 and the Glossary apply.
 
-- [ ] One tab per enabled store; `stores` option controls which exist
-- [ ] Filter field narrows the active tab
-- [ ] Selecting a row opens a detail area with the formatted, truncated value and an expand control; Redacted values stay hidden unless revealed
-- [ ] An entry can be added from the Window
-- [ ] Tests cover tabs, filter, detail, truncation and add
+- [x] One tab per enabled store; `stores` option controls which exist
+- [x] Filter field narrows the active tab
+- [x] Selecting a row opens a detail area with the formatted, truncated value and an expand control; Redacted values stay hidden unless revealed
+- [x] An entry can be added from the Window
+- [x] Tests cover tabs, filter, detail, truncation and add

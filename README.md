@@ -141,30 +141,33 @@ Each has its own section below, except TanStack Query, which is documented in [i
 | `network()`          | `redactHeaders`                    | Header names to mask. Default: `authorization`, `proxy-authorization`, `cookie`, `set-cookie`, `x-api-key`                                   |
 |                      | `replayHeaders(name, maskedValue)` | What a replayed request sends for a header. Return `null` to leave it out (the default for redacted headers)                                 |
 |                      | `fetch`                            | Also record `fetch`. Default `true`                                                                                                          |
-| `storage()` (opt-in) | `redact`                           | Keys whose values are Redacted. Default `/token\|secret\|password\|auth\|session\|jwt\|key/i`                                                |
+| `storage()` (opt-in) | `stores`                           | Which stores the Window, Agent tools and Debug bundle include. Any of `localStorage`, `sessionStorage`, `cookies`. Default: all three          |
+|                      | `redact`                           | Keys whose values are Redacted. Default `/token\|secret\|password\|auth\|session\|jwt\|key/i`                                                |
 |                      | `includeValuesInBundle`            | Put values in the Debug bundle too (Redacted ones stay hidden). Default `false`: key names and sizes only                                    |
 | `display()`          | `darkClass`                        | Class toggled on `<html>` for dark mode. Default `"dark"`; `false` hides the switch                                                          |
 |                      | `locale`                           | `{ cookie, options, default? }` adds a language switch that sets a cookie and reloads                                                        |
 | `breakpoint()`       | `breakpoints`                      | Name to minimum width (px number or `"48rem"`/`"768px"`). Default: Tailwind v4's `sm 40rem`, `md 48rem`, `lg 64rem`, `xl 80rem`, `2xl 96rem` |
+|                      | `base`                             | Name of the range below the smallest breakpoint. Default `"base"`                                                                           |
+|                      | `outline`                          | Start with the outline on. Default `false`. A saved choice wins after the first toggle                                                      |
 
 ### Breakpoint indicator (opt-in)
 
-`breakpoint()` is not in the defaults. Add it to your own list to show the current breakpoint and width at the end of the toolbar (e.g. `md · 812px`), updating as you resize. While a Frame is active it reports the Frame's width, not the window's. The Debug bundle gets a `Breakpoint` line. Below your smallest breakpoint it shows `base`.
+`breakpoint()` is not in the defaults. Add it to your own list to show the current breakpoint and width (e.g. `md · 812px`) next to an outline toggle, updating as you resize. While a Frame is active it reports that Frame's real width, including a custom size, not the surrounding window and not the scaled-down on-screen size. Unpinning the Plugin hides the readout and the toggle together, and the outline stops. The Debug bundle gets a `Breakpoint` line. Below your smallest breakpoint it shows `base`, or the name you pass as `base`.
 
 ```tsx
 import { breakpoint } from "react-devbelt/plugins";
 
 breakpoint(); // Tailwind v4 breakpoints
-breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 } });
+breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 }, base: "xs", outline: true });
 ```
 
 ### Storage (opt-in)
 
-`storage()` is not in the default list; add it by name: `[...defaultPlugins(), storage()]`. Its Window shows localStorage, sessionStorage and readable cookies, grouped by store, and lets you edit a value, delete an entry or clear a store (Redacted values can be replaced or deleted without being shown; `devbelt:*` keys are never touched). The write Agent tools (`devbelt_set_storage_item`, `devbelt_delete_storage_item`, `devbelt_clear_storage`) are off until you set `agent: { write: true }` on the plugin. It hides its own `devbelt:*` keys and says that HttpOnly cookies cannot be seen. Values whose key matches the `redact` pattern show only their name and length, in the Window, in the `devbelt_get_storage` Agent tool and in the Debug bundle. The bundle lists key names and sizes; values appear only with `includeValuesInBundle`, and Redacted ones never do.
+`storage()` is not in the default list; add it by name: `[...defaultPlugins(), storage()]`. Its Window has a tab for each enabled store (localStorage, sessionStorage and readable cookies by default; pass `stores` to leave one out), a filter, and a detail area. Opening an entry shows the value in the JSON view, shortened until you expand it. You can add an entry, edit a value, delete an entry or clear the active store (Redacted values stay hidden until revealed, and can be replaced or deleted without being shown; `devbelt:*` keys are never touched). The write Agent tools (`devbelt_set_storage_item`, `devbelt_delete_storage_item`, `devbelt_clear_storage`) are off until you set `agent: { write: true }` on the plugin. It hides its own `devbelt:*` keys and says that HttpOnly cookies cannot be seen. Values whose key matches the `redact` pattern show only their name and length, in the Window, in the `devbelt_get_storage` Agent tool and in the Debug bundle. The bundle lists key names and sizes; values appear only with `includeValuesInBundle`, and Redacted ones never do.
 
 ### Switcher (opt-in)
 
-`switcher()` lets a person choose among named Options the app defines: a user, a tenant, a role, a flag set. It does not know what choosing means; your `apply` does. One Plugin is one Axis, so add one instance per Axis. The Toolbar shows the current Option at its end, a window lists the Options, and the Debug bundle gets a line with the current one. The page reloads after `apply` unless `reload: false`. It is not in the defaults.
+`switcher()` lets a person choose among named Options the app defines: a user, a tenant, a role, a flag set. It does not know what choosing means; your `apply` does. One Plugin is one Axis, so add one instance per Axis. It is pinned on the Toolbar as an Item showing the Axis name and the current Option; opening it lists the Options. While `apply` runs, the Item is busy and ignores further picks. If `apply` fails, the error is shown, the current Option stays, and you can retry. The current Option is also shown at the end of the Toolbar, a window lists the Options, and the Debug bundle gets a line with the current one. The page reloads after `apply` unless `reload: false`. It is not in the defaults.
 
 | Option      | Meaning                                                                                           |
 | ----------- | ------------------------------------------------------------------------------------------------- |

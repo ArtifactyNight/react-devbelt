@@ -4,12 +4,12 @@
 
 **Blocked by:** Review-fixes branch (`fix/devbelt-review-findings`) merged
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/switcher.md` (follow-up from the code review of `spec/devbelt-plugins`); ADR 0003 and the Glossary apply.
 
-- [ ] Item shows Axis name and current Option and updates after `apply`
-- [ ] Picking an Option runs `apply`; further picks are ignored while busy
-- [ ] A failed `apply` shows a message and leaves the current Option unchanged
-- [ ] Pinned by default when added, per the spec
-- [ ] Tests cover busy, failure and success
+- [x] Item shows Axis name and current Option and updates after `apply`
+- [x] Picking an Option runs `apply`; further picks are ignored while busy
+- [x] A failed `apply` shows a message and leaves the current Option unchanged
+- [x] Pinned by default when added, per the spec
+- [x] Tests cover busy, failure and success
