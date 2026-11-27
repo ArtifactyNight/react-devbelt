@@ -4,11 +4,11 @@
 
 **Blocked by:** 13
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/storage.md` (follow-up from the code review of `spec/devbelt-plugins`); ADR 0003 and the Glossary apply.
 
-- [ ] Page and Frame writes appear without a manual refresh
-- [ ] The last-used tab is remembered
-- [ ] The cookie other-path note is shown
-- [ ] Tests cover live updates and the remembered tab
+- [x] Page and Frame writes appear without a manual refresh
+- [x] The last-used tab is remembered
+- [x] The cookie other-path note is shown
+- [x] Tests cover live updates and the remembered tab
