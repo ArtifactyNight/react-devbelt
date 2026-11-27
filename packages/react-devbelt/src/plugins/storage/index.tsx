@@ -11,29 +11,33 @@ import {
   formatStorageBundleSection,
   formatStorageForAgent,
   readStorageState,
+  resolveStorageStores,
   setStorageEntry,
-  STORAGE_STORES,
   type StorageStore,
 } from "../../core/storage-view";
 import { definePlugin } from "../../plugin";
 import { StoragePanel } from "./panel";
 
 export type StorageOptions = {
+  /** Stores to show. Default: localStorage, sessionStorage and cookies. */
+  stores?: readonly StorageStore[];
   /** Keys matching this are Redacted. Default: `/token|secret|password|auth|session|jwt|key/i`. */
   redact?: RegExp;
   /** Put values in the Debug bundle too. Redacted values stay hidden. Default false: names and sizes only. */
   includeValuesInBundle?: boolean;
 };
 
-const storeProp = {
-  type: "string",
-  enum: STORAGE_STORES,
-  description: "localStorage, sessionStorage or cookies",
-};
+function storeProp(stores: readonly StorageStore[]) {
+  return {
+    type: "string",
+    enum: stores,
+    description: "localStorage, sessionStorage or cookies",
+  };
+}
 
-function storeOf(input: Record<string, unknown>): StorageStore {
-  if (!STORAGE_STORES.includes(input.store as StorageStore)) {
-    throw new Error(`store must be one of: ${STORAGE_STORES.join(", ")}`);
+function storeOf(stores: readonly StorageStore[], input: Record<string, unknown>): StorageStore {
+  if (!stores.includes(input.store as StorageStore)) {
+    throw new Error(`store must be one of: ${stores.join(", ")}`);
   }
   return input.store as StorageStore;
 }
@@ -50,6 +54,8 @@ function keyOf(input: Record<string, unknown>): string {
  */
 export function storage(options: StorageOptions = {}) {
   const { redact: pattern, includeValuesInBundle = false } = options;
+  const stores = resolveStorageStores(options.stores);
+  const store = storeProp(stores);
   return definePlugin({
     id: "storage",
     name: "Storage",
@@ -58,12 +64,17 @@ export function storage(options: StorageOptions = {}) {
     window: {
       title: "Storage",
       size: { width: 640, height: 420, minWidth: 360, minHeight: 220 },
-      Component: () => <StoragePanel pattern={pattern} />,
+      Component: () => <StoragePanel pattern={pattern} stores={stores} />,
     },
     debugSections: () => {
       const { entries, unavailable } = readStorageState();
       return [
-        formatStorageBundleSection(entries, { pattern, unavailable, includeValues: includeValuesInBundle }),
+        formatStorageBundleSection(entries, {
+          pattern,
+          unavailable,
+          includeValues: includeValuesInBundle,
+          stores,
+        }),
       ];
     },
     agentTools: [
@@ -74,7 +85,7 @@ export function storage(options: StorageOptions = {}) {
         inputSchema: {
           type: "object",
           properties: {
-            store: storeProp,
+            store,
             prefix: { type: "string", description: "Only keys starting with this" },
             limit: {
               type: "number",
@@ -89,7 +100,8 @@ export function storage(options: StorageOptions = {}) {
             formatStorageForAgent(entries, {
               pattern,
               unavailable,
-              store: STORAGE_STORES.includes(input.store as StorageStore) ? (input.store as StorageStore) : undefined,
+              store: stores.includes(input.store as StorageStore) ? (input.store as StorageStore) : undefined,
+              stores,
               prefix: typeof input.prefix === "string" ? input.prefix : undefined,
               limit: typeof input.limit === "number" ? input.limit : undefined,
             }),
@@ -103,7 +115,7 @@ export function storage(options: StorageOptions = {}) {
         inputSchema: {
           type: "object",
           properties: {
-            store: storeProp,
+            store,
             key: { type: "string" },
             value: { type: "string" },
           },
@@ -112,11 +124,11 @@ export function storage(options: StorageOptions = {}) {
         writes: true,
         annotations: { readOnlyHint: false },
         run: async (input) => {
-          const store = storeOf(input);
+          const chosen = storeOf(stores, input);
           const key = keyOf(input);
           if (typeof input.value !== "string") throw new Error("value must be a string");
-          setStorageEntry(store, key, input.value);
-          return text(`Set "${key}" in ${store}.`);
+          setStorageEntry(chosen, key, input.value);
+          return text(`Set "${key}" in ${chosen}.`);
         },
       },
       {
@@ -125,29 +137,29 @@ export function storage(options: StorageOptions = {}) {
           "Delete one entry from localStorage, sessionStorage or the cookies. Keys starting with devbelt: are refused.",
         inputSchema: {
           type: "object",
-          properties: { store: storeProp, key: { type: "string" } },
+          properties: { store, key: { type: "string" } },
           required: ["store", "key"],
         },
         writes: true,
         annotations: { readOnlyHint: false },
         run: async (input) => {
-          const store = storeOf(input);
+          const chosen = storeOf(stores, input);
           const key = keyOf(input);
-          deleteStorageEntry(store, key);
-          return text(`Deleted "${key}" from ${store}.`);
+          deleteStorageEntry(chosen, key);
+          return text(`Deleted "${key}" from ${chosen}.`);
         },
       },
       {
         name: "devbelt_clear_storage",
         description:
           "Delete every entry of one store (localStorage, sessionStorage or cookies). Keys starting with devbelt: are kept.",
-        inputSchema: { type: "object", properties: { store: storeProp }, required: ["store"] },
+        inputSchema: { type: "object", properties: { store }, required: ["store"] },
         writes: true,
         annotations: { readOnlyHint: false },
         run: async (input) => {
-          const store = storeOf(input);
-          clearStorageStore(store);
-          return text(`Cleared ${store}.`);
+          const chosen = storeOf(stores, input);
+          clearStorageStore(chosen);
+          return text(`Cleared ${chosen}.`);
         },
       },
     ],

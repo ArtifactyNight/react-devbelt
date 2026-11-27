@@ -174,6 +174,102 @@ test("includeValuesInBundle adds values but never redacted ones", () => {
   expect(section).not.toContain(SECRET);
 });
 
+test("the Window has one tab per store and shows only the active store", () => {
+  mountWindow();
+  expect(screen.getByRole("tab", { name: "localStorage" })).toBeTruthy();
+  expect(screen.getByRole("tab", { name: "sessionStorage" })).toBeTruthy();
+  expect(screen.getByRole("tab", { name: "Cookies" })).toBeTruthy();
+  expect(within(screen.getByRole("region", { name: "localStorage" })).getByText("theme")).toBeTruthy();
+  expect(screen.queryByRole("region", { name: "sessionStorage" })).toBeNull();
+  expect(screen.queryByText("step")).toBeNull();
+
+  fireEvent.click(screen.getByRole("tab", { name: "sessionStorage" }));
+  expect(within(screen.getByRole("region", { name: "sessionStorage" })).getByText("step")).toBeTruthy();
+  expect(screen.queryByRole("region", { name: "localStorage" })).toBeNull();
+  expect(screen.queryByText("theme")).toBeNull();
+});
+
+test("the filter field narrows the active tab", () => {
+  localStorage.setItem("other", "1");
+  mountWindow();
+  fireEvent.change(screen.getByRole("textbox", { name: "Filter entries" }), {
+    target: { value: "theme" },
+  });
+  const local = screen.getByRole("region", { name: "localStorage" });
+  expect(within(local).getByText("theme")).toBeTruthy();
+  expect(within(local).queryByText("authToken")).toBeNull();
+  expect(within(local).queryByText("other")).toBeNull();
+
+  fireEvent.click(screen.getByRole("tab", { name: "sessionStorage" }));
+  const session = screen.getByRole("region", { name: "sessionStorage" });
+  expect(within(session).queryByText("step")).toBeNull();
+  expect(within(session).getByText("No matches.")).toBeTruthy();
+});
+
+test("opening an entry shows its value formatted as JSON", () => {
+  localStorage.setItem("cfg", JSON.stringify({ color: "blue", n: 2 }));
+  mountWindow();
+  fireEvent.click(screen.getByRole("button", { name: "cfg" }));
+  const detail = screen.getByRole("region", { name: "Details for cfg" });
+  expect(detail.querySelector("pre")?.textContent).toBe('{\n  "color": "blue",\n  "n": 2\n}');
+});
+
+test("a long value is shortened in the list and in the detail until expanded", () => {
+  const value = "a".repeat(300);
+  localStorage.setItem("note", value);
+  mountWindow();
+  const local = screen.getByRole("region", { name: "localStorage" });
+  expect(within(local).getByText(`${"a".repeat(80)}…`)).toBeTruthy();
+  expect(within(local).getByText("300")).toBeTruthy();
+  expect(within(local).queryByText(value)).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: "note" }));
+  const detail = screen.getByRole("region", { name: "Details for note" });
+  expect(detail.querySelector("pre")?.textContent).toBe(`${"a".repeat(240)}…`);
+
+  fireEvent.click(screen.getByRole("button", { name: "Expand value" }));
+  expect(screen.getByRole("region", { name: "Details for note" }).querySelector("pre")?.textContent).toBe(value);
+});
+
+test("a Redacted value stays hidden in the detail until it is revealed", () => {
+  mountWindow();
+  fireEvent.click(screen.getByRole("button", { name: "authToken" }));
+  const detail = screen.getByRole("region", { name: "Details for authToken" });
+  expect(detail.textContent).toContain(`[redacted: ${SECRET.length} chars]`);
+  expect(detail.textContent).not.toContain(SECRET);
+  fireEvent.click(screen.getByRole("button", { name: "Reveal authToken" }));
+  expect(screen.getByRole("region", { name: "Details for authToken" }).textContent).toContain(SECRET);
+});
+
+test("an entry can be added to the active store", () => {
+  mountWindow();
+  fireEvent.click(screen.getByRole("tab", { name: "sessionStorage" }));
+  fireEvent.click(screen.getByRole("button", { name: "Add entry" }));
+  fireEvent.change(screen.getByRole("textbox", { name: "New key" }), { target: { value: "flag" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "New value" }), { target: { value: "on" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save new entry" }));
+  expect(sessionStorage.getItem("flag")).toBe("on");
+  expect(localStorage.getItem("flag")).toBeNull();
+  expect(screen.getByRole("button", { name: "flag" })).toBeTruthy();
+  expect(screen.getByText("on")).toBeTruthy();
+});
+
+test("the stores option leaves out stores it does not list", () => {
+  const { Component } = storage({ stores: ["cookies"] }).window!;
+  render(
+    <StubToolbar>
+      <Component />
+    </StubToolbar>,
+  );
+  expect(screen.getByRole("tab", { name: "Cookies" })).toBeTruthy();
+  expect(screen.queryByRole("tab", { name: "localStorage" })).toBeNull();
+  expect(screen.queryByRole("tab", { name: "sessionStorage" })).toBeNull();
+  expect(screen.queryByText("theme")).toBeNull();
+  const [section] = storage({ stores: ["cookies"] }).debugSections!();
+  expect(section).not.toContain("theme");
+  expect(section).not.toContain("step");
+});
+
 test("the Window groups entries by store, hides redacted values and states the HttpOnly limit", () => {
   const { Component } = storage().window!;
   render(
@@ -185,8 +281,10 @@ test("the Window groups entries by store, hides redacted values and states the H
   expect(within(local).getByText("theme")).toBeTruthy();
   expect(within(local).getByText("dark")).toBeTruthy();
   expect(within(local).getByText(`[redacted: ${SECRET.length} chars]`)).toBeTruthy();
+  fireEvent.click(screen.getByRole("tab", { name: "sessionStorage" }));
   const session = screen.getByRole("region", { name: "sessionStorage" });
   expect(within(session).getByText("step")).toBeTruthy();
+  fireEvent.click(screen.getByRole("tab", { name: "Cookies" }));
   expect(screen.getByRole("region", { name: "Cookies" })).toBeTruthy();
   expect(screen.getByText(/HttpOnly cookies cannot be seen/)).toBeTruthy();
   expect(document.body.textContent).not.toContain(SECRET);
