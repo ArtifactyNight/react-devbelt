@@ -1,8 +1,11 @@
 // The framework-free half: capture, formatting and storage. No React in here.
 export {
   clampLimit,
+  exposedAgentTools,
+  markUntrusted,
   registerAgentTools,
   text,
+  UNTRUSTED_META_KEY,
   type AgentTool,
   type ToolResult,
 } from "./agent-tools";
