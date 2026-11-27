@@ -32,14 +32,15 @@ const OUTLINE_CSS = `*${SKIPPED.map((s) => `:not(${s}):not(${s} *)`).join("")}{o
 /** The toggle's state, one per plugin instance. */
 const OUTLINE_STORAGE_KEY = "breakpoint-outline";
 
-function createOutlineStore() {
-  let on = readString(OUTLINE_STORAGE_KEY) === "1";
+function createOutlineStore(initial: boolean) {
+  const stored = readString(OUTLINE_STORAGE_KEY);
+  let on = stored === null ? initial : stored === "1";
   const listeners = new Set<() => void>();
   return {
     get: () => on,
     set(next: boolean) {
       on = next;
-      writeString(OUTLINE_STORAGE_KEY, next ? "1" : null);
+      writeString(OUTLINE_STORAGE_KEY, next ? "1" : "0");
       listeners.forEach((l) => l());
     },
     use: () =>
@@ -73,6 +74,8 @@ export type BreakpointOptions = {
   breakpoints?: Breakpoints;
   /** Name of the range below the smallest breakpoint. Default `base`. */
   base?: string;
+  /** Start with the outline on. Default off. A saved choice wins after the first toggle. */
+  outline?: boolean;
 };
 
 /** The Frame's width when the viewport Plugin has one, else the window's. */
@@ -99,11 +102,14 @@ export function breakpoint(options: BreakpointOptions = {}) {
   const describe = (width: number) =>
     `${resolveBreakpoint(width, breakpoints, base)} · ${Math.round(width)}px`;
 
-  const outline = createOutlineStore();
+  const outline = createOutlineStore(options.outline ?? false);
 
-  /** Outlines every element on the page and in the Frame while on. Renders nothing. */
-  function OutlineOverlay() {
+  // The readout and the toggle share one Item, so pinning shows both and
+  // unpinning removes both. The outline effect lives here too: unmounting
+  // the Item (unpin) takes the stylesheet with it.
+  function BreakpointItem() {
     const on = outline.use();
+    const width = useWidth();
     const { active, src, frameVersion } = useViewportState();
     useEffect(() => {
       if (!on) return;
@@ -112,28 +118,20 @@ export function breakpoint(options: BreakpointOptions = {}) {
         .map(applyOutline);
       return () => offs.forEach((off) => off());
     }, [on, active, src, frameVersion]);
-    return null;
-  }
-
-  function OutlineItem() {
-    const on = outline.use();
     return (
-      <button
-        type="button"
-        aria-label="Outline all elements"
-        title="Outline all elements"
-        aria-pressed={on}
-        onClick={() => outline.set(!on)}
-        className={`${toolbarItemClass} px-3 ${on ? "bg-white text-neutral-950 hover:bg-white [&_svg]:text-neutral-950" : ""}`}
-      >
-        <SquareDashedIcon className="size-4" aria-hidden="true" />
-      </button>
-    );
-  }
-
-  function BreakpointStatus() {
-    return (
-      <span className="px-2 text-white tabular-nums">{describe(useWidth())}</span>
+      <>
+        <span className="px-2 text-white tabular-nums">{describe(width)}</span>
+        <button
+          type="button"
+          aria-label="Outline all elements"
+          title="Outline all elements"
+          aria-pressed={on}
+          onClick={() => outline.set(!on)}
+          className={`${toolbarItemClass} px-3 ${on ? "bg-white text-neutral-950 hover:bg-white [&_svg]:text-neutral-950" : ""}`}
+        >
+          <SquareDashedIcon className="size-4" aria-hidden="true" />
+        </button>
+      </>
     );
   }
 
@@ -146,9 +144,7 @@ export function breakpoint(options: BreakpointOptions = {}) {
     name: "Breakpoint",
     pinned: false,
     icon: <RulerIcon className="size-4" aria-hidden="true" />,
-    Item: OutlineItem,
-    Overlay: OutlineOverlay,
-    Status: BreakpointStatus,
+    Item: BreakpointItem,
     ChipStatus: BreakpointChip,
     agentTools: [
       {

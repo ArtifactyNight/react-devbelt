@@ -146,16 +146,18 @@ Each has its own section below, except TanStack Query, which is documented in [i
 | `display()`          | `darkClass`                        | Class toggled on `<html>` for dark mode. Default `"dark"`; `false` hides the switch                                                          |
 |                      | `locale`                           | `{ cookie, options, default? }` adds a language switch that sets a cookie and reloads                                                        |
 | `breakpoint()`       | `breakpoints`                      | Name to minimum width (px number or `"48rem"`/`"768px"`). Default: Tailwind v4's `sm 40rem`, `md 48rem`, `lg 64rem`, `xl 80rem`, `2xl 96rem` |
+|                      | `base`                             | Name of the range below the smallest breakpoint. Default `"base"`                                                                           |
+|                      | `outline`                          | Start with the outline on. Default `false`. A saved choice wins after the first toggle                                                      |
 
 ### Breakpoint indicator (opt-in)
 
-`breakpoint()` is not in the defaults. Add it to your own list to show the current breakpoint and width at the end of the toolbar (e.g. `md · 812px`), updating as you resize. While a Frame is active it reports the Frame's width, not the window's. The Debug bundle gets a `Breakpoint` line. Below your smallest breakpoint it shows `base`.
+`breakpoint()` is not in the defaults. Add it to your own list to show the current breakpoint and width (e.g. `md · 812px`) next to an outline toggle, updating as you resize. While a Frame is active it reports that Frame's real width, including a custom size, not the surrounding window and not the scaled-down on-screen size. Unpinning the Plugin hides the readout and the toggle together, and the outline stops. The Debug bundle gets a `Breakpoint` line. Below your smallest breakpoint it shows `base`, or the name you pass as `base`.
 
 ```tsx
 import { breakpoint } from "react-devbelt/plugins";
 
 breakpoint(); // Tailwind v4 breakpoints
-breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 } });
+breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 }, base: "xs", outline: true });
 ```
 
 ### Storage (opt-in)

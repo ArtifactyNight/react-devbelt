@@ -4,11 +4,11 @@
 
 **Blocked by:** Review-fixes branch (`fix/devbelt-review-findings`) merged
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/breakpoint.md` (follow-up from the code review of `spec/devbelt-plugins`); ADR 0003 and the Glossary apply.
 
-- [ ] Readout uses the Frame's real width, including a custom size
-- [ ] Base-name and initial-outline options work
-- [ ] Unpinning hides readout and toggle together, and the outline stops
-- [ ] Tests cover each
+- [x] Readout uses the Frame's real width, including a custom size
+- [x] Base-name and initial-outline options work
+- [x] Unpinning hides readout and toggle together, and the outline stops
+- [x] Tests cover each
