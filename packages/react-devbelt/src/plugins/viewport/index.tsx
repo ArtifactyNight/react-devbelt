@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { motion } from "motion/react";
 import { registerShortcut } from "@ui-sdk/core/shortcuts";
 import { Toggle, ToggleGroup } from "@ui-sdk/react/toggle";
 import {
@@ -28,6 +29,7 @@ import {
   menuItemClass,
   menuLabelClass,
 } from "../../ui/more-menu";
+import { useToolbarTransition } from "../../ui/motion";
 import { kbdClass, toolbarItemClass, tooltipClass } from "../../ui/styles";
 import {
   frameLoaded,
@@ -106,17 +108,17 @@ function ViewportItem() {
   const state = useViewportState();
   const preset = presetOf(state);
   const indicator = useSlidingIndicator(preset?.id ?? "full");
+  const transition = useToolbarTransition();
 
   return (
     <div ref={indicator.groupRef} className="relative flex items-center">
       {indicator.box ? (
-        <span
+        <motion.span
           aria-hidden="true"
-          className={`pointer-events-none absolute inset-y-0 start-0 rounded-full bg-white shadow-sm ${indicator.animate ? "transition-[transform,width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none" : ""}`}
-          style={{
-            width: indicator.box.width,
-            transform: `translateX(${indicator.box.left}px)`,
-          }}
+          initial={false}
+          animate={{ x: indicator.box.left, width: indicator.box.width }}
+          transition={indicator.animate ? transition : { duration: 0 }}
+          className="pointer-events-none absolute inset-y-0 start-0 rounded-full bg-white shadow-sm"
         />
       ) : null}
       <ToggleGroup
@@ -153,6 +155,7 @@ function ViewportItem() {
 }
 
 function ViewportOverlay() {
+  const transition = useToolbarTransition();
   const state = useViewportState();
   const preset = presetOf(state);
   const scale = useFrameScale(preset?.width, preset?.height);
@@ -195,14 +198,21 @@ function ViewportOverlay() {
           aria-hidden="true"
           className="pointer-events-none fixed inset-0 z-[10001] grid place-items-center"
         >
-          <div
-            className={`fill-mode-forwards flex flex-col items-center gap-1 rounded-2xl bg-neutral-950/85 px-6 py-4 text-white shadow-2xl ring-1 ring-white/10 backdrop-blur-md motion-reduce:animate-none ${hud.leaving ? "animate-out fade-out zoom-out-95 duration-200" : "animate-in fade-in zoom-in-90 duration-200"}`}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={
+              hud.leaving
+                ? { opacity: 0, scale: 0.95 }
+                : { opacity: 1, scale: 1 }
+            }
+            transition={transition}
+            className="flex flex-col items-center gap-1 rounded-2xl bg-neutral-950/85 px-6 py-4 text-white shadow-2xl ring-1 ring-white/10 backdrop-blur-md"
           >
             <span className="text-2xl font-semibold tracking-tight">
               {hud.label}
             </span>
             <span className="text-sm text-white/60 tabular-nums">{hud.size}</span>
-          </div>
+          </motion.div>
         </div>
       ) : null}
     </>

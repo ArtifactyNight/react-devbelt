@@ -136,6 +136,10 @@ export function frameLoaded() {
   set({ frameVersion: getViewportState().frameVersion + 1 });
 }
 
+export function getFrameElement(): HTMLIFrameElement | null {
+  return frame;
+}
+
 export function getFrameWindow(): Window | null {
   return frame?.contentWindow ?? null;
 }

@@ -7,6 +7,10 @@ This package bundles third-party software in its distributed files:
   https://github.com/vercel-labs/ui
   The full license text is in licenses/ui-sdk-APACHE-2.0.txt.
 
+  motion (framer-motion) - MIT License
+  https://motion.dev
+  The full license text is in licenses/motion-MIT.txt.
+
 It also depends on, without bundling them:
 
   react-grab (MIT), highlight.js (BSD-3-Clause), lucide-react (ISC)

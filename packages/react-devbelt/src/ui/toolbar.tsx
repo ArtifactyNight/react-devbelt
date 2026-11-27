@@ -7,6 +7,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
+import { motion } from "motion/react";
 import { Button } from "@ui-sdk/react/button";
 import {
   Toolbar,
@@ -26,6 +27,7 @@ import { DefaultItem } from "./default-item";
 import { FloatingWindow } from "./floating-window";
 import { MoreMenu } from "./more-menu";
 import { PluginBoundary } from "./plugin-boundary";
+import { useToolbarTransition } from "./motion";
 import { tooltipClass } from "./styles";
 import { ToolbarPortal, useMount, type Isolation } from "./toolbar-root";
 import { clampRect, defaultRect, useDevLayout } from "./use-dev-layout";
@@ -142,6 +144,8 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [mount]);
 
+  const transition = useToolbarTransition();
+
   const toggleCollapsed = () =>
     setCollapsed((current) => {
       writeString(COLLAPSE_KEY, current ? "0" : "1");
@@ -228,36 +232,60 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
             } as CSSProperties
           }
         >
-          <Button
+          <motion.div
             data-react-grab-ignore
             data-dock="chip"
-            onPointerDown={dock.startDrag}
-            aria-label={collapsed ? "Show dev tools" : "Hide dev tools"}
-            aria-expanded={!collapsed}
-            onClick={toggleCollapsed}
-            className={`pointer-events-auto fixed inset-x-0 z-[10000] mx-auto flex h-7 w-fit items-center justify-center gap-1.5 rounded-full border border-white/10 bg-neutral-950 text-xs font-medium text-white shadow-lg transition-[bottom] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 motion-reduce:transition-none ${collapsed ? "bottom-4 px-3" : "bottom-[4.25rem] px-3.5"}`}
+            initial={false}
+            animate={{ bottom: collapsed ? "1rem" : "4.25rem" }}
+            transition={transition}
+            className="pointer-events-none fixed inset-x-0 z-[10000] mx-auto flex w-fit"
           >
-            <ChevronDownIcon
-              className={`size-3.5 text-neutral-400 ${collapsed ? "rotate-180" : ""}`}
-              aria-hidden="true"
-            />
-            {collapsed
-              ? plugins.map((plugin) =>
-                  plugin.ChipStatus ? (
-                    <PluginBoundary key={plugin.id} plugin={plugin.id}>
-                      <plugin.ChipStatus />
-                    </PluginBoundary>
-                  ) : null,
-                )
-              : null}
-          </Button>
+            <Button
+              onPointerDown={dock.startDrag}
+              aria-label={collapsed ? "Show dev tools" : "Hide dev tools"}
+              aria-expanded={!collapsed}
+              onClick={toggleCollapsed}
+              className="pointer-events-auto flex h-7 w-fit items-center justify-center gap-1.5 rounded-full border border-white/10 bg-neutral-950 px-3 text-xs font-medium text-white shadow-lg hover:bg-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+            >
+              <motion.span
+                initial={false}
+                animate={{ rotate: collapsed ? 180 : 0 }}
+                transition={transition}
+                className="inline-flex"
+              >
+                <ChevronDownIcon className="size-3.5 text-neutral-400" aria-hidden="true" />
+              </motion.span>
+              {collapsed ? (
+                <motion.span
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={transition}
+                  className="inline-flex items-center gap-1.5"
+                >
+                  {plugins.map((plugin) =>
+                    plugin.ChipStatus ? (
+                      <PluginBoundary key={plugin.id} plugin={plugin.id}>
+                        <plugin.ChipStatus />
+                      </PluginBoundary>
+                    ) : null,
+                  )}
+                </motion.span>
+              ) : null}
+            </Button>
+          </motion.div>
 
-          <Toolbar
-            aria-label="Dev tools"
+          <motion.div
             data-react-grab-ignore
             data-dock="toolbar"
+            initial={false}
+            animate={{ y: collapsed ? "calc(100% + 1rem)" : 0 }}
+            transition={transition}
+            className="pointer-events-none fixed inset-x-0 bottom-4 z-[10000] mx-auto w-fit"
+          >
+          <Toolbar
+            aria-label="Dev tools"
             inert={collapsed}
-            className={`pointer-events-auto fixed inset-x-0 bottom-4 z-[10000] mx-auto flex w-fit items-center gap-1 rounded-full border border-white/10 bg-neutral-950 p-1 text-xs text-white shadow-lg transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${collapsed ? "translate-y-[calc(100%+1rem)]" : ""}`}
+            className="pointer-events-auto relative flex w-fit items-center gap-1 rounded-full border border-white/10 bg-neutral-950 p-1 text-xs text-white shadow-lg"
           >
             <Tooltip>
               <TooltipTrigger
@@ -318,6 +346,7 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
               ) : null,
             )}
           </Toolbar>
+          </motion.div>
         </div>
       </ToolbarPortal>
     </ToolbarContext.Provider>

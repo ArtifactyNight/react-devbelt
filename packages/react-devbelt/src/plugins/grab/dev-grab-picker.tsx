@@ -5,6 +5,7 @@ import { Button } from "@ui-sdk/react/button";
 import { createPortal } from "react-dom";
 
 import { useToolbar } from "../../ui/context";
+import { getFrameDocument, getFrameElement } from "../viewport/store";
 import {
   GrabGuide,
   readGuideDismissed,
@@ -14,7 +15,7 @@ import { GrabPickNote } from "./grab-pick-note";
 import {
   copyContent,
   getElementAtPoint,
-  getElementBounds,
+  getElementBounds as getOwnBounds,
   getElementContext,
   isElementGrabbable,
   type ElementBounds,
@@ -72,6 +73,46 @@ const insideRatio = (
     Math.max(bounds.y, rect.y);
   const area = bounds.width * bounds.height;
   return w > 0 && h > 0 && area > 0 ? (w * h) / area : 0;
+};
+
+/** The viewport iframe's box on screen and how far it is scaled down. */
+const frameGeometry = () => {
+  const frame = getFrameElement();
+  if (!frame) return null;
+  const box = frame.getBoundingClientRect();
+  const scale = frame.offsetWidth > 0 ? box.width / frame.offsetWidth : 1;
+  return { frame, box, scale: scale || 1 };
+};
+
+/** Bounds in host-page coordinates, even for elements inside the viewport frame. */
+const getElementBounds = (element: Element): ElementBounds => {
+  const bounds = getOwnBounds(element);
+  if (element.ownerDocument === document) return bounds;
+  const geo = frameGeometry();
+  if (!geo) return bounds;
+  return {
+    ...bounds,
+    x: geo.box.left + bounds.x * geo.scale,
+    y: geo.box.top + bounds.y * geo.scale,
+    width: bounds.width * geo.scale,
+    height: bounds.height * geo.scale,
+  };
+};
+
+const grabbable = (candidate: Element) =>
+  isElementGrabbable(candidate) && !candidate.closest("[data-react-grab-ignore]");
+
+/** Hit test the host page, then continue inside the viewport frame if it was hit. */
+const hitTest = (x: number, y: number): Element | null => {
+  const hit = getElementAtPoint(x, y, { filter: grabbable });
+  const geo = frameGeometry();
+  if (!hit || !geo || hit !== geo.frame) return hit;
+  const doc = getFrameDocument();
+  if (!doc) return hit;
+  const inner = doc
+    .elementsFromPoint((x - geo.box.left) / geo.scale, (y - geo.box.top) / geo.scale)
+    .find(grabbable);
+  return inner ?? hit;
 };
 
 type Highlight = { key: number; bounds: ElementBounds; label: string };
@@ -188,12 +229,7 @@ export function DevGrabPicker({ viewportLabel, appendix, onDone }: Props) {
     return () => cancelAnimationFrame(frame);
   }, [picks]);
 
-  const pick = (x: number, y: number) =>
-    getElementAtPoint(x, y, {
-      filter: (candidate) =>
-        isElementGrabbable(candidate) &&
-        !candidate.closest("[data-react-grab-ignore]"),
-    });
+  const pick = hitTest;
 
   const dragging =
     dragStart &&
