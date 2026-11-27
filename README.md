@@ -7,6 +7,10 @@ A pluggable dev toolbar for **React 19+ and Next.js**. It floats over your app a
 - **Viewport**: frame the page as a phone, iPad, laptop or custom size (keys `1`–`6`)
 - **Grab**: point at an element (key `G`) and copy it with its component stack and source location
 - **Debug bundle**: page, viewport, errors and failed requests in one paste for an AI assistant
+- **Storage** *(opt-in)*: view, edit and clear localStorage, sessionStorage and readable cookies; secret-looking values are Redacted
+- **Switcher** *(opt-in)*: switch the user, tenant, role or flag set your app defines, one Axis per Plugin
+- **Breakpoint** *(opt-in)*: the current breakpoint and width in the Toolbar, plus an outline-all-elements toggle
+- **TanStack Query** *(opt-in, separate package)*: queries and mutations at a glance, with refetch, invalidate and reset
 - **Agent tools**: all of the above is also readable by a browser agent through WebMCP and `window.devbelt`
 - **Plugins**: add your own tools; the built-ins are plugins too
 
@@ -27,14 +31,20 @@ Requires React 19 or newer. The toolbar is built on [ui-sdk](https://ui-sdk.dev)
 ```ts
 // next.config.ts: captures requests and errors before hydration
 import { withDevBelt } from "react-devbelt/next";
-export default withDevBelt({ /* your config */ });
+export default withDevBelt({
+  /* your config */
+});
 ```
 
 ```tsx
 // app/layout.tsx
 import { DevBelt } from "react-devbelt";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body>
@@ -74,7 +84,14 @@ By default you get Viewport, Grab, Network, Console, Display and Copy debug bund
 // devbelt.tsx
 "use client";
 import { DevBelt, installDevBelt } from "react-devbelt";
-import { network, consolePlugin, viewport, grab, bundle, display } from "react-devbelt/plugins";
+import {
+  network,
+  consolePlugin,
+  viewport,
+  grab,
+  bundle,
+  display,
+} from "react-devbelt/plugins";
 
 export const plugins =
   process.env.NODE_ENV === "production"
@@ -84,11 +101,17 @@ export const plugins =
         grab(),
         network({
           // header values are masked in the log; say what a replay should send
-          replayHeaders: (name) => (name.toLowerCase() === "authorization" ? `Bearer ${getToken()}` : null),
+          replayHeaders: (name) =>
+            name.toLowerCase() === "authorization"
+              ? `Bearer ${getToken()}`
+              : null,
         }),
         consolePlugin(),
         bundle(),
-        display({ darkClass: "dark", locale: { cookie: "locale", options: ["en", "th"] } }),
+        display({
+          darkClass: "dark",
+          locale: { cookie: "locale", options: ["en", "th"] },
+        }),
       ];
 
 installDevBelt(plugins); // optional: start capturing before the app renders
@@ -98,27 +121,103 @@ export const Toolbar = () => <DevBelt plugins={plugins} />;
 
 Create the array once at module level, not inside a component. With your own list, do not also `import "react-devbelt/install"`; whichever runs first decides each plugin's options.
 
+### Opt-in plugins
+
+These are not in `defaultPlugins()`; add them by name: `[...defaultPlugins(), storage(), breakpoint()]`.
+
+| Plugin | From | What it does |
+| --- | --- | --- |
+| `breakpoint()` | `react-devbelt/plugins` | Current breakpoint and width, outline-all-elements toggle |
+| `storage()` | `react-devbelt/plugins` | localStorage, sessionStorage and cookies, with Redaction |
+| `switcher()` | `react-devbelt/plugins` | Choose among named Options your app defines |
+| `tanstackQuery(client)` | `devbelt-plugin-tanstack-query` | TanStack Query v5 queries and mutations |
+
+Each has its own section below, except TanStack Query, which is documented in [its package](packages/devbelt-plugin-tanstack-query).
+
 ### Built-in plugin options
 
-| Plugin | Option | Meaning |
-| --- | --- | --- |
-| `network()` | `redactHeaders` | Header names to mask. Default: `authorization`, `proxy-authorization`, `cookie`, `set-cookie`, `x-api-key` |
-| | `replayHeaders(name, maskedValue)` | What a replayed request sends for a header. Return `null` to leave it out (the default for redacted headers) |
-| | `fetch` | Also record `fetch`. Default `true` |
-| `display()` | `darkClass` | Class toggled on `<html>` for dark mode. Default `"dark"`; `false` hides the switch |
-| | `locale` | `{ cookie, options, default? }` adds a language switch that sets a cookie and reloads |
+| Plugin               | Option                             | Meaning                                                                                                                                      |
+| -------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `network()`          | `redactHeaders`                    | Header names to mask. Default: `authorization`, `proxy-authorization`, `cookie`, `set-cookie`, `x-api-key`                                   |
+|                      | `replayHeaders(name, maskedValue)` | What a replayed request sends for a header. Return `null` to leave it out (the default for redacted headers)                                 |
+|                      | `fetch`                            | Also record `fetch`. Default `true`                                                                                                          |
+| `storage()` (opt-in) | `redact`                           | Keys whose values are Redacted. Default `/token\|secret\|password\|auth\|session\|jwt\|key/i`                                                |
+|                      | `includeValuesInBundle`            | Put values in the Debug bundle too (Redacted ones stay hidden). Default `false`: key names and sizes only                                    |
+| `display()`          | `darkClass`                        | Class toggled on `<html>` for dark mode. Default `"dark"`; `false` hides the switch                                                          |
+|                      | `locale`                           | `{ cookie, options, default? }` adds a language switch that sets a cookie and reloads                                                        |
+| `breakpoint()`       | `breakpoints`                      | Name to minimum width (px number or `"48rem"`/`"768px"`). Default: Tailwind v4's `sm 40rem`, `md 48rem`, `lg 64rem`, `xl 80rem`, `2xl 96rem` |
+
+### Breakpoint indicator (opt-in)
+
+`breakpoint()` is not in the defaults. Add it to your own list to show the current breakpoint and width at the end of the toolbar (e.g. `md · 812px`), updating as you resize. While a Frame is active it reports the Frame's width, not the window's. The Debug bundle gets a `Breakpoint` line. Below your smallest breakpoint it shows `base`.
+
+```tsx
+import { breakpoint } from "react-devbelt/plugins";
+
+breakpoint(); // Tailwind v4 breakpoints
+breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 } });
+```
+
+### Storage (opt-in)
+
+`storage()` is not in the default list; add it by name: `[...defaultPlugins(), storage()]`. Its Window shows localStorage, sessionStorage and readable cookies, grouped by store, and lets you edit a value, delete an entry or clear a store (Redacted values can be replaced or deleted without being shown; `devbelt:*` keys are never touched). The write Agent tools (`devbelt_set_storage_item`, `devbelt_delete_storage_item`, `devbelt_clear_storage`) are off until you set `agent: { write: true }` on the plugin. It hides its own `devbelt:*` keys and says that HttpOnly cookies cannot be seen. Values whose key matches the `redact` pattern show only their name and length, in the Window, in the `devbelt_get_storage` Agent tool and in the Debug bundle. The bundle lists key names and sizes; values appear only with `includeValuesInBundle`, and Redacted ones never do.
+
+### Switcher (opt-in)
+
+`switcher()` lets a person choose among named Options the app defines: a user, a tenant, a role, a flag set. It does not know what choosing means; your `apply` does. One Plugin is one Axis, so add one instance per Axis. The Toolbar shows the current Option at its end, a window lists the Options, and the Debug bundle gets a line with the current one. The page reloads after `apply` unless `reload: false`. It is not in the defaults.
+
+| Option      | Meaning                                                                                           |
+| ----------- | ------------------------------------------------------------------------------------------------- |
+| `id`        | Unique Plugin id for this Axis, e.g. `role`                                                       |
+| `name`      | Label in the Toolbar and Debug bundle. Default: the id                                            |
+| `options`   | `{ id, label, description? }[]`, or a function returning them (so one Axis can depend on another) |
+| `apply(id)` | What choosing an Option does: set a cookie, call an API, write localStorage. May be async         |
+| `current()` | The id of the active Option                                                                       |
+| `reload`    | Reload after `apply`. Default `true`                                                              |
+
+```tsx
+import { defaultPlugins, switcher } from "react-devbelt/plugins";
+
+const tenantAxis = switcher({
+  id: "tenant",
+  options: [
+    { id: "acme", label: "Acme" },
+    { id: "globex", label: "Globex", description: "Enterprise plan" },
+  ],
+  apply: (id) => localStorage.setItem("tenant", id),
+  current: () => localStorage.getItem("tenant") ?? "acme",
+});
+
+const roleAxis = switcher({
+  id: "role",
+  // depends on the tenant Axis
+  options: () =>
+    localStorage.getItem("tenant") === "globex"
+      ? [{ id: "viewer", label: "Viewer" }]
+      : [
+          { id: "admin", label: "Admin" },
+          { id: "viewer", label: "Viewer" },
+        ],
+  apply: (id) => (document.cookie = `role=${id}; path=/`),
+  current: () => document.cookie.match(/role=(\w+)/)?.[1],
+});
+
+<DevBelt plugins={[...defaultPlugins(), tenantAxis, roleAxis]} />;
+```
+
+Agent tools: `list_<id>_options` (read) and `switch_<id>` (a write tool, off until you set `agent: { write: true }` on the Plugin, see ADR 0003). `window.devbelt.switch_<id>({ id })` is the same call.
 
 ## `<DevBelt>` props
 
-| Prop | Default | |
-| --- | --- | --- |
-| `plugins` | built-ins | The tools to show |
+| Prop        | Default    |                                                                             |
+| ----------- | ---------- | --------------------------------------------------------------------------- |
+| `plugins`   | built-ins  | The tools to show                                                           |
 | `isolation` | `"shadow"` | `"none"` renders in a plain div; import `react-devbelt/styles.css` yourself |
-| `enabled` | `true` | Switch the toolbar off in development without removing it |
+| `enabled`   | `true`     | Switch the toolbar off in development without removing it                   |
 
 ## Security
 
-The toolbar reads request and response **bodies** and console output. Credentials in headers are masked, but bodies are not. It is built for development: do not ship it to production (production builds drop it) and do not expose it on shared or demo environments. Tools offered to browser agents are read-only apart from changing the viewport, and everything they return is marked as untrusted content.
+The toolbar reads request and response **bodies** and console output. Credentials in headers are masked, but bodies are not. It is built for development: do not ship it to production (production builds drop it) and do not expose it on shared or demo environments. Tools offered to browser agents are read-only apart from changing the viewport, and everything they return is marked as untrusted content. Tools that change state (editing storage, applying a Switcher Option, refetching or invalidating queries) do not exist until you set `agent: { write: true }` on that Plugin. Values whose key looks secret (`token`, `password`, `auth`, `session`, `jwt`, `key`, and so on) are Redacted in the Toolbar, in Agent tools and in the Debug bundle.
 
 ## Writing a plugin
 

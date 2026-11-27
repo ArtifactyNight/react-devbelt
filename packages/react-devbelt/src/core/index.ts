@@ -1,8 +1,12 @@
 // The framework-free half: capture, formatting and storage. No React in here.
 export {
   clampLimit,
+  errorResult,
+  exposedAgentTools,
+  markUntrusted,
   registerAgentTools,
   text,
+  UNTRUSTED_META_KEY,
   type AgentTool,
   type ToolResult,
 } from "./agent-tools";
@@ -37,3 +41,17 @@ export {
   type NetworkLogOptions,
 } from "./network-log";
 export { readJson, readString, storageKey, writeJson, writeString } from "./storage";
+export { DEFAULT_REDACTION_PATTERN, isRedacted, redact, redactedForm } from "./redaction";
+export {
+  clearStorageStore,
+  deleteStorageEntry,
+  setStorageEntry,
+  formatStorageBundleSection,
+  formatStorageForAgent,
+  HTTP_ONLY_NOTE,
+  readStorageEntries,
+  STORAGE_STORES,
+  type StorageEntry,
+  type StorageStore,
+  type StorageViewOptions,
+} from "./storage-view";
