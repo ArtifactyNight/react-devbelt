@@ -70,3 +70,7 @@ A plugin can also set `agent` itself when it is built, but the app decides. Tool
 ## Errors and compatibility
 
 A plugin that throws while installing or rendering loses only its own UI; the toolbar keeps working. `definePlugin` stamps `apiVersion: 1`; a plugin built for a newer API is rejected with a clear message. Name published plugins `devbelt-plugin-*` so people can find them.
+
+## Package plugin example: TanStack Query
+
+`devbelt-plugin-tanstack-query` is the reference Package plugin. It depends only on the public API (`react-devbelt` and `react-devbelt/core`). `tanstackQuery(queryClient)` subscribes to the query and mutation caches in `install()`, batches changes to one redraw per frame, and contributes a Window, a Badge and Hint (failing and fetching queries), a Debug bundle section and a read-only Agent tool. Cache data is never put in the bundle or in agent output, and `react-devbelt/core`'s Redaction hides secret-looking values in keys.
