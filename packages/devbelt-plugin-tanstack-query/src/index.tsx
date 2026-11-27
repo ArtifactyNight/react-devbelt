@@ -6,6 +6,7 @@ import { clampLimit, text, type AgentTool } from "react-devbelt/core";
 import { definePlugin, type DevBeltPlugin, type ToolbarApi } from "react-devbelt";
 
 import {
+  keyText,
   mutationRows,
   queryRows,
   summarize,
@@ -37,6 +38,8 @@ const STYLES = `
 .tq-key{font-family:ui-monospace,monospace;word-break:break-all}
 .tq-error{color:#fda4af}
 .tq-empty{opacity:.7}
+.tq-actions{white-space:nowrap}
+.tq-actions button{margin-left:4px;padding:0 6px;border-radius:6px;background:transparent;color:inherit;border:1px solid #555}
 `;
 
 const frame = (fn: () => void) =>
@@ -54,9 +57,10 @@ const plural = (n: number, word: string, many = `${word}s`) => `${n} ${n === 1 ?
 
 /**
  * TanStack Query v5 Package plugin. Pass the same `QueryClient` the app uses;
- * the plugin never creates or finds one on its own. Read-only: it lists
+ * the plugin never creates or finds one on its own. It lists
  * queries and mutations, badges failures, and feeds the Debug bundle and a
- * read Agent tool. Cache data is never put in the bundle or agent output.
+ * read Agent tool; refetch, invalidate and reset are in the Window and, with
+ * `agent: { write: true }`, Agent tools. Cache data is never put in the bundle or agent output.
  */
 export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOptions = {}): DevBeltPlugin {
   if (
@@ -105,6 +109,24 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
     );
   }
 
+  const ACTIONS = {
+    refetch: (key: readonly unknown[]) => queryClient.refetchQueries({ queryKey: key, exact: true }),
+    invalidate: (key: readonly unknown[]) => queryClient.invalidateQueries({ queryKey: key, exact: true }),
+    reset: (key: readonly unknown[]) => queryClient.resetQueries({ queryKey: key, exact: true }),
+  } as const;
+  type Action = keyof typeof ACTIONS;
+
+  /** The cached query whose key prints as `keyText`, first match winning. */
+  const findQuery = (keyString: string) =>
+    queryClient.getQueryCache().getAll().find((q) => keyText(q.queryKey) === keyString);
+
+  const act = (action: Action, keyString: string): boolean => {
+    const query = findQuery(keyString);
+    if (!query) return false;
+    void ACTIONS[action](query.queryKey).catch(() => {});
+    return true;
+  };
+
   const QueriesTable = ({ rows }: { rows: QueryRow[] }) =>
     rows.length === 0 ? (
       <p className="tq-empty">No queries.</p>
@@ -119,6 +141,19 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
               <td>{plural(row.fetchCount, "fetch", "fetches")}</td>
               <td>{relative(row.updatedAt)}</td>
               <td className="tq-error">{row.error}</td>
+              <td className="tq-actions">
+                {(["refetch", "invalidate", "reset"] as const).map((action) => (
+                  <button
+                    key={action}
+                    type="button"
+                    aria-label={`${action[0].toUpperCase()}${action.slice(1)} ${row.key}`}
+                    onClick={() => act(action, row.key)}
+                  >
+                    {action[0].toUpperCase()}
+                    {action.slice(1)}
+                  </button>
+                ))}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -210,6 +245,32 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
     },
   };
 
+  const writeTool = (action: Action, verb: string, effect: string): AgentTool<ToolbarApi> => ({
+    name: `devbelt_${action}_${id.replaceAll("-", "_")}`,
+    description: `${verb} one TanStack Query query, identified by its key as the exact text shown in the Window (for example ["todos",{"page":1}]). ${effect} Changes page state.`,
+    inputSchema: {
+      type: "object",
+      properties: { key: { type: "string", description: "The query key as shown in the Window" } },
+      required: ["key"],
+    },
+    writes: true,
+    run: async (input) => {
+      const key = typeof input.key === "string" ? input.key : "";
+      if (!act(action, key)) return text(`No query with key ${key}.`);
+      return text(`Requested ${action} of ${key}.`);
+    },
+  });
+
+  // Write tools do not exist unless the app opts in (ADR 0003).
+  const writeTools =
+    options.agent?.write === true
+      ? [
+          writeTool("refetch", "Refetch", "Runs its query function again."),
+          writeTool("invalidate", "Invalidate", "Marks it stale and refetches it if it is in use."),
+          writeTool("reset", "Reset", "Returns it to its initial state, discarding its data."),
+        ]
+      : [];
+
   return definePlugin({
     id,
     name: "TanStack Query",
@@ -234,7 +295,7 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
       size: { width: 760, height: 420, minWidth: 420, minHeight: 200 },
       Component: Window,
     },
-    agentTools: [readTool],
+    agentTools: [readTool, ...writeTools],
     debugSections: () => {
       const queries = queryRows(queryClient).filter(
         (r) => r.status === "error" || r.status === "fetching" || r.status === "paused",
