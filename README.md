@@ -122,9 +122,53 @@ breakpoint(); // Tailwind v4 breakpoints
 breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 } });
 ```
 
+<<<<<<< HEAD
 ### Storage (opt-in)
 
 `storage()` is not in the default list; add it by name: `[...defaultPlugins(), storage()]`. Its Window shows localStorage, sessionStorage and readable cookies, read-only, grouped by store. It hides its own `devbelt:*` keys and says that HttpOnly cookies cannot be seen. Values whose key matches the `redact` pattern show only their name and length, in the Window, in the `devbelt_get_storage` Agent tool and in the Debug bundle. The bundle lists key names and sizes; values appear only with `includeValuesInBundle`, and Redacted ones never do.
+=======
+### Switcher (opt-in)
+
+`switcher()` lets a person choose among named Options the app defines: a user, a tenant, a role, a flag set. It does not know what choosing means; your `apply` does. One Plugin is one Axis, so add one instance per Axis. The Toolbar shows the current Option at its end, a window lists the Options, and the Debug bundle gets a line with the current one. The page reloads after `apply` unless `reload: false`. It is not in the defaults.
+
+| Option | Meaning |
+| --- | --- |
+| `id` | Unique Plugin id for this Axis, e.g. `role` |
+| `name` | Label in the Toolbar and Debug bundle. Default: the id |
+| `options` | `{ id, label, description? }[]`, or a function returning them (so one Axis can depend on another) |
+| `apply(id)` | What choosing an Option does: set a cookie, call an API, write localStorage. May be async |
+| `current()` | The id of the active Option |
+| `reload` | Reload after `apply`. Default `true` |
+
+```tsx
+import { defaultPlugins, switcher } from "react-devbelt/plugins";
+
+const tenantAxis = switcher({
+  id: "tenant",
+  options: [
+    { id: "acme", label: "Acme" },
+    { id: "globex", label: "Globex", description: "Enterprise plan" },
+  ],
+  apply: (id) => localStorage.setItem("tenant", id),
+  current: () => localStorage.getItem("tenant") ?? "acme",
+});
+
+const roleAxis = switcher({
+  id: "role",
+  // depends on the tenant Axis
+  options: () =>
+    localStorage.getItem("tenant") === "globex"
+      ? [{ id: "viewer", label: "Viewer" }]
+      : [{ id: "admin", label: "Admin" }, { id: "viewer", label: "Viewer" }],
+  apply: (id) => document.cookie = `role=${id}; path=/`,
+  current: () => document.cookie.match(/role=(\w+)/)?.[1],
+});
+
+<DevBelt plugins={[...defaultPlugins(), tenantAxis, roleAxis]} />;
+```
+
+Agent tools: `list_<id>_options` (read) and `switch_<id>` (a write tool, off until you set `agent: { write: true }` on the Plugin, see ADR 0003). `window.devbelt.switch_<id>({ id })` is the same call.
+>>>>>>> ticket/05-switcher-plugin
 
 ## `<DevBelt>` props
 
