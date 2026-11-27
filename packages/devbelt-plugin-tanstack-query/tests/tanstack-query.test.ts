@@ -1,13 +1,21 @@
 import { QueryClient } from "@tanstack/react-query";
 import { definePlugin } from "react-devbelt";
 import { exposedAgentTools } from "react-devbelt/core";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { tanstackQuery } from "../src";
 
+let stop: (() => void) | void;
+
 describe("tanstackQuery(queryClient)", () => {
+  afterEach(() => {
+    stop?.();
+    stop = undefined;
+  });
+
   it("returns a valid Plugin built on the public API", () => {
     const plugin = tanstackQuery(new QueryClient());
+    stop = plugin.install?.();
 
     expect(plugin.apiVersion).toBe(1);
     expect(plugin.id).toBe("tanstack-query");
@@ -18,6 +26,7 @@ describe("tanstackQuery(queryClient)", () => {
 
   it("has a window and a read Agent tool, and no write tools", () => {
     const plugin = tanstackQuery(new QueryClient());
+    stop = plugin.install?.();
 
     expect(plugin.window).toBeDefined();
     expect(exposedAgentTools([plugin]).every((tool) => !tool.writes)).toBe(true);
