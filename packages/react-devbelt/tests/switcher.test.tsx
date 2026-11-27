@@ -4,7 +4,10 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
+import { writeString } from "../src/core/storage";
+import { VIEWPORT_STORAGE_KEY } from "../src/core/viewports";
 import { switcher } from "../src/plugins/switcher";
+import { resetViewportStore, setFrame } from "../src/plugins/viewport/store";
 
 const reload = vi.fn();
 
@@ -57,6 +60,41 @@ test("picking an Option runs apply and reloads the page", async () => {
   fireEvent.click(screen.getByRole("radio", { name: /Admin/ }));
   await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
   expect(apply).toHaveBeenCalledWith("admin");
+});
+
+test("reload targets the active Frame instead of the top page", async () => {
+  resetViewportStore();
+  writeString(VIEWPORT_STORAGE_KEY, "mobile");
+  const frame = document.createElement("iframe");
+  document.body.append(frame);
+  const frameReload = vi.fn();
+  Object.defineProperty(frame, "contentWindow", {
+    configurable: true,
+    get: () => ({ location: { reload: frameReload } }) as unknown as Window,
+  });
+  setFrame(frame);
+  try {
+    const { Panel } = setup();
+    render(<Panel />);
+    fireEvent.click(screen.getByRole("radio", { name: /Admin/ }));
+    await waitFor(() => expect(frameReload).toHaveBeenCalledTimes(1));
+    expect(reload).not.toHaveBeenCalled();
+  } finally {
+    setFrame(null);
+    frame.remove();
+    resetViewportStore();
+  }
+});
+
+test("a reload function replaces the page reload and is called with no arguments", async () => {
+  const custom = vi.fn();
+  const { apply, Panel } = setup({ reload: custom });
+  render(<Panel />);
+  fireEvent.click(screen.getByRole("radio", { name: /Admin/ }));
+  await waitFor(() => expect(custom).toHaveBeenCalledTimes(1));
+  expect(custom.mock.calls[0]).toEqual([]);
+  expect(apply).toHaveBeenCalledWith("admin");
+  expect(reload).not.toHaveBeenCalled();
 });
 
 test("reload: false applies without reloading and updates the selection", async () => {
@@ -121,7 +159,7 @@ test("the current Option's label is in the Debug bundle", () => {
 
 test("an unknown current id still shows in the Debug bundle", () => {
   const { plugin } = setup({ current: () => "ghost" });
-  expect(plugin.debugContext?.()).toEqual([{ label: "role", value: "ghost" }]);
+  expect(plugin.debugContext?.()).toEqual([{ label: "role", value: "Unknown (ghost)" }]);
 });
 
 // --- Agent tools, through the Toolbar's write gate ---
@@ -326,6 +364,145 @@ test("a failed apply shows the error, keeps the current Option, and can be retri
   );
   expect(apply).toHaveBeenCalledTimes(2);
   expect(screen.queryByRole("alert")).toBeNull();
+});
+
+test("an unknown current id shows Unknown with the id and checks nothing", async () => {
+  const { default: Toolbar } = await import("../src/ui/toolbar");
+  const { plugin } = setup({ name: "Role", current: () => "ghost" });
+  render(<Toolbar plugins={[plugin]} isolation="none" />);
+  const item = screen.getByRole("button", { name: /Role/ });
+  expect(item.textContent).toContain("Unknown");
+  expect(item.textContent).toContain("ghost");
+  const user = userEvent.setup();
+  await user.click(item);
+  for (const option of screen.getAllByRole("menuitemradio")) {
+    expect(option.getAttribute("aria-checked")).toBe("false");
+  }
+  expect(plugin.debugContext?.()).toEqual([{ label: "Role", value: "Unknown (ghost)" }]);
+});
+
+test("a null current checks nothing in the menu", async () => {
+  const { default: Toolbar } = await import("../src/ui/toolbar");
+  const { plugin } = setup({ name: "Role", current: () => null });
+  render(<Toolbar plugins={[plugin]} isolation="none" />);
+  const item = screen.getByRole("button", { name: /Role/ });
+  expect(item.textContent).toContain("none");
+  expect(item.textContent).not.toContain("Admin");
+  expect(item.textContent).not.toContain("Viewer");
+  const user = userEvent.setup();
+  await user.click(item);
+  for (const option of screen.getAllByRole("menuitemradio")) {
+    expect(option.getAttribute("aria-checked")).toBe("false");
+  }
+  expect(plugin.debugContext?.()).toEqual([{ label: "Role", value: "none" }]);
+});
+
+test("async options shows a loading row, then the list", async () => {
+  const { default: Toolbar } = await import("../src/ui/toolbar");
+  let resolveList: (options: typeof roles) => void = () => {};
+  const plugin = switcher({
+    id: "role",
+    name: "Role",
+    reload: false,
+    options: () =>
+      new Promise((resolve) => {
+        resolveList = resolve;
+      }),
+    apply: () => {},
+    current: () => "viewer",
+  });
+  render(<Toolbar plugins={[plugin]} isolation="none" />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: /Role/ }));
+  expect(screen.getByRole("status").textContent).toMatch(/Loading Options/);
+  expect(screen.queryByRole("menuitemradio")).toBeNull();
+  resolveList(roles);
+  await waitFor(() =>
+    expect(screen.getByRole("menuitemradio", { name: /Viewer/ }).getAttribute("aria-checked")).toBe(
+      "true",
+    ),
+  );
+  expect(screen.queryByRole("status")).toBeNull();
+});
+
+test("the menu reads options again each time it opens", async () => {
+  const { default: Toolbar } = await import("../src/ui/toolbar");
+  let tenant = "acme";
+  const plugin = switcher({
+    id: "role",
+    name: "Role",
+    reload: false,
+    options: () =>
+      tenant === "acme"
+        ? [
+            { id: "admin", label: "Admin" },
+            { id: "viewer", label: "Viewer" },
+          ]
+        : [{ id: "viewer", label: "Viewer" }],
+    apply: () => {},
+    current: () => "viewer",
+  });
+  render(<Toolbar plugins={[plugin]} isolation="none" />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: /Role/ }));
+  expect(screen.getAllByRole("menuitemradio")).toHaveLength(2);
+  await user.keyboard("{Escape}");
+  tenant = "globex";
+  await user.click(screen.getByRole("button", { name: /Role/ }));
+  expect(screen.getAllByRole("menuitemradio")).toHaveLength(1);
+});
+
+test("a failed options read shows the error and retry loads the list", async () => {
+  const { default: Toolbar } = await import("../src/ui/toolbar");
+  let fail = true;
+  const plugin = switcher({
+    id: "role",
+    name: "Role",
+    reload: false,
+    options: () => (fail ? Promise.reject(new Error("network down")) : Promise.resolve(roles)),
+    apply: () => {},
+    current: () => "viewer",
+  });
+  render(<Toolbar plugins={[plugin]} isolation="none" />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: /Role/ }));
+  await waitFor(() => expect(screen.getByRole("alert").textContent).toMatch(/network down/));
+  expect(screen.queryByRole("menuitemradio")).toBeNull();
+  fail = false;
+  await user.click(screen.getByRole("button", { name: "Retry" }));
+  await waitFor(() => expect(screen.getByRole("menuitemradio", { name: /Viewer/ })).toBeTruthy());
+  expect(screen.queryByRole("alert")).toBeNull();
+});
+
+test("an async current shows its Option and is read again after apply", async () => {
+  const { default: Toolbar } = await import("../src/ui/toolbar");
+  let value: string | null = "viewer";
+  const plugin = switcher({
+    id: "role",
+    name: "Role",
+    reload: false,
+    options: roles,
+    apply: (id) => {
+      value = id;
+    },
+    current: () => Promise.resolve(value),
+  });
+  render(<Toolbar plugins={[plugin]} isolation="none" />);
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: /Role/ }).textContent).toContain("Viewer"),
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: /Role/ }));
+  expect(screen.getByRole("menuitemradio", { name: /Viewer/ }).getAttribute("aria-checked")).toBe(
+    "true",
+  );
+  await user.click(screen.getByRole("menuitemradio", { name: /Admin/ }));
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: /Role/ }).textContent).toContain("Admin"),
+  );
+  expect(screen.getByRole("menuitemradio", { name: /Admin/ }).getAttribute("aria-checked")).toBe(
+    "true",
+  );
 });
 
 test("a Switcher is pinned when added and can be unpinned", async () => {

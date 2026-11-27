@@ -16,6 +16,7 @@ import { errorResult, text, type AgentTool } from "../../core/agent-tools";
 import { definePlugin, type ToolbarApi } from "../../plugin";
 import { menuIndicatorClass, menuItemClass } from "../../ui/more-menu";
 import { toolbarItemClass } from "../../ui/styles";
+import { getFrameWindow, getViewportState, presetOf } from "../viewport/store";
 
 const menuContentClass =
   "m-0 min-w-56 rounded-xl border border-white/10 bg-neutral-950 p-1 text-xs text-white shadow-2xl";
@@ -35,17 +36,33 @@ export type SwitcherConfig = {
   id: string;
   /** Shown as the Plugin's name. Default: the id. */
   name?: string;
-  /** The Options, or a function that returns them (so one Axis can depend on another). */
-  options: readonly SwitcherOption[] | (() => readonly SwitcherOption[]);
+  /** The Options, or a function that returns them (so one Axis can depend on another). The function may be async. */
+  options:
+    | readonly SwitcherOption[]
+    | (() => readonly SwitcherOption[] | Promise<readonly SwitcherOption[]>);
   /** What choosing an Option means: set a cookie, call an API, write localStorage. */
   apply: (id: string) => void | Promise<void>;
-  /** The id of the Option that is active now. */
-  current: () => string | undefined;
-  /** Reload the page after `apply`. Default `true`. */
-  reload?: boolean;
+  /** The id of the Option that is active now, or null when nothing is selected. May be async. */
+  current: () => string | null | undefined | Promise<string | null | undefined>;
+  /** Reload after `apply`. Default `true`. `false` skips it. A function replaces the reload and is called with no arguments. */
+  reload?: boolean | (() => void);
 };
 
-type Current = { ok: true; id: string | undefined } | { ok: false };
+type Current = { ok: true; id: string | undefined; pending?: boolean } | { ok: false };
+
+type OptionsResult =
+  | { status: "ready"; options: readonly SwitcherOption[] }
+  | { status: "error"; message: string };
+
+type OptionsView = OptionsResult | { status: "loading" };
+
+function isPromise<T>(value: T | Promise<T>): value is Promise<T> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Promise<T>).then === "function"
+  );
+}
 
 /** One Axis the app can switch along (user, tenant, role, flag set). Opt-in. The Plugin id is `switcher-<id>`. */
 export function switcher(config: SwitcherConfig) {
@@ -59,9 +76,13 @@ export function switcher(config: SwitcherConfig) {
       seen.add(option.id);
     }
   }
-  // A function's list is read on every use; a later duplicate id is ignored.
-  const list = (): readonly SwitcherOption[] => {
-    const all = typeof config.options === "function" ? config.options() : config.options;
+  // A function's list is read when the menu opens, not cached across opens.
+  // A later duplicate id is ignored.
+  let optionsView: OptionsView = { status: "loading" };
+  let optionsAsync = false;
+  let optionsToken = 0;
+  const optionsListeners = new Set<() => void>();
+  const dedupe = (all: readonly SwitcherOption[]): readonly SwitcherOption[] => {
     const seen = new Set<string>();
     return all.filter((option) => {
       if (seen.has(option.id)) {
@@ -72,17 +93,157 @@ export function switcher(config: SwitcherConfig) {
       return true;
     });
   };
-  const read = (): Current => {
+  const messageOf = (error: unknown) => (error instanceof Error ? error.message : String(error));
+  const publishOptions = (next: OptionsView) => {
+    optionsView = next;
+    for (const listener of optionsListeners) listener();
+  };
+  const readOptions = (): OptionsResult | Promise<OptionsResult> => {
     try {
-      return { ok: true, id: config.current() };
+      const all = typeof config.options === "function" ? config.options() : config.options;
+      if (isPromise(all)) {
+        optionsAsync = true;
+        return all.then(
+          (options) => ({ status: "ready", options: dedupe(options) }),
+          (error) => ({ status: "error", message: messageOf(error) }),
+        );
+      }
+      return { status: "ready", options: dedupe(all) };
+    } catch (error) {
+      return { status: "error", message: messageOf(error) };
+    }
+  };
+  // Sync callers (the Debug bundle) cannot wait. An async function is read by the menu.
+  const syncList = (): readonly SwitcherOption[] => {
+    if (optionsView.status === "ready") return optionsView.options;
+    if (typeof config.options !== "function") return dedupe(config.options);
+    if (optionsAsync) return [];
+    const value = readOptions();
+    if (isPromise(value)) {
+      void value.then((next) => publishOptions(next));
+      return [];
+    }
+    if (value.status === "error") return [];
+    return value.options;
+  };
+  function useOptions(generation: number): OptionsView {
+    const [state, setState] = useState<OptionsView>(() =>
+      typeof config.options === "function" ? { status: "loading" } : { status: "ready", options: dedupe(config.options) },
+    );
+    useEffect(() => {
+      const listener = () => setState(optionsView);
+      optionsListeners.add(listener);
+      const token = ++optionsToken;
+      const value = readOptions();
+      const apply = (next: OptionsResult) => {
+        if (token !== optionsToken) return;
+        publishOptions(next);
+      };
+      if (isPromise(value)) {
+        if (token === optionsToken) publishOptions({ status: "loading" });
+        void value.then(apply);
+      } else {
+        apply(value);
+      }
+      return () => {
+        optionsListeners.delete(listener);
+      };
+    }, [generation]);
+    return state;
+  }
+  function OptionsNote({ state, onRetry }: { state: OptionsView; onRetry: () => void }) {
+    switch (state.status) {
+      case "loading":
+        return <p role="status">Loading Options…</p>;
+      case "error":
+        return (
+          <>
+            <p role="alert">Could not load Options: {state.message}</p>
+            <button type="button" className={menuItemClass} onClick={onRetry}>
+              Retry
+            </button>
+          </>
+        );
+      case "ready":
+        return null;
+      default: {
+        const exhaustive: never = state;
+        return exhaustive;
+      }
+    }
+  }
+  // The Item, the Window and the Status row share one settled read so an async
+  // `current` updates every place that shows it.
+  let settled: Current = { ok: true, id: undefined, pending: true };
+  let currentToken = 0;
+  const listeners = new Set<() => void>();
+  const commit = (next: Current) => {
+    settled = next;
+    for (const listener of listeners) listener();
+  };
+  const loadCurrent = (): Current | Promise<Current> => {
+    try {
+      const value = config.current();
+      if (isPromise(value)) {
+        return value.then(
+          (id) => ({ ok: true, id: id ?? undefined }),
+          () => ({ ok: false }),
+        );
+      }
+      return { ok: true, id: value ?? undefined };
     } catch {
       return { ok: false };
     }
   };
-  const labelOf = (current: Current) =>
-    !current.ok
-      ? "Unknown"
-      : (list().find((option) => option.id === current.id)?.label ?? current.id ?? "none");
+  const read = (): Current => {
+    const value = loadCurrent();
+    if (isPromise(value)) {
+      void value.then((next) => commit(next));
+      if (settled.ok && settled.pending) return { ok: true, id: undefined, pending: true };
+      return settled;
+    }
+    return value;
+  };
+  function useCurrent(version: number): Current {
+    const [current, setCurrent] = useState<Current>(() => {
+      const value = loadCurrent();
+      return isPromise(value) ? { ok: true, id: undefined, pending: true } : value;
+    });
+    useEffect(() => {
+      const listener = () => setCurrent(settled);
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    }, []);
+    useEffect(() => {
+      const token = ++currentToken;
+      const value = loadCurrent();
+      const apply = (next: Current) => {
+        if (token !== currentToken) return;
+        commit(next);
+      };
+      if (isPromise(value)) void value.then(apply);
+      else apply(value);
+    }, [version]);
+    return current;
+  }
+  const labelOf = (current: Current, options: readonly SwitcherOption[]) => {
+    if (!current.ok) return "Unknown";
+    if (current.id === undefined) return "none";
+    const match = options.find((option) => option.id === current.id);
+    return match ? match.label : `Unknown (${current.id})`;
+  };
+  const checkedId = (current: Current, options: readonly SwitcherOption[]) =>
+    current.ok && current.id !== undefined && options.some((option) => option.id === current.id)
+      ? current.id
+      : null;
+  const debugValue = (current: Current) => {
+    if (!current.ok) return "unknown (the current Option could not be read)";
+    if (current.id === undefined) return "none";
+    const match = syncList().find((option) => option.id === current.id);
+    return match ? `${match.label} (${current.id})` : `Unknown (${current.id})`;
+  };
 
   /** Applies an Option; resolves to an error message, or null on success. Never rejects. */
   async function choose(id: string): Promise<string | null> {
@@ -91,15 +252,23 @@ export function switcher(config: SwitcherConfig) {
     } catch (error) {
       return error instanceof Error ? error.message : String(error);
     }
-    if (config.reload !== false) window.location.reload();
+    if (typeof config.reload === "function") config.reload();
+    else if (config.reload !== false) {
+      const frame = getFrameWindow();
+      if (frame && presetOf(getViewportState())) frame.location.reload();
+      else window.location.reload();
+    }
     return null;
   }
 
   function SwitcherPanel() {
-    const [, refresh] = useReducer((n: number) => n + 1, 0);
+    const [version, refresh] = useReducer((n: number) => n + 1, 0);
     const [error, setError] = useState<string | null>(null);
     const busy = useRef(false);
-    const current = read();
+    const current = useCurrent(version);
+    const [optionsAttempt, retryOptions] = useReducer((n: number) => n + 1, 0);
+    const optionsState = useOptions(optionsAttempt);
+    const options = optionsState.status === "ready" ? optionsState.options : [];
     return (
       <div role="radiogroup" aria-label={name} className="flex flex-col gap-1 p-2">
         {!current.ok ? (
@@ -110,12 +279,13 @@ export function switcher(config: SwitcherConfig) {
             Switching failed: {error}
           </p>
         ) : null}
-        {list().map((option) => (
+        <OptionsNote state={optionsState} onRetry={retryOptions} />
+        {options.map((option) => (
           <button
             key={option.id}
             type="button"
             role="radio"
-            aria-checked={current.ok && option.id === current.id}
+            aria-checked={checkedId(current, options) === option.id}
             className="flex flex-col rounded-md px-2 py-1.5 text-left text-xs text-white hover:bg-white/10 aria-checked:bg-white/15"
             onClick={() => {
               if (busy.current || (current.ok && option.id === current.id)) return;
@@ -149,7 +319,9 @@ export function switcher(config: SwitcherConfig) {
     annotations: { readOnlyHint: false },
     run: async (input) => {
       const id = String(input.id ?? "");
-      if (!list().some((option) => option.id === id)) {
+      const loaded = await readOptions();
+      if (loaded.status === "error") return errorResult(`Could not load Options: ${loaded.message}`);
+      if (!loaded.options.some((option) => option.id === id)) {
         return errorResult(`"${id}" is not an Option of ${name}.`);
       }
       const problem = await choose(id);
@@ -163,11 +335,13 @@ export function switcher(config: SwitcherConfig) {
     description: `List the Options of ${name} and which one is current.`,
     inputSchema: { type: "object", properties: {} },
     annotations: { readOnlyHint: true },
-    run: () => {
-      const current = read();
+    run: async () => {
+      const current = await loadCurrent();
+      const loaded = await readOptions();
+      if (loaded.status === "error") return errorResult(`Could not load Options: ${loaded.message}`);
       return text(
         JSON.stringify(
-          list().map((option) => ({ ...option, current: current.ok && option.id === current.id })),
+          loaded.options.map((option) => ({ ...option, current: current.ok && option.id === current.id })),
           null,
           2,
         ) + (current.ok ? "" : "\nThe current Option could not be read."),
@@ -176,16 +350,23 @@ export function switcher(config: SwitcherConfig) {
   };
 
   function SwitcherStatus() {
-    return <span className="px-2 text-white">{labelOf(read())}</span>;
+    const current = useCurrent(0);
+    const optionsState = useOptions(0);
+    const options = optionsState.status === "ready" ? optionsState.options : [];
+    return <span className="px-2 text-white">{labelOf(current, options)}</span>;
   }
 
   function SwitcherItem() {
-    const [, refresh] = useReducer((n: number) => n + 1, 0);
+    const [version, refresh] = useReducer((n: number) => n + 1, 0);
+    const [opens, setOpens] = useState(0);
+    const [optionsAttempt, retryOptions] = useReducer((n: number) => n + 1, 0);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [flash, setFlash] = useState<string | null>(null);
     const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const current = read();
+    const current = useCurrent(version);
+    const optionsState = useOptions(opens + optionsAttempt);
+    const options = optionsState.status === "ready" ? optionsState.options : [];
     useEffect(
       () => () => {
         if (flashTimer.current !== null) clearTimeout(flashTimer.current);
@@ -193,14 +374,14 @@ export function switcher(config: SwitcherConfig) {
       [],
     );
     return (
-      <Menu>
+      <Menu onOpenChange={(open) => { if (open) setOpens((n) => n + 1); }}>
         <ToolbarButton
           render={<MenuTrigger />}
           className={toolbarItemClass}
           aria-busy={busy || undefined}
         >
           <span>{name}</span>
-          <span>{flash ?? labelOf(current)}</span>
+          <span>{flash ?? labelOf(current, options)}</span>
         </ToolbarButton>
         <MenuContent side="top" sideOffset={10} className={menuContentClass}>
           {busy ? <p role="status">Switching…</p> : null}
@@ -209,9 +390,10 @@ export function switcher(config: SwitcherConfig) {
               Switching failed: {error}
             </p>
           ) : null}
+          <OptionsNote state={optionsState} onRetry={retryOptions} />
           <MenuRadioGroup
             aria-label={name}
-            value={current.ok ? (current.id ?? null) : null}
+            value={checkedId(current, options)}
             onValueChange={(id) => {
               if (busy || (current.ok && id === current.id)) return;
               setBusy(true);
@@ -233,7 +415,7 @@ export function switcher(config: SwitcherConfig) {
               });
             }}
           >
-            {list().map((option) => (
+            {options.map((option) => (
               <MenuRadioItem
                 key={option.id}
                 value={option.id}
@@ -267,10 +449,7 @@ export function switcher(config: SwitcherConfig) {
     agentTools: [listTool, switchTool],
     debugContext: () => {
       const current = read();
-      if (!current.ok) return [{ label: name, value: "unknown (the current Option could not be read)" }];
-      const label = labelOf(current);
-      const id = current.id;
-      return [{ label: name, value: label === id || id === undefined ? label : `${label} (${id})` }];
+      return [{ label: name, value: debugValue(current) }];
     },
     window: {
       title: name,

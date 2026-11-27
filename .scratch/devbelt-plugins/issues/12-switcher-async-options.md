@@ -4,11 +4,11 @@
 
 **Blocked by:** 11
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/switcher.md` (follow-up from the code review of `spec/devbelt-plugins`); ADR 0003 and the Glossary apply.
 
-- [ ] Async `options` shows a loading row, then the list, with an error row and retry on failure
-- [ ] Async or null `current` is handled; unknown id shows Unknown with the id
-- [ ] `reload` accepts a function; reload reloads the Frame when one is active
-- [ ] Tests cover each case
+- [x] Async `options` shows a loading row, then the list, with an error row and retry on failure
+- [x] Async or null `current` is handled; unknown id shows Unknown with the id
+- [x] `reload` accepts a function; reload reloads the Frame when one is active
+- [x] Tests cover each case
