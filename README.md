@@ -165,7 +165,7 @@ breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 } });
 
 ### Switcher (opt-in)
 
-`switcher()` lets a person choose among named Options the app defines: a user, a tenant, a role, a flag set. It does not know what choosing means; your `apply` does. One Plugin is one Axis, so add one instance per Axis. The Toolbar shows the current Option at its end, a window lists the Options, and the Debug bundle gets a line with the current one. The page reloads after `apply` unless `reload: false`. It is not in the defaults.
+`switcher()` lets a person choose among named Options the app defines: a user, a tenant, a role, a flag set. It does not know what choosing means; your `apply` does. One Plugin is one Axis, so add one instance per Axis. It is pinned on the Toolbar as an Item showing the Axis name and the current Option; opening it lists the Options. While `apply` runs, the Item is busy and ignores further picks. If `apply` fails, the error is shown, the current Option stays, and you can retry. The current Option is also shown at the end of the Toolbar, a window lists the Options, and the Debug bundle gets a line with the current one. The page reloads after `apply` unless `reload: false`. It is not in the defaults.
 
 | Option      | Meaning                                                                                           |
 | ----------- | ------------------------------------------------------------------------------------------------- |
