@@ -4,11 +4,11 @@
 
 **Blocked by:** 06 (Breakpoint indicator)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/README.md`; see ADR 0003 for the write gate and the Glossary for vocabulary.
 
-- [ ] Toggling on outlines all page elements; toggling off removes it completely
-- [ ] The toolbar and its Windows are not outlined
-- [ ] Works inside the Frame as well as on the page
-- [ ] Tests for on/off and cleanup
+- [x] Toggling on outlines all page elements; toggling off removes it completely
+- [x] The toolbar and its Windows are not outlined
+- [x] Works inside the Frame as well as on the page
+- [x] Tests for on/off and cleanup
