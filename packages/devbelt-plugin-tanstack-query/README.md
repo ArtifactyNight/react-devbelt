@@ -2,7 +2,7 @@
 
 A [react-devbelt](../react-devbelt) Package plugin for TanStack Query v5.
 
-Read-only for now: a Window with Queries and Mutations tabs, a failing-query Badge, a Debug bundle section and a read Agent tool. Refetch, invalidate and reset (and their write Agent tools) are planned (see `docs/specs/tanstack-query.md`).
+A Window with Queries and Mutations tabs, a failing-query Badge, a Debug bundle section and a read Agent tool. Each query row has Refetch, Invalidate and Reset buttons. The matching Agent tools (`devbelt_refetch_tanstack_query`, `devbelt_invalidate_tanstack_query`, `devbelt_reset_tanstack_query`, taking the key as shown in the Window) are write tools: they do not exist unless you pass `tanstackQuery(client, { agent: { write: true } })`.
 
 ## Install
 
