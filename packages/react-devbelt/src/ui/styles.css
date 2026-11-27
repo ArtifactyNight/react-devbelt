@@ -1,0 +1,7 @@
+/* Compiled by scripts/build-css.mjs into dist/styles.css and into the string
+   the toolbar injects into its shadow root. Scans the sources for utilities. */
+@import "tailwindcss";
+@import "tw-animate-css";
+@source "../";
+
+@source not "./styles.generated.ts";

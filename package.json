@@ -1,0 +1,21 @@
+{
+  "name": "devbelt-monorepo",
+  "private": true,
+  "packageManager": "pnpm@12.18.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "pnpm --filter react-devbelt build",
+    "test": "pnpm --filter react-devbelt test",
+    "typecheck": "pnpm --filter react-devbelt typecheck",
+    "lint": "oxlint packages examples",
+    "format": "oxfmt",
+    "check:package": "pnpm --filter react-devbelt check:package",
+    "changeset": "changeset",
+    "release": "pnpm build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^3.0.3",
+    "oxfmt": "^0.80.0",
+    "oxlint": "^1.95.0"
+  }
+}

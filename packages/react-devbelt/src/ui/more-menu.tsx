@@ -1,0 +1,121 @@
+"use client";
+
+import { Fragment } from "react";
+import {
+  Menu,
+  MenuCheckboxItem,
+  MenuContent,
+  MenuGroup,
+  MenuGroupLabel,
+  MenuItem,
+  MenuItemIndicator,
+  MenuSeparator,
+  MenuTrigger,
+} from "@ui-sdk/react/menu";
+import { ToolbarButton } from "@ui-sdk/react/toolbar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@ui-sdk/react/tooltip";
+import { CheckIcon, EllipsisIcon } from "lucide-react";
+
+import type { DevBeltPlugin } from "../plugin";
+import { toolbarItemClass, tooltipClass } from "./styles";
+
+type Props = {
+  plugins: readonly DevBeltPlugin[];
+  isPinned: (plugin: DevBeltPlugin) => boolean;
+  onRun: (plugin: DevBeltPlugin) => void;
+  onPin: (id: string, pinned: boolean) => void;
+  onReset: () => void;
+};
+
+const contentClass =
+  "m-0 min-w-56 rounded-xl border border-white/10 bg-neutral-950 p-1 text-xs text-white shadow-2xl";
+export const menuLabelClass =
+  "px-2 pt-1.5 pb-1 text-[10px] tracking-wide text-white/50 uppercase";
+export const menuItemClass =
+  "flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 outline-none data-highlighted:bg-white/10";
+// kept mounted so labels line up; hidden while unchecked
+export const menuIndicatorClass =
+  "inline-flex size-3.5 items-center justify-center data-unchecked:invisible";
+export const menuSeparatorClass = "my-1 h-px bg-white/10";
+
+/**
+ * Everything the toolbar can do, pinned or not. Items open or run a tool;
+ * the checkboxes decide which tools the toolbar shows. Plugins add their own
+ * sections through `MenuSection`.
+ */
+export function MoreMenu({ plugins, isPinned, onRun, onPin, onReset }: Props) {
+  const runnable = plugins.filter((p) => p.window || p.run);
+
+  return (
+    <Menu>
+      <Tooltip>
+        <TooltipTrigger
+          render={<ToolbarButton render={<MenuTrigger />} />}
+          aria-label="More tools"
+          className={toolbarItemClass}
+        >
+          <EllipsisIcon className="size-4" aria-hidden="true" />
+        </TooltipTrigger>
+        <TooltipContent side="top" sideOffset={8} className={tooltipClass}>
+          More tools
+        </TooltipContent>
+      </Tooltip>
+      <MenuContent
+        side="top"
+        sideOffset={10}
+        data-react-grab-ignore
+        className={contentClass}
+      >
+        {runnable.length > 0 ? (
+          <>
+            <MenuGroup>
+              <MenuGroupLabel className={menuLabelClass}>Open</MenuGroupLabel>
+              {runnable.map((plugin) => (
+                <MenuItem
+                  key={plugin.id}
+                  value={`run:${plugin.id}`}
+                  className={menuItemClass}
+                  onSelect={() => onRun(plugin)}
+                >
+                  {plugin.window?.title ?? plugin.name}
+                </MenuItem>
+              ))}
+            </MenuGroup>
+            <MenuSeparator className={menuSeparatorClass} />
+          </>
+        ) : null}
+        {plugins.map((plugin) =>
+          plugin.MenuSection ? (
+            <Fragment key={plugin.id}>
+              <plugin.MenuSection />
+              <MenuSeparator className={menuSeparatorClass} />
+            </Fragment>
+          ) : null,
+        )}
+        <MenuGroup>
+          <MenuGroupLabel className={menuLabelClass}>
+            Pinned to toolbar
+          </MenuGroupLabel>
+          {plugins.map((plugin) => (
+            <MenuCheckboxItem
+              key={plugin.id}
+              value={`pin:${plugin.id}`}
+              checked={isPinned(plugin)}
+              onCheckedChange={(checked) => onPin(plugin.id, checked)}
+              className={menuItemClass}
+            >
+              <MenuItemIndicator keepMounted className={menuIndicatorClass}>
+                <CheckIcon className="size-3.5" aria-hidden="true" />
+              </MenuItemIndicator>
+              {plugin.name}
+            </MenuCheckboxItem>
+          ))}
+        </MenuGroup>
+        <MenuSeparator className={menuSeparatorClass} />
+        <MenuItem value="reset" className={menuItemClass} onSelect={onReset}>
+          Reset layout
+        </MenuItem>
+      </MenuContent>
+    </Menu>
+  );
+}

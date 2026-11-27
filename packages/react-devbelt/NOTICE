@@ -1,0 +1,12 @@
+devbelt
+Copyright (c) 2026 react-devbelt contributors. MIT License (see LICENSE).
+
+This package bundles third-party software in its distributed files:
+
+  ui-sdk (@ui-sdk/core, @ui-sdk/react) - Apache License 2.0
+  https://github.com/vercel-labs/ui
+  The full license text is in licenses/ui-sdk-APACHE-2.0.txt.
+
+It also depends on, without bundling them:
+
+  react-grab (MIT), highlight.js (BSD-3-Clause), lucide-react (ISC)
