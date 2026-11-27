@@ -49,6 +49,11 @@ export interface DevBeltPlugin {
   install?: () => void | (() => void);
   /** Tools for the browser's agent (WebMCP) and `window.devbelt`. */
   agentTools?: AgentTool<ToolbarApi>[];
+  /**
+   * Agent options set by the app. Agent tools marked `writes: true` stay off
+   * until `agent: { write: true }` (ADR 0003). Read-only tools are unaffected.
+   */
+  agent?: { write?: boolean };
   /** Lines for the header of "Copy debug bundle". */
   debugContext?: () => DebugEntry[];
   /** Whole Markdown sections for the end of the debug bundle. */

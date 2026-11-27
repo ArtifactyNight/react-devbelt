@@ -4,12 +4,12 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/README.md`; see ADR 0003 for the write gate and the Glossary for vocabulary.
 
-- [ ] The Toolbar shows e.g. `md · 812px` and updates on resize
-- [ ] The app can declare its own breakpoints
-- [ ] Inside the Frame, the Frame's width and breakpoint are shown
-- [ ] Current breakpoint and width appear in the Debug bundle
-- [ ] Not part of `defaultPlugins()`; tests and a docs section
+- [x] The Toolbar shows e.g. `md · 812px` and updates on resize
+- [x] The app can declare its own breakpoints
+- [x] Inside the Frame, the Frame's width and breakpoint are shown
+- [x] Current breakpoint and width appear in the Debug bundle
+- [x] Not part of `defaultPlugins()`; tests and a docs section

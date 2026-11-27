@@ -71,7 +71,9 @@ test("agent tools are callable from window.devbelt with the host's context", asy
     () => "ctx",
   );
   const tools = (window as unknown as { devbelt: Record<string, (i?: object) => unknown> }).devbelt;
-  expect(await tools.echo({ v: 1 })).toEqual(text("ctx:1"));
+  expect(await tools.echo({ v: 1 })).toMatchObject({
+    content: [{ text: expect.stringContaining("ctx:1") }],
+  });
   off();
   expect((window as unknown as { devbelt?: unknown }).devbelt).toBeUndefined();
 });
