@@ -75,7 +75,22 @@ export type StorageViewOptions = {
   pattern?: RegExp;
   /** Stores that could not be read; they are reported instead of shown as empty. */
   unavailable?: StorageUnavailable;
+  /** Stores to include. Default: localStorage, sessionStorage and cookies. */
+  stores?: readonly StorageStore[];
 };
+
+/** The stores a plugin instance shows, in the order given, with unknowns and duplicates dropped. */
+export function resolveStorageStores(stores?: readonly StorageStore[]): StorageStore[] {
+  if (!stores) return STORAGE_STORES;
+  const seen = new Set<StorageStore>();
+  const resolved: StorageStore[] = [];
+  for (const store of stores) {
+    if (!STORAGE_STORES.includes(store) || seen.has(store)) continue;
+    seen.add(store);
+    resolved.push(store);
+  }
+  return resolved;
+}
 
 export const AGENT_DEFAULT_LIMIT = 50;
 export const AGENT_MAX_LIMIT = 100;
@@ -91,8 +106,8 @@ const STORE_TITLE: Record<StorageStore, string> = {
 
 const cell = (value: string) => value.replaceAll("|", "\\|").replace(/\s+/g, " ");
 
-function grouped(entries: StorageEntry[]) {
-  return STORAGE_STORES.map((store) => ({
+function grouped(entries: StorageEntry[], stores: readonly StorageStore[]) {
+  return stores.map((store) => ({
     store,
     entries: entries.filter((e) => e.store === store),
   }));
@@ -113,18 +128,19 @@ export function formatStorageForAgent(
     store,
     prefix,
     limit,
+    stores = STORAGE_STORES,
   }: StorageViewOptions & { store?: StorageStore; prefix?: string; limit?: number } = {},
 ): string {
+  const allowed = stores.filter((item) => !store || item === store);
   const matching = entries.filter(
-    (e) => (!store || e.store === store) && (!prefix || e.key.startsWith(prefix)),
+    (e) => allowed.includes(e.store) && (!prefix || e.key.startsWith(prefix)),
   );
   const max = Math.min(
     typeof limit === "number" && limit > 0 ? Math.floor(limit) : AGENT_DEFAULT_LIMIT,
     AGENT_MAX_LIMIT,
   );
   const shown = matching.slice(0, max);
-  const sections = grouped(shown)
-    .filter(({ store: s }) => !store || s === store)
+  const sections = grouped(shown, allowed)
     .map(({ store: s, entries: list }) =>
       [
         `## ${STORE_TITLE[s]} (${list.length})`,
@@ -150,9 +166,14 @@ export function formatStorageForAgent(
  */
 export function formatStorageBundleSection(
   entries: StorageEntry[],
-  { pattern, unavailable = {}, includeValues = false }: StorageViewOptions & { includeValues?: boolean } = {},
+  {
+    pattern,
+    unavailable = {},
+    includeValues = false,
+    stores = STORAGE_STORES,
+  }: StorageViewOptions & { includeValues?: boolean } = {},
 ): string {
-  const sections = grouped(entries).map(({ store, entries: list }) =>
+  const sections = grouped(entries, stores).map(({ store, entries: list }) =>
     [
       `### ${STORE_TITLE[store]} (${list.length})`,
       unavailable[store] !== undefined
