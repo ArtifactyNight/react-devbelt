@@ -122,11 +122,10 @@ breakpoint(); // Tailwind v4 breakpoints
 breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 } });
 ```
 
-<<<<<<< HEAD
 ### Storage (opt-in)
 
 `storage()` is not in the default list; add it by name: `[...defaultPlugins(), storage()]`. Its Window shows localStorage, sessionStorage and readable cookies, read-only, grouped by store. It hides its own `devbelt:*` keys and says that HttpOnly cookies cannot be seen. Values whose key matches the `redact` pattern show only their name and length, in the Window, in the `devbelt_get_storage` Agent tool and in the Debug bundle. The bundle lists key names and sizes; values appear only with `includeValuesInBundle`, and Redacted ones never do.
-=======
+
 ### Switcher (opt-in)
 
 `switcher()` lets a person choose among named Options the app defines: a user, a tenant, a role, a flag set. It does not know what choosing means; your `apply` does. One Plugin is one Axis, so add one instance per Axis. The Toolbar shows the current Option at its end, a window lists the Options, and the Debug bundle gets a line with the current one. The page reloads after `apply` unless `reload: false`. It is not in the defaults.
@@ -168,7 +167,6 @@ const roleAxis = switcher({
 ```
 
 Agent tools: `list_<id>_options` (read) and `switch_<id>` (a write tool, off until you set `agent: { write: true }` on the Plugin, see ADR 0003). `window.devbelt.switch_<id>({ id })` is the same call.
->>>>>>> ticket/05-switcher-plugin
 
 ## `<DevBelt>` props
 
