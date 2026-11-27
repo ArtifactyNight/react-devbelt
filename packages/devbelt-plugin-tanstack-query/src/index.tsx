@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 import { clampLimit, errorResult, text, type AgentTool } from "react-devbelt/core";
 import { definePlugin, type DevBeltPlugin, type ToolbarApi } from "react-devbelt";
+import { chipClass } from "react-devbelt/ui";
 
 import {
   keyText,
@@ -28,18 +29,19 @@ const DEFAULT_MAX = 300;
 const DEFAULT_AGENT_LIMIT = 20;
 const STATUSES = ["fetching", "paused", "error", "stale", "fresh", "inactive", "idle", "pending", "success"];
 
+// Only layout and inherited colour: the toolbar's stylesheet cannot be extended, so
+// anything this plugin needs beyond the shared `react-devbelt/ui` classes lives here.
 const STYLES = `
-.tq-window{font-size:12px;color:#fff;padding:8px;overflow:auto;height:100%}
+.tq-window{font-size:12px;padding:8px;overflow:auto;height:100%}
 .tq-tabs{display:flex;gap:4px;margin-bottom:8px}
-.tq-tabs button{padding:2px 8px;border-radius:6px;background:transparent;color:inherit;border:1px solid #555}
-.tq-tabs button[aria-selected="true"]{background:#444}
 .tq-table{width:100%;border-collapse:collapse}
 .tq-table td,.tq-table th{padding:2px 6px;text-align:left;vertical-align:top}
 .tq-key{font-family:ui-monospace,monospace;word-break:break-all}
-.tq-error{color:#fda4af}
+.tq-error{font-weight:600;text-decoration:underline dotted}
 .tq-empty{opacity:.7}
 .tq-actions{white-space:nowrap}
-.tq-actions button{margin-left:4px;padding:0 6px;border-radius:6px;background:transparent;color:inherit;border:1px solid #555}
+.tq-actions>*{margin-left:4px}
+.tq-badge{font-size:10px;font-variant-numeric:tabular-nums}
 `;
 
 const frame = (fn: () => void) =>
@@ -97,7 +99,7 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
   function Badge() {
     useVersion();
     const { failing } = summarize(queryClient);
-    return failing > 0 ? <span className="text-[10px] tabular-nums text-rose-300">{failing}</span> : null;
+    return failing > 0 ? <span className="tq-badge">{failing}</span> : null;
   }
 
   function Hint() {
@@ -148,6 +150,7 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
                   <button
                     key={action}
                     type="button"
+                    className={chipClass}
                     aria-label={`${action[0].toUpperCase()}${action.slice(1)} ${row.key}`}
                     onClick={() => act(action, row.key)}
                   >
@@ -190,6 +193,8 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
             <button
               key={name}
               type="button"
+              className={chipClass}
+              data-pressed={tab === name ? "" : undefined}
               role="tab"
               aria-selected={tab === name}
               onClick={() => setTab(name)}
