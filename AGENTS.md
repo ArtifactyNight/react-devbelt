@@ -19,7 +19,7 @@ Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/ag
 Format: `type(scope): subject`, with an optional body and footers.
 
 - **Types**: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`, `chore`, `revert`. Use `feat` and `fix` only for changes a user of the package can see; they map to a changeset bump (`feat` = minor, `fix` = patch while on `0.x`).
-- **Scope** (optional, lowercase): a Plugin id (`network`, `console`, `viewport`, `grab`, `storage`, `switcher`, `breakpoint`), an area (`core`, `ui`, `next`, `plugin-api`, `agent-tools`, `debug-bundle`), `examples`, `docs`, or `deps`. One scope per commit; omit it if the change spans several.
+- **Scope** (optional, lowercase): a Plugin id (`network`, `console`, `viewport`, `grab`, `storage`, `breakpoint`), an area (`core`, `ui`, `next`, `plugin-api`, `agent-tools`, `debug-bundle`), `examples`, `docs`, or `deps`. One scope per commit; omit it if the change spans several.
 - **Subject**: imperative mood ("add", not "added"), lowercase, no trailing period, 72 characters or fewer. Use Glossary terms (Plugin, Item, Window, Agent tool, Debug bundle), not synonyms the glossary avoids.
 - **Body**: only when the why isn't obvious. Wrap at 100 columns.
 - **Breaking changes**: `!` after the type/scope (`feat(plugin-api)!: ...`) and a `BREAKING CHANGE:` footer. The plugin API stays `apiVersion: 1` with additive changes only, so a breaking change needs an ADR first.

@@ -8,7 +8,6 @@ A pluggable dev toolbar for **React 19+ and Next.js**. It floats over your app a
 - **Grab**: point at an element (key `G`) and copy it with its component stack and source location
 - **Debug bundle**: page, viewport, errors and failed requests in one paste for an AI assistant
 - **Storage** *(opt-in)*: view, edit and clear localStorage, sessionStorage and readable cookies; secret-looking values are Redacted
-- **Switcher** *(opt-in)*: switch the user, tenant, role or flag set your app defines, one Axis per Plugin
 - **Breakpoint** *(opt-in)*: the current breakpoint and width in the Toolbar, plus an outline-all-elements toggle
 - **TanStack Query** *(opt-in, separate package)*: queries and mutations at a glance, with refetch, invalidate and reset
 - **Agent tools**: all of the above is also readable by a browser agent through WebMCP and `window.devbelt`
@@ -129,7 +128,6 @@ These are not in `defaultPlugins()`; add them by name: `[...defaultPlugins(), st
 | --- | --- | --- |
 | `breakpoint()` | `react-devbelt/plugins` | Current breakpoint and width, outline-all-elements toggle |
 | `storage()` | `react-devbelt/plugins` | localStorage, sessionStorage and cookies, with Redaction |
-| `switcher()` | `react-devbelt/plugins` | Choose among named Options your app defines |
 | `tanstackQuery(client)` | `devbelt-plugin-tanstack-query` | TanStack Query v5 queries and mutations |
 
 Each has its own section below, except TanStack Query, which is documented in [its package](packages/devbelt-plugin-tanstack-query).
@@ -165,51 +163,6 @@ breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 }, base: "xs", outlin
 
 `storage()` is not in the default list; add it by name: `[...defaultPlugins(), storage()]`. Its Window has a tab for each enabled store (localStorage, sessionStorage and readable cookies by default; pass `stores` to leave one out), a filter, and a detail area. Opening an entry shows the value in the JSON view, shortened until you expand it. You can add an entry, edit a value, delete an entry or clear the active store (Redacted values stay hidden until revealed, and can be replaced or deleted without being shown; `devbelt:*` keys are never touched). The write Agent tools (`devbelt_set_storage_item`, `devbelt_delete_storage_item`, `devbelt_clear_storage`) are off until you set `agent: { write: true }` on the plugin. It hides its own `devbelt:*` keys and says that HttpOnly cookies cannot be seen. Values whose key matches the `redact` pattern show only their name and length, in the Window, in the `devbelt_get_storage` Agent tool and in the Debug bundle. The bundle lists key names and sizes; values appear only with `includeValuesInBundle`, and Redacted ones never do.
 
-### Switcher (opt-in)
-
-`switcher()` lets a person choose among named Options the app defines: a user, a tenant, a role, a flag set. It does not know what choosing means; your `apply` does. One Plugin is one Axis, so add one instance per Axis. It is pinned on the Toolbar as an Item showing the Axis name and the current Option; opening it lists the Options. While `apply` runs, the Item is busy and ignores further picks. If `apply` fails, the error is shown, the current Option stays, and you can retry. The current Option is also shown at the end of the Toolbar, a window lists the Options, and the Debug bundle gets a line with the current one. The page reloads after `apply` unless `reload: false`. It is not in the defaults.
-
-| Option      | Meaning                                                                                           |
-| ----------- | ------------------------------------------------------------------------------------------------- |
-| `id`        | Unique Plugin id for this Axis, e.g. `role`                                                       |
-| `name`      | Label in the Toolbar and Debug bundle. Default: the id                                            |
-| `options`   | `{ id, label, description? }[]`, or a function returning them (so one Axis can depend on another) |
-| `apply(id)` | What choosing an Option does: set a cookie, call an API, write localStorage. May be async         |
-| `current()` | The id of the active Option                                                                       |
-| `reload`    | Reload after `apply`. Default `true`                                                              |
-
-```tsx
-import { defaultPlugins, switcher } from "react-devbelt/plugins";
-
-const tenantAxis = switcher({
-  id: "tenant",
-  options: [
-    { id: "acme", label: "Acme" },
-    { id: "globex", label: "Globex", description: "Enterprise plan" },
-  ],
-  apply: (id) => localStorage.setItem("tenant", id),
-  current: () => localStorage.getItem("tenant") ?? "acme",
-});
-
-const roleAxis = switcher({
-  id: "role",
-  // depends on the tenant Axis
-  options: () =>
-    localStorage.getItem("tenant") === "globex"
-      ? [{ id: "viewer", label: "Viewer" }]
-      : [
-          { id: "admin", label: "Admin" },
-          { id: "viewer", label: "Viewer" },
-        ],
-  apply: (id) => (document.cookie = `role=${id}; path=/`),
-  current: () => document.cookie.match(/role=(\w+)/)?.[1],
-});
-
-<DevBelt plugins={[...defaultPlugins(), tenantAxis, roleAxis]} />;
-```
-
-Agent tools: `list_<id>_options` (read) and `switch_<id>` (a write tool, off until you set `agent: { write: true }` on the Plugin, see ADR 0003). `window.devbelt.switch_<id>({ id })` is the same call.
-
 ## `<DevBelt>` props
 
 | Prop        | Default    |                                                                             |
@@ -220,7 +173,7 @@ Agent tools: `list_<id>_options` (read) and `switch_<id>` (a write tool, off unt
 
 ## Security
 
-The toolbar reads request and response **bodies** and console output. Credentials in headers are masked, but bodies are not. It is built for development: do not ship it to production (production builds drop it) and do not expose it on shared or demo environments. Tools offered to browser agents are read-only apart from changing the viewport, and everything they return is marked as untrusted content. Tools that change state (editing storage, applying a Switcher Option, refetching or invalidating queries) do not exist until you set `agent: { write: true }` on that Plugin. Values whose key looks secret (`token`, `password`, `auth`, `session`, `jwt`, `key`, and so on) are Redacted in the Toolbar, in Agent tools and in the Debug bundle.
+The toolbar reads request and response **bodies** and console output. Credentials in headers are masked, but bodies are not. It is built for development: do not ship it to production (production builds drop it) and do not expose it on shared or demo environments. Tools offered to browser agents are read-only apart from changing the viewport, and everything they return is marked as untrusted content. Tools that change state (editing storage, refetching or invalidating queries) do not exist until you set `agent: { write: true }` on that Plugin. Values whose key looks secret (`token`, `password`, `auth`, `session`, `jwt`, `key`, and so on) are Redacted in the Toolbar, in Agent tools and in the Debug bundle.
 
 ## Writing a plugin
 

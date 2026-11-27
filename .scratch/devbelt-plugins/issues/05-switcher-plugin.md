@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (write gate)
 
-**Status:** resolved
+**Status:** wontfix
 
 Spec: `docs/specs/README.md`; see ADR 0003 for the write gate and the Glossary for vocabulary.
 
@@ -15,3 +15,7 @@ Spec: `docs/specs/README.md`; see ADR 0003 for the write gate and the Glossary f
 - [x] The current Option appears in the Debug bundle
 - [x] The apply Agent tool is a write tool, off until `agent: { write: true }`
 - [x] Not part of `defaultPlugins()`; tests and a docs section with an example
+
+## Comments
+
+The Plugin was removed. It cannot work for every app without app-specific Options and `apply`.

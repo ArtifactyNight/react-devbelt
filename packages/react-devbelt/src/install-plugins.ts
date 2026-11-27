@@ -21,7 +21,7 @@ export function installPlugins(plugins: readonly DevBeltPlugin[]): () => void {
   for (const { id } of plugins) {
     if (ids.has(id)) {
       throw new Error(
-        `devbelt: two plugins share the id "${id}". Plugin ids must be unique (a Switcher's id is "switcher-" plus its Axis id, so each Axis needs its own).`,
+        `devbelt: two plugins share the id "${id}". Plugin ids must be unique.`,
       );
     }
     ids.add(id);

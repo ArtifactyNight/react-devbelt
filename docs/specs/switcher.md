@@ -1,5 +1,5 @@
 ---
-status: ready-for-agent
+status: wontfix
 kind: Built-in plugin, opt-in
 related: ../adr/0002-switcher-is-generic-one-axis-per-instance.md, ../adr/0003-agent-tools-that-change-state-are-off-by-default.md, ../../GLOSSARY.md
 ---

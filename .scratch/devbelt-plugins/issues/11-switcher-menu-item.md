@@ -4,7 +4,7 @@
 
 **Blocked by:** Review-fixes branch (`fix/devbelt-review-findings`) merged
 
-**Status:** resolved
+**Status:** wontfix
 
 Spec: `docs/specs/switcher.md` (follow-up from the code review of `spec/devbelt-plugins`); ADR 0003 and the Glossary apply.
 
@@ -13,3 +13,7 @@ Spec: `docs/specs/switcher.md` (follow-up from the code review of `spec/devbelt-
 - [x] A failed `apply` shows a message and leaves the current Option unchanged
 - [x] Pinned by default when added, per the spec
 - [x] Tests cover busy, failure and success
+
+## Comments
+
+The Plugin was removed. It cannot work for every app without app-specific Options and `apply`.

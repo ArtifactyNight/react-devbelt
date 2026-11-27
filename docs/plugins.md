@@ -1,6 +1,6 @@
 # Writing a plugin
 
-A plugin is a plain object made with `definePlugin`. Every part is optional; add only what the tool needs. The built-in tools (`network`, `consolePlugin`, `viewport`, `grab`, `bundle`, `display`, and the opt-in `breakpoint` and `switcher`) are plugins and live in `packages/react-devbelt/src/plugins/`, so they double as examples.
+A plugin is a plain object made with `definePlugin`. Every part is optional; add only what the tool needs. The built-in tools (`network`, `consolePlugin`, `viewport`, `grab`, `bundle`, `display`, and the opt-in `breakpoint` and `storage`) are plugins and live in `packages/react-devbelt/src/plugins/`, so they double as examples.
 
 ```tsx
 "use client";

@@ -4,7 +4,7 @@
 
 **Blocked by:** 11
 
-**Status:** resolved
+**Status:** wontfix
 
 Spec: `docs/specs/switcher.md` (follow-up from the code review of `spec/devbelt-plugins`); ADR 0003 and the Glossary apply.
 
@@ -12,3 +12,7 @@ Spec: `docs/specs/switcher.md` (follow-up from the code review of `spec/devbelt-
 - [x] Async or null `current` is handled; unknown id shows Unknown with the id
 - [x] `reload` accepts a function; reload reloads the Frame when one is active
 - [x] Tests cover each case
+
+## Comments
+
+The Plugin was removed. It cannot work for every app without app-specific Options and `apply`.

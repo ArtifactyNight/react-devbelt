@@ -82,7 +82,7 @@ A **Storage** Plugin, opt-in, that adds a Window listing the page's `localStorag
 
 - IndexedDB, Cache Storage, service worker storage, and storage quota views.
 - HttpOnly cookies (they cannot be read by script) and cookie attributes other than name and value.
-- Import and export of storage snapshots, and saved storage presets (a Switcher covers repeatable states).
+- Import and export of storage snapshots, and saved storage presets.
 - A count badge on the Item.
 - Editing from agents by default (opt-in only, per ADR 0003).
 - Cross-tab live sync beyond what the browser's storage event provides.
