@@ -4,12 +4,12 @@
 
 **Blocked by:** 08 (Package-plugin scaffold)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/README.md`; see ADR 0003 for the write gate and the Glossary for vocabulary.
 
-- [ ] The Window lists queries and mutations with key, status, fetch count and error and updates live
-- [ ] The badge counts failing queries
-- [ ] Failed and pending queries appear in the Debug bundle without secrets (Redaction applies to keys/data shown)
-- [ ] A read Agent tool returns the same data
-- [ ] Tests against a real QueryClient; docs section
+- [x] The Window lists queries and mutations with key, status, fetch count and error and updates live
+- [x] The badge counts failing queries
+- [x] Failed and pending queries appear in the Debug bundle without secrets (Redaction applies to keys/data shown)
+- [x] A read Agent tool returns the same data
+- [x] Tests against a real QueryClient; docs section
