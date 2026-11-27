@@ -4,10 +4,10 @@
 
 **Blocked by:** 09 (TanStack Query read-only Window), 01 (write gate)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/README.md`; see ADR 0003 for the write gate and the Glossary for vocabulary.
 
-- [ ] Each action works from the Window and updates the list
-- [ ] The Agent tools are off by default and on with `agent: { write: true }`
-- [ ] Tests cover each action and the gate
+- [x] Each action works from the Window and updates the list
+- [x] The Agent tools are off by default and on with `agent: { write: true }`
+- [x] Tests cover each action and the gate
