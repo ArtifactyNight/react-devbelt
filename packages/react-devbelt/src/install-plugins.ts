@@ -17,6 +17,15 @@ function registry(): Map<string, Installed> {
  */
 export function installPlugins(plugins: readonly DevBeltPlugin[]): () => void {
   if (typeof window === "undefined") return () => {};
+  const ids = new Set<string>();
+  for (const { id } of plugins) {
+    if (ids.has(id)) {
+      throw new Error(
+        `devbelt: two plugins share the id "${id}". Plugin ids must be unique (a Switcher's id is "switcher-" plus its Axis id, so each Axis needs its own).`,
+      );
+    }
+    ids.add(id);
+  }
   const installed = registry();
   const held: string[] = [];
 
