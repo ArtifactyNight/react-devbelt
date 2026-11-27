@@ -5,6 +5,8 @@
 
 export type ToolResult = {
   content: { type: "text"; text: string }[];
+  /** True when the call failed; the text says why. */
+  isError?: boolean;
   _meta?: Record<string, unknown>;
 };
 
@@ -64,6 +66,12 @@ type ModelContext = {
 
 export const text = (value: string): ToolResult => ({
   content: [{ type: "text", text: value }],
+});
+
+/** A failed call: the text explains what went wrong, `isError` marks it. */
+export const errorResult = (value: string): ToolResult => ({
+  ...text(value),
+  isError: true,
 });
 
 export const clampLimit = (value: unknown, fallback: number) =>
