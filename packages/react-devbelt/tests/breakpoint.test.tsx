@@ -1,12 +1,17 @@
 // @vitest-environment jsdom
 
-import { act, render } from "@testing-library/react";
+import { act, cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
 import { resolveBreakpoint } from "../src/core/breakpoints";
 import { defaultPlugins } from "../src/plugins";
 import { breakpoint } from "../src/plugins/breakpoint";
-import { resetViewportStore } from "../src/plugins/viewport/store";
+import {
+  frameLoaded,
+  resetViewportStore,
+  setFrame,
+} from "../src/plugins/viewport/store";
+import { StubToolbar } from "./helpers";
 import { writeString } from "../src/core/storage";
 import { VIEWPORT_STORAGE_KEY } from "../src/core/viewports";
 
@@ -16,6 +21,7 @@ function setWidth(width: number) {
 }
 
 afterEach(() => {
+  cleanup();
   resetViewportStore();
   sessionStorage.clear();
   localStorage.clear();
@@ -63,4 +69,72 @@ test("inside the Frame it reports the Frame's width, not the window's", () => {
 
 test("it is opt-in", () => {
   expect(defaultPlugins().map((p) => p.id)).not.toContain("breakpoint");
+});
+
+// ---- outline-all-elements toggle ----
+
+const OUTLINE_SELECTOR = "style[data-devbelt-outline]";
+
+function mountOutline() {
+  const plugin = breakpoint();
+  const Item = plugin.Item!;
+  const Overlay = plugin.Overlay!;
+  return render(
+    <StubToolbar>
+      <Item />
+      <Overlay />
+    </StubToolbar>,
+  );
+}
+
+function toggle(view: ReturnType<typeof mountOutline>) {
+  fireEvent.click(view.getByRole("button", { name: /outline/i }));
+}
+
+test("toggling on outlines page elements, toggling off removes it completely", () => {
+  const view = mountOutline();
+  expect(document.querySelector(OUTLINE_SELECTOR)).toBeNull();
+  toggle(view);
+  const style = document.querySelector(OUTLINE_SELECTOR)!;
+  expect(style).toBeTruthy();
+  expect(style.textContent).toMatch(/outline/);
+  toggle(view);
+  expect(document.querySelector(OUTLINE_SELECTOR)).toBeNull();
+});
+
+test("the outline rule skips the toolbar and its Windows", () => {
+  const view = mountOutline();
+  toggle(view);
+  const css = document.querySelector(OUTLINE_SELECTOR)!.textContent!;
+  for (const skipped of ["devbelt-root", "[data-devbelt]", "[data-devbelt-window]"]) {
+    expect(css).toContain(`:not(${skipped})`);
+    expect(css).toContain(`:not(${skipped} *)`);
+  }
+});
+
+test("unmounting while on removes the outline", () => {
+  const view = mountOutline();
+  toggle(view);
+  view.unmount();
+  expect(document.querySelector(OUTLINE_SELECTOR)).toBeNull();
+});
+
+test("the outline is also applied inside the Frame, and follows reloads", () => {
+  writeString(VIEWPORT_STORAGE_KEY, "mobile");
+  const frame = document.createElement("iframe");
+  document.body.append(frame);
+  setFrame(frame);
+  const view = mountOutline();
+  toggle(view);
+  const frameDoc = frame.contentDocument!;
+  expect(frameDoc.querySelector(OUTLINE_SELECTOR)).toBeTruthy();
+  // a reload replaces the Frame's document; the outline must come back
+  frameDoc.open();
+  frameDoc.write("<html><body></body></html>");
+  frameDoc.close();
+  act(() => frameLoaded());
+  expect(frame.contentDocument!.querySelector(OUTLINE_SELECTOR)).toBeTruthy();
+  toggle(view);
+  expect(frame.contentDocument!.querySelector(OUTLINE_SELECTOR)).toBeNull();
+  frame.remove();
 });

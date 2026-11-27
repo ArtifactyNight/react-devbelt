@@ -105,6 +105,8 @@ Create the array once at module level, not inside a component. With your own lis
 | `network()` | `redactHeaders` | Header names to mask. Default: `authorization`, `proxy-authorization`, `cookie`, `set-cookie`, `x-api-key` |
 | | `replayHeaders(name, maskedValue)` | What a replayed request sends for a header. Return `null` to leave it out (the default for redacted headers) |
 | | `fetch` | Also record `fetch`. Default `true` |
+| `storage()` (opt-in) | `redact` | Keys whose values are Redacted. Default `/token\|secret\|password\|auth\|session\|jwt\|key/i` |
+| | `includeValuesInBundle` | Put values in the Debug bundle too (Redacted ones stay hidden). Default `false`: key names and sizes only |
 | `display()` | `darkClass` | Class toggled on `<html>` for dark mode. Default `"dark"`; `false` hides the switch |
 | | `locale` | `{ cookie, options, default? }` adds a language switch that sets a cookie and reloads |
 | `breakpoint()` | `breakpoints` | Name to minimum width (px number or `"48rem"`/`"768px"`). Default: Tailwind v4's `sm 40rem`, `md 48rem`, `lg 64rem`, `xl 80rem`, `2xl 96rem` |
@@ -119,6 +121,52 @@ import { breakpoint } from "react-devbelt/plugins";
 breakpoint(); // Tailwind v4 breakpoints
 breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 } });
 ```
+
+### Storage (opt-in)
+
+`storage()` is not in the default list; add it by name: `[...defaultPlugins(), storage()]`. Its Window shows localStorage, sessionStorage and readable cookies, grouped by store, and lets you edit a value, delete an entry or clear a store (Redacted values can be replaced or deleted without being shown; `devbelt:*` keys are never touched). The write Agent tools (`devbelt_set_storage_item`, `devbelt_delete_storage_item`, `devbelt_clear_storage`) are off until you set `agent: { write: true }` on the plugin. It hides its own `devbelt:*` keys and says that HttpOnly cookies cannot be seen. Values whose key matches the `redact` pattern show only their name and length, in the Window, in the `devbelt_get_storage` Agent tool and in the Debug bundle. The bundle lists key names and sizes; values appear only with `includeValuesInBundle`, and Redacted ones never do.
+
+### Switcher (opt-in)
+
+`switcher()` lets a person choose among named Options the app defines: a user, a tenant, a role, a flag set. It does not know what choosing means; your `apply` does. One Plugin is one Axis, so add one instance per Axis. The Toolbar shows the current Option at its end, a window lists the Options, and the Debug bundle gets a line with the current one. The page reloads after `apply` unless `reload: false`. It is not in the defaults.
+
+| Option | Meaning |
+| --- | --- |
+| `id` | Unique Plugin id for this Axis, e.g. `role` |
+| `name` | Label in the Toolbar and Debug bundle. Default: the id |
+| `options` | `{ id, label, description? }[]`, or a function returning them (so one Axis can depend on another) |
+| `apply(id)` | What choosing an Option does: set a cookie, call an API, write localStorage. May be async |
+| `current()` | The id of the active Option |
+| `reload` | Reload after `apply`. Default `true` |
+
+```tsx
+import { defaultPlugins, switcher } from "react-devbelt/plugins";
+
+const tenantAxis = switcher({
+  id: "tenant",
+  options: [
+    { id: "acme", label: "Acme" },
+    { id: "globex", label: "Globex", description: "Enterprise plan" },
+  ],
+  apply: (id) => localStorage.setItem("tenant", id),
+  current: () => localStorage.getItem("tenant") ?? "acme",
+});
+
+const roleAxis = switcher({
+  id: "role",
+  // depends on the tenant Axis
+  options: () =>
+    localStorage.getItem("tenant") === "globex"
+      ? [{ id: "viewer", label: "Viewer" }]
+      : [{ id: "admin", label: "Admin" }, { id: "viewer", label: "Viewer" }],
+  apply: (id) => document.cookie = `role=${id}; path=/`,
+  current: () => document.cookie.match(/role=(\w+)/)?.[1],
+});
+
+<DevBelt plugins={[...defaultPlugins(), tenantAxis, roleAxis]} />;
+```
+
+Agent tools: `list_<id>_options` (read) and `switch_<id>` (a write tool, off until you set `agent: { write: true }` on the Plugin, see ADR 0003). `window.devbelt.switch_<id>({ id })` is the same call.
 
 ## `<DevBelt>` props
 
