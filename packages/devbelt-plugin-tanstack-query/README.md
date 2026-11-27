@@ -2,7 +2,7 @@
 
 A [react-devbelt](../react-devbelt) Package plugin for TanStack Query v5.
 
-> Scaffold: the plugin loads but does not show anything yet. The compact list of queries and mutations, refetch/invalidate/reset actions and Debug bundle sections are planned (see `docs/specs/tanstack-query.md`).
+Read-only for now: a Window with Queries and Mutations tabs, a failing-query Badge, a Debug bundle section and a read Agent tool. Refetch, invalidate and reset (and their write Agent tools) are planned (see `docs/specs/tanstack-query.md`).
 
 ## Install
 
@@ -29,3 +29,21 @@ const plugins = [...defaultPlugins(), tanstackQuery(queryClient)]; // build once
 ```
 
 See `examples/vite-app` for a working setup. Opt-in: it is not in `defaultPlugins()`.
+
+## What you get
+
+- **Window**: queries (key, status, observers, fetch count, last update, error) and mutations (key, status, time, error). Failed entries come first. It updates live, at most once per frame.
+- **Badge and tooltip**: the number of queries in error; the tooltip adds how many are fetching.
+- **Debug bundle**: a "TanStack Query" section listing failed, fetching and paused queries with key, status, failure count and error message. It never includes data or variables.
+- **Agent tool** `devbelt_get_tanstack_query` (read-only): queries and mutations with `status` and `limit` filters. Never includes data.
+
+Values stored under secret-looking names in a key (`token`, `password`, `apiKey`, ...) are Redacted to their length in every place the key is shown.
+
+## Options
+
+```ts
+tanstackQuery(queryClient, {
+  id: "tanstack-query", // give a second client its own id
+  maxEntries: 300, // most rows per tab in the Window
+});
+```

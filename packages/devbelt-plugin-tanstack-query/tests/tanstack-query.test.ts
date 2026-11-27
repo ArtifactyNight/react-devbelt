@@ -15,12 +15,11 @@ describe("tanstackQuery(queryClient)", () => {
     expect(() => definePlugin(plugin)).not.toThrow();
   });
 
-  it("is opt-in and empty for now: no window, item or agent tools", () => {
+  it("has a window and a read Agent tool, and no write tools", () => {
     const plugin = tanstackQuery(new QueryClient());
 
-    expect(plugin.window).toBeUndefined();
-    expect(plugin.run).toBeUndefined();
-    expect(plugin.agentTools ?? []).toEqual([]);
+    expect(plugin.window).toBeDefined();
+    expect(plugin.agentTools?.every((tool) => !tool.writes)).toBe(true);
   });
 
   it("requires the client to be passed explicitly", () => {
