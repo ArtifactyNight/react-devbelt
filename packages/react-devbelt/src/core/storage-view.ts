@@ -98,6 +98,9 @@ export const AGENT_MAX_LIMIT = 100;
 export const HTTP_ONLY_NOTE =
   "HttpOnly cookies cannot be seen: the browser hides them from page scripts.";
 
+export const COOKIE_PATH_NOTE =
+  "Editing or clearing a cookie sets it for the whole site (path /). A cookie of the same name on another path is not affected, and the original's other attributes cannot be read or preserved.";
+
 const STORE_TITLE: Record<StorageStore, string> = {
   localStorage: "localStorage",
   sessionStorage: "sessionStorage",

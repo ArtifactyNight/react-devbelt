@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@ui-sdk/react/button";
 import { Input } from "@ui-sdk/react/input";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@ui-sdk/react/tabs";
-import { CheckIcon, EyeIcon, EyeOffIcon, PencilIcon, RefreshCwIcon, Trash2Icon, XIcon } from "lucide-react";
+import { CheckIcon, EyeIcon, EyeOffIcon, PencilIcon, Trash2Icon, XIcon } from "lucide-react";
 
 import { isRedacted, redact } from "../../core/redaction";
+import { readString, writeString } from "../../core/storage";
+import { pollCookiesWhileOpen, subscribeStorageChanges } from "../../core/storage-watch";
 import {
   clearStorageStore,
   deleteStorageEntry,
   setStorageEntry,
+  COOKIE_PATH_NOTE,
   HTTP_ONLY_NOTE,
   readStorageState,
   resolveStorageStores,
@@ -73,6 +76,19 @@ function EntryDetail({
   );
 }
 
+const TAB_KEY = "storage-tab";
+
+function readSavedTab(enabled: readonly StorageStore[]): StorageStore {
+  const saved = readString(TAB_KEY);
+  if (
+    (saved === "localStorage" || saved === "sessionStorage" || saved === "cookies") &&
+    enabled.includes(saved)
+  ) {
+    return saved;
+  }
+  return enabled[0] ?? "localStorage";
+}
+
 const TITLE: Record<StorageStore, string> = {
   localStorage: "localStorage",
   sessionStorage: "sessionStorage",
@@ -88,10 +104,8 @@ export function StoragePanel({
   stores?: readonly StorageStore[];
 }) {
   const enabled = resolveStorageStores(stores);
-  // Storage has no change event for the same tab, so the list is a snapshot
-  // that the refresh button retakes.
   const [state, setState] = useState(readStorageState);
-  const [active, setActive] = useState<StorageStore>(enabled[0] ?? "localStorage");
+  const [active, setActive] = useState<StorageStore>(() => readSavedTab(enabled));
   const { entries, unavailable } = state;
   // One Redacted value may be shown at a time. Never saved: it lives and dies with the open Window.
   const [revealed, setRevealed] = useState<{ store: StorageStore; key: string } | null>(null);
@@ -103,11 +117,20 @@ export function StoragePanel({
   const [adding, setAdding] = useState(false);
   const [newKey, setNewKey] = useState("");
   const [newValue, setNewValue] = useState("");
+  useEffect(() => {
+    const unsubscribe = subscribeStorageChanges(() => setState(readStorageState()));
+    const stopPolling = pollCookiesWhileOpen();
+    return () => {
+      unsubscribe();
+      stopPolling();
+    };
+  }, []);
   const store = enabled.includes(active) ? active : enabled[0];
   const refresh = () => setState(readStorageState());
   const selectStore = (value: StorageStore | null) => {
     if (!value || !enabled.includes(value) || value === store) return;
     setActive(value);
+    writeString(TAB_KEY, value);
     setConfirming(null);
     setEditing(null);
     setSelected(null);
@@ -138,13 +161,6 @@ export function StoragePanel({
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
         <p className="min-w-0 flex-1 text-white/60">{HTTP_ONLY_NOTE}</p>
-        <Button
-          aria-label="Refresh storage"
-          className={iconButtonClass}
-          onClick={refresh}
-        >
-          <RefreshCwIcon className="size-3.5" aria-hidden="true" />
-        </Button>
       </div>
       {error ? (
         <p role="alert" className="border-b border-white/10 px-3 py-1 text-red-300">
@@ -167,6 +183,7 @@ export function StoragePanel({
           const list = needle ? all.filter((e) => e.key.toLowerCase().includes(needle)) : all;
           const section = (
             <section aria-label={TITLE[store]} className="mb-4">
+              {store === "cookies" ? <p className="mb-2 text-white/60">{COOKIE_PATH_NOTE}</p> : null}
               <Input
                 aria-label="Filter entries"
                 placeholder="Filter by key"

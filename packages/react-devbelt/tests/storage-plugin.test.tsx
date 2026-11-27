@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, beforeEach, expect, test } from "vitest";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { defaultPlugins, storage } from "../src/plugins";
 import ToolbarImpl from "../src/ui/toolbar";
@@ -17,11 +17,20 @@ beforeEach(() => {
   localStorage.setItem("devbelt:layout", "{}");
   sessionStorage.setItem("step", "2");
 });
+const clearCookies = () => {
+  for (const part of document.cookie.split(";")) {
+    const name = part.split("=")[0]?.trim();
+    if (name) document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+  }
+};
+
 afterEach(() => {
   cleanup();
   delete (window as unknown as Record<string, unknown>).devbelt;
+  vi.useRealTimers();
   localStorage.clear();
   sessionStorage.clear();
+  clearCookies();
 });
 
 const readTool = (plugin = storage()) =>
@@ -289,4 +298,73 @@ test("the Window groups entries by store, hides redacted values and states the H
   expect(screen.getByText(/HttpOnly cookies cannot be seen/)).toBeTruthy();
   expect(document.body.textContent).not.toContain(SECRET);
   expect(document.body.textContent).not.toContain("devbelt:layout");
+});
+
+test("a page write shows up in the Window without a refresh", () => {
+  render(<ToolbarImpl plugins={[storage()]} isolation="none" />);
+  fireEvent.click(screen.getByRole("button", { name: "Storage" }));
+  expect(screen.getByText("dark")).toBeTruthy();
+
+  act(() => {
+    localStorage.setItem("theme", "light");
+  });
+
+  expect(screen.getByText("light")).toBeTruthy();
+  expect(screen.queryByText("dark")).toBeNull();
+});
+
+test("a write in the Frame shows up in the Window", async () => {
+  render(<ToolbarImpl plugins={[storage()]} isolation="none" />);
+  fireEvent.click(screen.getByRole("button", { name: "Storage" }));
+  const frame = document.createElement("iframe");
+  document.body.append(frame);
+
+  try {
+    frame.contentWindow!.localStorage.setItem("framed", "yes");
+    await act(async () => {
+      await new Promise((resolve) => setImmediate(resolve));
+    });
+
+    expect(screen.getByText("framed")).toBeTruthy();
+    expect(screen.getByText("yes")).toBeTruthy();
+  } finally {
+    frame.remove();
+  }
+});
+
+test("a cookie the page writes shows up while the Window is open", () => {
+  vi.useFakeTimers();
+  render(<ToolbarImpl plugins={[storage()]} isolation="none" />);
+  fireEvent.click(screen.getByRole("button", { name: "Storage" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Cookies" }));
+  expect(screen.getByText("Empty.")).toBeTruthy();
+
+  document.cookie = "locale=en; path=/";
+  act(() => {
+    vi.advanceTimersByTime(500);
+  });
+
+  expect(screen.getByText("locale")).toBeTruthy();
+  expect(screen.getByText("en")).toBeTruthy();
+});
+
+test("the Window reopens on the last-used tab", () => {
+  render(<ToolbarImpl plugins={[storage()]} isolation="none" />);
+  fireEvent.click(screen.getByRole("button", { name: "Storage" }));
+  fireEvent.click(screen.getByRole("tab", { name: "sessionStorage" }));
+  fireEvent.click(screen.getByRole("button", { name: "Close Storage" }));
+  fireEvent.click(screen.getByRole("button", { name: "Storage" }));
+
+  expect(screen.getByRole("region", { name: "sessionStorage" })).toBeTruthy();
+  expect(screen.queryByRole("region", { name: "localStorage" })).toBeNull();
+  expect(screen.queryByText("theme")).toBeNull();
+});
+
+test("the cookies tab explains that a cookie on another path is not affected", () => {
+  mountWindow();
+  expect(screen.queryByText(/another path/i)).toBeNull();
+  fireEvent.click(screen.getByRole("tab", { name: "Cookies" }));
+  const note = screen.getByText(/another path/i);
+  expect(note.textContent).toMatch(/editing or clearing/i);
+  expect(note.textContent).toMatch(/not affected/i);
 });

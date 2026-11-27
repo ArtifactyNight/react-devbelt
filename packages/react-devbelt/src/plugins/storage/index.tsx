@@ -15,6 +15,7 @@ import {
   setStorageEntry,
   type StorageStore,
 } from "../../core/storage-view";
+import { installStorageWatch } from "../../core/storage-watch";
 import { definePlugin } from "../../plugin";
 import { StoragePanel } from "./panel";
 
@@ -49,7 +50,8 @@ function keyOf(input: Record<string, unknown>): string {
 
 /**
  * localStorage, sessionStorage and readable cookies: view, edit, delete and
- * clear. Opt-in: add it by name. The Agent tools that change state need
+ * clear, and the Window updates as the page or a framed page writes. Opt-in:
+ * add it by name. The Agent tools that change state need
  * `agent: { write: true }`. Hides its own `devbelt:*` keys; HttpOnly cookies are invisible.
  */
 export function storage(options: StorageOptions = {}) {
@@ -61,6 +63,9 @@ export function storage(options: StorageOptions = {}) {
     name: "Storage",
     label: "Storage",
     icon: <DatabaseIcon className="size-4" aria-hidden="true" />,
+    install() {
+      return installStorageWatch();
+    },
     window: {
       title: "Storage",
       size: { width: 640, height: 420, minWidth: 360, minHeight: 220 },
