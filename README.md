@@ -105,6 +105,8 @@ Create the array once at module level, not inside a component. With your own lis
 | `network()` | `redactHeaders` | Header names to mask. Default: `authorization`, `proxy-authorization`, `cookie`, `set-cookie`, `x-api-key` |
 | | `replayHeaders(name, maskedValue)` | What a replayed request sends for a header. Return `null` to leave it out (the default for redacted headers) |
 | | `fetch` | Also record `fetch`. Default `true` |
+| `storage()` (opt-in) | `redact` | Keys whose values are Redacted. Default `/token\|secret\|password\|auth\|session\|jwt\|key/i` |
+| | `includeValuesInBundle` | Put values in the Debug bundle too (Redacted ones stay hidden). Default `false`: key names and sizes only |
 | `display()` | `darkClass` | Class toggled on `<html>` for dark mode. Default `"dark"`; `false` hides the switch |
 | | `locale` | `{ cookie, options, default? }` adds a language switch that sets a cookie and reloads |
 | `breakpoint()` | `breakpoints` | Name to minimum width (px number or `"48rem"`/`"768px"`). Default: Tailwind v4's `sm 40rem`, `md 48rem`, `lg 64rem`, `xl 80rem`, `2xl 96rem` |
@@ -119,6 +121,10 @@ import { breakpoint } from "react-devbelt/plugins";
 breakpoint(); // Tailwind v4 breakpoints
 breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 } });
 ```
+
+### Storage (opt-in)
+
+`storage()` is not in the default list; add it by name: `[...defaultPlugins(), storage()]`. Its Window shows localStorage, sessionStorage and readable cookies, read-only, grouped by store. It hides its own `devbelt:*` keys and says that HttpOnly cookies cannot be seen. Values whose key matches the `redact` pattern show only their name and length, in the Window, in the `devbelt_get_storage` Agent tool and in the Debug bundle. The bundle lists key names and sizes; values appear only with `includeValuesInBundle`, and Redacted ones never do.
 
 ## `<DevBelt>` props
 
