@@ -5,6 +5,8 @@ export type QueryStatus = "fetching" | "paused" | "error" | "stale" | "fresh" | 
 export type MutationStatus = "idle" | "pending" | "paused" | "success" | "error";
 
 export type QueryRow = {
+  /** Cache identity. Two queries can share `key` text and still be different entries. */
+  hash: string;
   key: string;
   status: QueryStatus;
   observers: number;
@@ -12,17 +14,75 @@ export type QueryRow = {
   failureCount: number;
   error: string | null;
   updatedAt: number;
+  ambiguous: boolean;
 };
 
 export type MutationRow = {
+  hash: string;
   key: string;
   status: MutationStatus;
   failureCount: number;
   error: string | null;
+  /** Short, Redacted JSON of the variables. Null when the mutation has none. */
+  variables: string | null;
   at: number;
 };
 
 const ERROR_CLIP = 200;
+const VARIABLES_SUMMARY = 80;
+
+const scalar = (value: unknown) => value === null || (typeof value !== "object" && typeof value !== "function");
+
+/** A copy of cache data with secret-looking values hidden. Arrays follow the same rule as keys. */
+function redactData(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item, index) => {
+      const before = value[index - 1];
+      if (index > 0 && typeof before === "string" && isRedacted(before) && scalar(item)) {
+        return redactedForm(String(item));
+      }
+      return redactData(item);
+    });
+  }
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value)) {
+      out[key] = isRedacted(key) && scalar(item) ? redactedForm(String(item)) : redactData(item);
+    }
+    return out;
+  }
+  return value;
+}
+
+/** Pretty JSON of cache data, with secrets hidden. Null when there is no data. */
+export function dataJson(value: unknown): string | null {
+  if (value === undefined) return null;
+  try {
+    const json = JSON.stringify(redactData(value), null, 2);
+    return json === undefined ? null : json;
+  } catch {
+    return "[unserializable]";
+  }
+}
+
+/** The error message and stack, Redacted. The row and the Debug bundle stay on the short message. */
+export function errorDetail(error: unknown): string | null {
+  if (error === null || error === undefined) return null;
+  const raw = error instanceof Error ? error.stack || error.message : String(error);
+  return redactText(raw);
+}
+
+/** One short line of mutation variables for a row. */
+function variablesSummary(value: unknown): string | null {
+  if (value === undefined) return null;
+  try {
+    const json = JSON.stringify(redactData(value));
+    if (json === undefined) return null;
+    return json.length > VARIABLES_SUMMARY ? `${json.slice(0, VARIABLES_SUMMARY)}…` : json;
+  } catch {
+    return "[unserializable]";
+  }
+}
 
 /** The hidden form of a secret in a key: its length plus a short fingerprint, so two secrets stay distinguishable. */
 function hiddenKeyValue(value: string): string {
@@ -86,6 +146,7 @@ function queryStatus(query: Query): QueryStatus {
 }
 
 const queryRow = (query: Query): QueryRow => ({
+  hash: query.queryHash,
   key: keyText(query.queryKey),
   status: queryStatus(query),
   observers: query.getObserversCount(),
@@ -93,13 +154,16 @@ const queryRow = (query: Query): QueryRow => ({
   failureCount: query.state.fetchFailureCount,
   error: errorText(query.state.error),
   updatedAt: Math.max(query.state.dataUpdatedAt, query.state.errorUpdatedAt),
+  ambiguous: false,
 });
 
 const mutationRow = (mutation: Mutation): MutationRow => ({
+  hash: String(mutation.mutationId),
   key: keyText(mutation.options.mutationKey),
   status: mutation.state.isPaused ? "paused" : mutation.state.status,
   failureCount: mutation.state.failureCount,
   error: errorText(mutation.state.error),
+  variables: variablesSummary(mutation.state.variables),
   at: mutation.state.submittedAt,
 });
 
@@ -108,8 +172,13 @@ const byAttention = <T extends { status: string }>(time: (row: T) => number) =>
   (a: T, b: T) =>
     Number(b.status === "error") - Number(a.status === "error") || time(b) - time(a);
 
-export const queryRows = (client: QueryClient): QueryRow[] =>
-  client.getQueryCache().getAll().map(queryRow).sort(byAttention((r) => r.updatedAt));
+export const queryRows = (client: QueryClient): QueryRow[] => {
+  const rows = client.getQueryCache().getAll().map(queryRow).sort(byAttention((r) => r.updatedAt));
+  const seen = new Map<string, number>();
+  for (const row of rows) seen.set(row.key, (seen.get(row.key) ?? 0) + 1);
+  for (const row of rows) row.ambiguous = (seen.get(row.key) ?? 0) > 1;
+  return rows;
+};
 
 export const mutationRows = (client: QueryClient): MutationRow[] =>
   client.getMutationCache().getAll().map(mutationRow).sort(byAttention((r) => r.at));

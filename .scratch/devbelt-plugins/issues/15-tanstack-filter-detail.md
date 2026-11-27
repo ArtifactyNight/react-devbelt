@@ -4,12 +4,12 @@
 
 **Blocked by:** Review-fixes branch (`fix/devbelt-review-findings`) merged
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/tanstack-query.md` (follow-up from the code review of `spec/devbelt-plugins`); ADR 0003 and the Glossary apply.
 
-- [ ] Text and status filters narrow the active tab
-- [ ] Row detail shows key, truncated data and error with stack; Redaction still applies
-- [ ] Failed rows are marked, not only sorted; mutation variables are summarised
-- [ ] Duplicate key text is flagged; a duplicate Plugin id throws a clear error
-- [ ] Tests cover filters, detail, truncation, ambiguity and duplicate id
+- [x] Text and status filters narrow the active tab
+- [x] Row detail shows key, truncated data and error with stack; Redaction still applies
+- [x] Failed rows are marked, not only sorted; mutation variables are summarised
+- [x] Duplicate key text is flagged; a duplicate Plugin id throws a clear error
+- [x] Tests cover filters, detail, truncation, ambiguity and duplicate id

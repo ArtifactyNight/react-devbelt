@@ -13,6 +13,8 @@ let plugin: DevBeltPlugin;
 let teardown: (() => void) | void;
 
 const setup = (agent?: { write?: boolean }) => {
+  teardown?.();
+  client?.clear();
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   plugin = tanstackQuery(client, { agent });
   teardown = plugin.install?.();
