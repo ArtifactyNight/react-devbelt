@@ -4,12 +4,12 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/README.md`; see ADR 0003 for the write gate and the Glossary for vocabulary.
 
-- [ ] A Redaction helper decides, per key, whether a value is Redacted and returns the hidden form (name and length only)
-- [ ] The default pattern matches the list above, case-insensitively
-- [ ] The pattern can be overridden by the app
-- [ ] Tests cover matching, non-matching, custom pattern, and that no Redacted value appears in output
-- [ ] Exported from core so built-in and Package plugins can use it
+- [x] A Redaction helper decides, per key, whether a value is Redacted and returns the hidden form (name and length only)
+- [x] The default pattern matches the list above, case-insensitively
+- [x] The pattern can be overridden by the app
+- [x] Tests cover matching, non-matching, custom pattern, and that no Redacted value appears in output
+- [x] Exported from core so built-in and Package plugins can use it
