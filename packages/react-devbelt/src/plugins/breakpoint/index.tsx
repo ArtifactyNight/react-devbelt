@@ -3,11 +3,16 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { RulerIcon, SquareDashedIcon } from "lucide-react";
 
+import { text } from "../../core/agent-tools";
 import {
+  BASE_BREAKPOINT,
   DEFAULT_BREAKPOINTS,
+  parseBreakpointWidth,
   resolveBreakpoint,
+  validateBreakpoints,
   type Breakpoints,
 } from "../../core/breakpoints";
+import { readString, writeString } from "../../core/storage";
 import { definePlugin } from "../../plugin";
 import { toolbarItemClass } from "../../ui/styles";
 import {
@@ -25,12 +30,16 @@ const SKIPPED = ["devbelt-root", "[data-devbelt]", "[data-devbelt-window]"];
 const OUTLINE_CSS = `*${SKIPPED.map((s) => `:not(${s}):not(${s} *)`).join("")}{outline:1px solid rgba(239,68,68,.6)!important;outline-offset:-1px!important}`;
 
 /** The toggle's state, one per plugin instance. */
+const OUTLINE_STORAGE_KEY = "breakpoint-outline";
+
 function createOutlineStore() {
-  let on = false;
+  let on = readString(OUTLINE_STORAGE_KEY) === "1";
   const listeners = new Set<() => void>();
   return {
+    get: () => on,
     set(next: boolean) {
       on = next;
+      writeString(OUTLINE_STORAGE_KEY, next ? "1" : null);
       listeners.forEach((l) => l());
     },
     use: () =>
@@ -62,6 +71,8 @@ export type BreakpointOptions = {
    * Default: Tailwind v4's `sm 40rem`, `md 48rem`, `lg 64rem`, `xl 80rem`, `2xl 96rem`.
    */
   breakpoints?: Breakpoints;
+  /** Name of the range below the smallest breakpoint. Default `base`. */
+  base?: string;
 };
 
 /** The Frame's width when the viewport Plugin has one, else the window's. */
@@ -83,8 +94,10 @@ function useWidth(): number {
 /** The current breakpoint and width, e.g. `md · 812px`. */
 export function breakpoint(options: BreakpointOptions = {}) {
   const breakpoints = options.breakpoints ?? DEFAULT_BREAKPOINTS;
+  const base = options.base ?? BASE_BREAKPOINT;
+  validateBreakpoints(breakpoints, base);
   const describe = (width: number) =>
-    `${resolveBreakpoint(width, breakpoints)} · ${Math.round(width)}px`;
+    `${resolveBreakpoint(width, breakpoints, base)} · ${Math.round(width)}px`;
 
   const outline = createOutlineStore();
 
@@ -137,6 +150,34 @@ export function breakpoint(options: BreakpointOptions = {}) {
     Overlay: OutlineOverlay,
     Status: BreakpointStatus,
     ChipStatus: BreakpointChip,
-    debugContext: () => [{ label: "Breakpoint", value: describe(currentWidth()) }],
+    agentTools: [
+      {
+        name: "devbelt_get_breakpoint",
+        description:
+          "The page's current responsive breakpoint and width, the declared breakpoints with their minimum widths, and whether the element outline is on. Read-only.",
+        inputSchema: { type: "object", properties: {} },
+        annotations: { readOnlyHint: true },
+        run: () => {
+          const width = currentWidth();
+          const declared = Object.entries(breakpoints)
+            .map(([name, value]) => [name, parseBreakpointWidth(value) ?? 0] as const)
+            .sort((a, b) => a[1] - b[1]);
+          return text(
+            [
+              `Breakpoint: ${resolveBreakpoint(width, breakpoints, base)}`,
+              `Width: ${Math.round(width)}px${presetOf(getViewportState()) ? " (the device Frame's width)" : ""}`,
+              `Declared breakpoints (minimum width): ${[`${base} 0px`, ...declared.map(([n, px]) => `${n} ${px}px`)].join(", ")}`,
+              `Outline: ${outline.get() ? "on" : "off"}`,
+            ].join("\n"),
+          );
+        },
+      },
+    ],
+    debugContext: () => [
+      {
+        label: "Breakpoint",
+        value: `${describe(currentWidth())}${presetOf(getViewportState()) ? " (Frame width)" : ""}`,
+      },
+    ],
   });
 }

@@ -137,6 +137,7 @@ test("Window: delete an entry, including a redacted one", () => {
 test("Window: clear a store leaves devbelt:* keys", () => {
   mountWindow();
   fireEvent.click(screen.getByRole("button", { name: "Clear localStorage" }));
+  fireEvent.click(screen.getByRole("button", { name: "Confirm clearing localStorage" }));
   expect(localStorage.getItem("theme")).toBeNull();
   expect(localStorage.getItem("devbelt:layout")).toBe("{}");
   expect(sessionStorage.getItem("step")).toBe("2");

@@ -2,8 +2,9 @@
 
 import { useState, useSyncExternalStore } from "react";
 import type { QueryClient } from "@tanstack/react-query";
-import { clampLimit, text, type AgentTool } from "react-devbelt/core";
+import { clampLimit, errorResult, text, type AgentTool } from "react-devbelt/core";
 import { definePlugin, type DevBeltPlugin, type ToolbarApi } from "react-devbelt";
+import { chipClass } from "react-devbelt/ui";
 
 import {
   keyText,
@@ -28,18 +29,19 @@ const DEFAULT_MAX = 300;
 const DEFAULT_AGENT_LIMIT = 20;
 const STATUSES = ["fetching", "paused", "error", "stale", "fresh", "inactive", "idle", "pending", "success"];
 
+// Only layout and inherited colour: the toolbar's stylesheet cannot be extended, so
+// anything this plugin needs beyond the shared `react-devbelt/ui` classes lives here.
 const STYLES = `
-.tq-window{font-size:12px;color:#fff;padding:8px;overflow:auto;height:100%}
+.tq-window{font-size:12px;padding:8px;overflow:auto;height:100%}
 .tq-tabs{display:flex;gap:4px;margin-bottom:8px}
-.tq-tabs button{padding:2px 8px;border-radius:6px;background:transparent;color:inherit;border:1px solid #555}
-.tq-tabs button[aria-selected="true"]{background:#444}
 .tq-table{width:100%;border-collapse:collapse}
 .tq-table td,.tq-table th{padding:2px 6px;text-align:left;vertical-align:top}
 .tq-key{font-family:ui-monospace,monospace;word-break:break-all}
-.tq-error{color:#fda4af}
+.tq-error{font-weight:600;text-decoration:underline dotted}
 .tq-empty{opacity:.7}
 .tq-actions{white-space:nowrap}
-.tq-actions button{margin-left:4px;padding:0 6px;border-radius:6px;background:transparent;color:inherit;border:1px solid #555}
+.tq-actions>*{margin-left:4px}
+.tq-badge{font-size:10px;font-variant-numeric:tabular-nums}
 `;
 
 const frame = (fn: () => void) =>
@@ -68,7 +70,9 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
     typeof queryClient.getQueryCache !== "function" ||
     typeof queryClient.getMutationCache !== "function"
   ) {
-    throw new Error("devbelt-plugin-tanstack-query: pass the app's QueryClient, e.g. tanstackQuery(queryClient).");
+    throw new Error(
+      "devbelt-plugin-tanstack-query: pass the app's TanStack Query v5 QueryClient, e.g. tanstackQuery(queryClient). Only v5 is supported.",
+    );
   }
   const id = options.id ?? DEFAULT_ID;
   const max = options.maxEntries ?? DEFAULT_MAX;
@@ -95,7 +99,7 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
   function Badge() {
     useVersion();
     const { failing } = summarize(queryClient);
-    return failing > 0 ? <span className="text-[10px] tabular-nums text-rose-300">{failing}</span> : null;
+    return failing > 0 ? <span className="tq-badge">{failing}</span> : null;
   }
 
   function Hint() {
@@ -116,15 +120,15 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
   } as const;
   type Action = keyof typeof ACTIONS;
 
-  /** The cached query whose key prints as `keyText`, first match winning. */
-  const findQuery = (keyString: string) =>
-    queryClient.getQueryCache().getAll().find((q) => keyText(q.queryKey) === keyString);
-
-  const act = (action: Action, keyString: string): boolean => {
-    const query = findQuery(keyString);
-    if (!query) return false;
-    void ACTIONS[action](query.queryKey).catch(() => {});
-    return true;
+  /** Why an action did not run, or null once it has been requested. */
+  const act = (action: Action, keyString: string): string | null => {
+    const matches = queryClient.getQueryCache().getAll().filter((q) => keyText(q.queryKey) === keyString);
+    if (matches.length === 0) return `No query with key ${keyString}.`;
+    if (matches.length > 1) {
+      return `Ambiguous: more than one query prints as ${keyString}; nothing was changed.`;
+    }
+    void ACTIONS[action](matches[0].queryKey).catch(() => {});
+    return null;
   };
 
   const QueriesTable = ({ rows }: { rows: QueryRow[] }) =>
@@ -146,6 +150,7 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
                   <button
                     key={action}
                     type="button"
+                    className={chipClass}
                     aria-label={`${action[0].toUpperCase()}${action.slice(1)} ${row.key}`}
                     onClick={() => act(action, row.key)}
                   >
@@ -188,6 +193,8 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
             <button
               key={name}
               type="button"
+              className={chipClass}
+              data-pressed={tab === name ? "" : undefined}
               role="tab"
               aria-selected={tab === name}
               onClick={() => setTab(name)}
@@ -239,7 +246,7 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
             ? ["None."]
             : mutations
                 .slice(0, limit)
-                .map((r) => `- ${r.key} — ${r.status} · ${plural(r.failureCount, "failure")}${err(r.error)}`)),
+                .map((r) => `- ${r.key ? `${r.key} — ` : ""}${r.status} · ${plural(r.failureCount, "failure")}${err(r.error)}`)),
         ].join("\n"),
       );
     },
@@ -256,20 +263,19 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
     writes: true,
     run: async (input) => {
       const key = typeof input.key === "string" ? input.key : "";
-      if (!act(action, key)) return text(`No query with key ${key}.`);
+      const problem = act(action, key);
+      if (problem) return errorResult(problem);
       return text(`Requested ${action} of ${key}.`);
     },
   });
 
-  // Write tools do not exist unless the app opts in (ADR 0003).
-  const writeTools =
-    options.agent?.write === true
-      ? [
-          writeTool("refetch", "Refetch", "Runs its query function again."),
-          writeTool("invalidate", "Invalidate", "Marks it stale and refetches it if it is in use."),
-          writeTool("reset", "Reset", "Returns it to its initial state, discarding its data."),
-        ]
-      : [];
+  // Marked `writes: true`: the Belt only offers them to agents once the plugin's
+  // `agent.write` is true, whether set by the option or by the app spreading the plugin (ADR 0003).
+  const writeTools = [
+    writeTool("refetch", "Refetch", "Runs its query function again."),
+    writeTool("invalidate", "Invalidate", "Marks it stale and refetches it if it is in use."),
+    writeTool("reset", "Reset", "Returns it to its initial state, discarding its data."),
+  ];
 
   return definePlugin({
     id,

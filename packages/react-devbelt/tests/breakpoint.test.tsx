@@ -63,7 +63,7 @@ test("inside the Frame it reports the Frame's width, not the window's", () => {
   writeString(VIEWPORT_STORAGE_KEY, "mobile");
   const plugin = breakpoint();
   expect(plugin.debugContext?.()).toEqual([
-    { label: "Breakpoint", value: "base · 390px" },
+    { label: "Breakpoint", value: "base · 390px (Frame width)" },
   ]);
 });
 
@@ -137,4 +137,54 @@ test("the outline is also applied inside the Frame, and follows reloads", () => 
   toggle(view);
   expect(frame.contentDocument!.querySelector(OUTLINE_SELECTOR)).toBeNull();
   frame.remove();
+});
+
+// ---- review fixes ----
+
+test("invalid breakpoints throw at creation, naming the entry", () => {
+  expect(() => breakpoint({ breakpoints: { tablet: 0 } })).toThrow(/tablet/);
+  expect(() => breakpoint({ breakpoints: { tablet: -5 } })).toThrow(/tablet/);
+  expect(() => breakpoint({ breakpoints: { tablet: "wide" } })).toThrow(/tablet/);
+  expect(() => breakpoint({ breakpoints: { tablet: "40em" } })).toThrow(/tablet/);
+  expect(() => breakpoint({ breakpoints: { tablet: Number.NaN } })).toThrow(/tablet/);
+  expect(() => breakpoint({ breakpoints: { a: 600, " a": 700 } })).toThrow(/a/);
+  expect(() => breakpoint({ breakpoints: { base: 600 } })).toThrow(/base/);
+  expect(() => breakpoint({ breakpoints: { tablet: "40rem", desktop: 1100 } })).not.toThrow();
+});
+
+test("a read-only Agent tool reports breakpoint, width, declared breakpoints and outline state", async () => {
+  setWidth(812);
+  const plugin = breakpoint();
+  const tool = plugin.agentTools!.find((t) => t.name === "devbelt_get_breakpoint")!;
+  expect(tool.annotations?.readOnlyHint).toBe(true);
+  expect(plugin.agentTools!.every((t) => !t.writes)).toBe(true);
+  const out = (await tool.run({}, undefined as never)).content[0].text;
+  expect(out).toMatch(/md/);
+  expect(out).toMatch(/812/);
+  expect(out).toMatch(/2xl.*1536|1536.*2xl/);
+  expect(out).toMatch(/outline.*off/i);
+});
+
+test("the Debug line notes when the width is the Frame's", () => {
+  setWidth(1600);
+  writeString(VIEWPORT_STORAGE_KEY, "mobile");
+  expect(breakpoint().debugContext!()[0].value).toMatch(/frame/i);
+  resetViewportStore();
+  localStorage.clear();
+  sessionStorage.clear();
+  setWidth(900);
+  expect(breakpoint().debugContext!()[0].value).not.toMatch(/frame/i);
+});
+
+test("the outline setting survives a reload", () => {
+  const first = mountOutline();
+  toggle(first);
+  first.unmount();
+  const second = mountOutline();
+  expect(document.querySelector(OUTLINE_SELECTOR)).toBeTruthy();
+  expect(second.getByRole("button", { name: /outline/i }).getAttribute("aria-pressed")).toBe("true");
+  toggle(second);
+  second.unmount();
+  mountOutline();
+  expect(document.querySelector(OUTLINE_SELECTOR)).toBeNull();
 });

@@ -4,6 +4,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { DevBeltPlugin } from "react-devbelt";
+import { exposedAgentTools } from "react-devbelt/core";
 
 import { tanstackQuery } from "../src";
 
@@ -93,7 +94,7 @@ describe("Window", () => {
     await client.fetchQuery({ queryKey: ["me", { token: "s3cr3t-value" }], queryFn: () => 1 });
     renderWindow();
     expect(document.body.textContent).not.toContain("s3cr3t-value");
-    expect(document.body.textContent).toContain("[redacted: 12 chars]");
+    expect(document.body.textContent).toContain("[redacted: 12 chars");
   });
 });
 
@@ -146,7 +147,7 @@ describe("Debug bundle", () => {
     expect(section).not.toContain('["fine"]');
     expect(section).not.toContain("ok@x.test");
     expect(section).not.toContain("abc123");
-    expect(section).toContain("[redacted: 6 chars]");
+    expect(section).toContain("[redacted: 6 chars");
   });
 
   it("says so briefly when nothing qualifies", () => {
@@ -158,7 +159,7 @@ describe("Debug bundle", () => {
 
 describe("Agent tool", () => {
   it("is read-only and exposed without agent.write", () => {
-    const tools = plugin.agentTools!;
+    const tools = exposedAgentTools([plugin]);
     expect(tools.map((t) => t.name)).toEqual(["devbelt_get_tanstack_query"]);
     expect(tools[0].writes).toBeFalsy();
     expect(tools[0].annotations).toMatchObject({ readOnlyHint: true });
