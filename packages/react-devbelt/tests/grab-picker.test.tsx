@@ -130,7 +130,10 @@ test("a plain click still copies the one element straight away", async () => {
   render(<DevGrabPicker viewportLabel="Mobile" onDone={onDone} />);
   await click(user, target("button", 0, "Save"));
 
-  await vi.waitFor(() => expect(state.copied).toHaveLength(1));
+  await vi.waitFor(() => {
+    expect(state.copied).toHaveLength(1);
+    expect(onDone).toHaveBeenCalledWith("copied"); // lands after the copy; wait so it cannot leak into the next test
+  });
   expect(state.copied[0]).toMatch(
     /^\[viewport: Mobile \d+×\d+, dpr \d+\]\n<button>Save<\/button>$/,
   );
@@ -179,7 +182,10 @@ test("several elements, each with its own note, are copied numbered", async () =
 
   expect(screen.getByText("3 selected")).toBeTruthy();
   await user.click(screen.getByRole("button", { name: "Copy selection" }));
-  await vi.waitFor(() => expect(state.copied).toHaveLength(1));
+  await vi.waitFor(() => {
+    expect(state.copied).toHaveLength(1);
+    expect(onDone).toHaveBeenCalledWith("copied"); // lands after the copy; wait so it cannot leak into the next test
+  });
 
   const text = state.copied[0];
   expect(text).toMatch(/^\[viewport: iPad \d+×\d+, dpr \d+, 3 elements\]\n/);
@@ -196,7 +202,10 @@ test("Enter copies the selection once no note is being edited", async () => {
   await click(user, target("button", 0, "A"), "Meta");
   await user.keyboard("{Escape}");
   await user.keyboard("{Enter}");
-  await vi.waitFor(() => expect(state.copied).toHaveLength(1));
+  await vi.waitFor(() => {
+    expect(state.copied).toHaveLength(1);
+    expect(onDone).toHaveBeenCalledWith("copied"); // lands after the copy; wait so it cannot leak into the next test
+  });
   expect(state.copied[0]).toContain("1. <button>A</button>");
 });
 
@@ -231,7 +240,10 @@ test("a plain click with a selection copies it plus the clicked element", async 
   await click(user, target("button", 0, "A"), "Meta");
   await user.keyboard("{Escape}");
   await click(user, target("button", 1, "B"));
-  await vi.waitFor(() => expect(state.copied).toHaveLength(1));
+  await vi.waitFor(() => {
+    expect(state.copied).toHaveLength(1);
+    expect(onDone).toHaveBeenCalledWith("copied"); // lands after the copy; wait so it cannot leak into the next test
+  });
   expect(state.copied[0]).toContain(
     "1. <button>A</button>\n\n2. <button>B</button>",
   );
@@ -261,7 +273,10 @@ test("recent problems are appended after the numbered selection", async () => {
   await click(user, target("button", 0, "A"), "Meta");
   await user.keyboard("{Escape}");
   await user.keyboard("{Enter}");
-  await vi.waitFor(() => expect(state.copied).toHaveLength(1));
+  await vi.waitFor(() => {
+    expect(state.copied).toHaveLength(1);
+    expect(onDone).toHaveBeenCalledWith("copied"); // lands after the copy; wait so it cannot leak into the next test
+  });
   expect(state.copied[0]).toMatch(/<button>A<\/button>\n\n## Recent problems/);
 });
 
@@ -295,7 +310,10 @@ test("⌘/Ctrl+Enter copies from inside a note, with the note's latest text", as
     "Disabled state looks active",
   );
   await user.keyboard("{Control>}{Enter}{/Control}");
-  await vi.waitFor(() => expect(state.copied).toHaveLength(1));
+  await vi.waitFor(() => {
+    expect(state.copied).toHaveLength(1);
+    expect(onDone).toHaveBeenCalledWith("copied"); // lands after the copy; wait so it cannot leak into the next test
+  });
   expect(state.copied[0]).toContain("Context: Disabled state looks active");
 });
 
