@@ -121,3 +121,29 @@ describe("version check", () => {
     expect(() => tanstackQuery({ getQueryCache() {} })).toThrow(/v5/);
   });
 });
+
+describe("styling", () => {
+  it("ships its own CSS without hardcoded colours", () => {
+    setup();
+    expect(plugin.styles).toBeTruthy();
+    expect(plugin.styles).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i);
+  });
+
+  it("Badge uses the plugin's own class, not uncompiled Tailwind classes", async () => {
+    setup();
+    await failing(["boom"], "x");
+    const Badge = plugin.Badge!;
+    const { container } = render(<Badge />);
+    const cls = container.querySelector("span")!.className;
+    expect(cls).toMatch(/tq-badge/);
+    expect(cls).not.toMatch(/text-\[|text-rose|tabular-nums/);
+  });
+
+  it("builds buttons from shared devbelt classes", async () => {
+    setup();
+    await client.fetchQuery({ queryKey: ["a"], queryFn: () => 1 });
+    const Window = plugin.window!.Component;
+    render(<Window />);
+    expect(screen.getByRole("button", { name: /Refetch/ }).className).toMatch(/h-6/);
+  });
+});
