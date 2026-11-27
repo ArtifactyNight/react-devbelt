@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { definePlugin } from "react-devbelt";
+import { exposedAgentTools } from "react-devbelt/core";
 import { describe, expect, it } from "vitest";
 
 import { tanstackQuery } from "../src";
@@ -19,7 +20,7 @@ describe("tanstackQuery(queryClient)", () => {
     const plugin = tanstackQuery(new QueryClient());
 
     expect(plugin.window).toBeDefined();
-    expect(plugin.agentTools?.every((tool) => !tool.writes)).toBe(true);
+    expect(exposedAgentTools([plugin]).every((tool) => !tool.writes)).toBe(true);
   });
 
   it("requires the client to be passed explicitly", () => {

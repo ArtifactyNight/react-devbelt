@@ -24,28 +24,56 @@ export type MutationRow = {
 
 const ERROR_CLIP = 200;
 
+/** The hidden form of a secret in a key: its length plus a short fingerprint, so two secrets stay distinguishable. */
+function hiddenKeyValue(value: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < value.length; i++) h = Math.imul(h ^ value.charCodeAt(i), 0x01000193);
+  return `${redactedForm(value).slice(0, -1)}, #${(h >>> 0).toString(16).padStart(8, "0").slice(0, 4)}]`;
+}
+
 /**
  * A key's canonical text, the form shown everywhere. Values stored under a
- * secret-looking property name are Redacted: only their length is shown.
+ * secret-looking property name, and the scalar that follows a secret-looking
+ * string in an array (`["auth", "Bearer x"]`), are Redacted: only their length
+ * and a short fingerprint are shown.
  */
 export function keyText(key: readonly unknown[] | undefined): string {
   if (key === undefined) return "";
+  const scalar = (v: unknown) => v !== null && typeof v !== "object" && typeof v !== "function";
   try {
-    return JSON.stringify(key, (name, value: unknown) =>
-      name !== "" && isRedacted(name) && value !== null && typeof value !== "object"
-        ? redactedForm(String(value))
-        : value,
-    );
+    return JSON.stringify(key, function (this: unknown, name: string, value: unknown) {
+      if (name === "") return value;
+      if (Array.isArray(this)) {
+        const before = this[Number(name) - 1];
+        return Number(name) > 0 && typeof before === "string" && isRedacted(before) && scalar(value)
+          ? hiddenKeyValue(String(value))
+          : value;
+      }
+      return isRedacted(name) && scalar(value) ? hiddenKeyValue(String(value)) : value;
+    });
   } catch {
     return "[unserializable key]";
   }
 }
 
-/** First line of the error message, clipped. */
+// `name: value`, `name=value` and `Bearer value` where the name looks secret.
+const SECRET_ASSIGNMENT = /([\w-]+)(["']?\s*[:=]\s*["']?)([^\s"',;&]+)/g;
+const SCHEME_VALUE = /\b(Bearer|Basic)\s+[\w.~+/=-]+/gi;
+
+/** Error text with secret-looking values hidden. */
+export function redactText(message: string): string {
+  return message
+    .replace(SCHEME_VALUE, (_m, scheme: string) => `${scheme} [redacted]`)
+    .replace(SECRET_ASSIGNMENT, (match, name: string, sep: string, value: string) =>
+      isRedacted(name) && !value.startsWith("[redacted") ? `${name}${sep}${redactedForm(value)}` : match,
+    );
+}
+
+/** First line of the error message, Redacted and clipped. */
 export function errorText(error: unknown): string | null {
   if (error === null || error === undefined) return null;
   const message = error instanceof Error ? error.message : String(error);
-  const line = message.split("\n")[0];
+  const line = redactText(message.split("\n")[0]);
   return line.length > ERROR_CLIP ? `${line.slice(0, ERROR_CLIP)}…` : line;
 }
 
@@ -68,7 +96,7 @@ const queryRow = (query: Query): QueryRow => ({
 });
 
 const mutationRow = (mutation: Mutation): MutationRow => ({
-  key: keyText(mutation.options.mutationKey) || "(no key)",
+  key: keyText(mutation.options.mutationKey),
   status: mutation.state.isPaused ? "paused" : mutation.state.status,
   failureCount: mutation.state.failureCount,
   error: errorText(mutation.state.error),

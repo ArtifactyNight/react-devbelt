@@ -4,6 +4,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { DevBeltPlugin } from "react-devbelt";
+import { exposedAgentTools } from "react-devbelt/core";
 
 import { tanstackQuery } from "../src";
 
@@ -110,10 +111,18 @@ describe("write Agent tools", () => {
 
   it("do not exist by default", () => {
     setup();
-    const names = plugin.agentTools!.map((t) => t.name);
-    for (const n of NAMES) expect(names).not.toContain(n);
+    const exposed = () => exposedAgentTools([plugin]).map((t) => t.name);
+    setup();
+    for (const n of NAMES) expect(exposed()).not.toContain(n);
     setup({ write: false });
-    for (const n of NAMES) expect(plugin.agentTools!.map((t) => t.name)).not.toContain(n);
+    for (const n of NAMES) expect(exposed()).not.toContain(n);
+  });
+
+  it("are exposed when the app spreads the plugin with agent.write", () => {
+    setup();
+    const spread = { ...plugin, agent: { write: true } };
+    const names = exposedAgentTools([spread]).map((t) => t.name);
+    for (const n of NAMES) expect(names).toContain(n);
   });
 
   it("exist with agent.write, marked as writing", () => {
@@ -150,5 +159,7 @@ describe("write Agent tools", () => {
     const out = await call(NAMES[0], { key: '["nope"]' });
     expect(out).toMatch(/no query/i);
     expect(todos.count()).toBe(1);
+    const tool = plugin.agentTools!.find((t) => t.name === NAMES[0])!;
+    expect((await tool.run({ key: '["nope"]' }, undefined as never)).isError).toBe(true);
   });
 });
