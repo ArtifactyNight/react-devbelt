@@ -42,6 +42,9 @@ export {
 export { readJson, readString, storageKey, writeJson, writeString } from "./storage";
 export { DEFAULT_REDACTION_PATTERN, isRedacted, redact, redactedForm } from "./redaction";
 export {
+  clearStorageStore,
+  deleteStorageEntry,
+  setStorageEntry,
   formatStorageBundleSection,
   formatStorageForAgent,
   HTTP_ONLY_NOTE,

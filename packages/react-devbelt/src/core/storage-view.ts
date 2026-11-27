@@ -1,4 +1,4 @@
-// A read-only view of the page's own storage: localStorage, sessionStorage and
+// A view of the page's own storage, plus edit, delete and clear: localStorage, sessionStorage and
 // the cookies JavaScript can see. The toolbar's own `devbelt:*` keys are left
 // out. Every value that reaches a person, an Agent tool or the Debug bundle
 // goes through Redaction here.
@@ -120,4 +120,43 @@ export function formatStorageBundleSection(
     ].join("\n\n"),
   );
   return ["## Storage", ...sections, HTTP_ONLY_NOTE].join("\n\n");
+}
+
+const EXPIRED = "Thu, 01 Jan 1970 00:00:00 GMT";
+
+function assertOwnable(key: string) {
+  if (key.startsWith(OWN_PREFIX)) {
+    throw new Error(`Keys starting with "${OWN_PREFIX}" belong to the toolbar and cannot be changed.`);
+  }
+}
+
+/** Sets or replaces one value. Redacted values are replaced blind: nothing is read back. */
+export function setStorageEntry(store: StorageStore, key: string, value: string): void {
+  assertOwnable(key);
+  if (store === "cookies") {
+    // Cookies are read and written raw, as the browser shows them.
+    if (/[;\s]/.test(key) || value.includes(";")) {
+      throw new Error("A cookie name or value cannot contain ';' or whitespace in the name.");
+    }
+    document.cookie = `${key}=${value}; path=/`;
+  } else {
+    window[store].setItem(key, value);
+  }
+}
+
+/** Removes one entry. */
+export function deleteStorageEntry(store: StorageStore, key: string): void {
+  assertOwnable(key);
+  if (store === "cookies") {
+    document.cookie = `${key}=; expires=${EXPIRED}; path=/`;
+  } else {
+    window[store].removeItem(key);
+  }
+}
+
+/** Removes every visible entry of one store. The toolbar's own `devbelt:*` keys stay. */
+export function clearStorageStore(store: StorageStore): void {
+  for (const entry of readStorageEntries().filter((e) => e.store === store)) {
+    deleteStorageEntry(store, entry.key);
+  }
 }
