@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 Spec: `docs/specs/README.md`; see ADR 0003 for the write gate and the Glossary for vocabulary.
 
