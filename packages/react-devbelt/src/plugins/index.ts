@@ -7,6 +7,7 @@ import { network } from "./network";
 import { viewport } from "./viewport";
 
 export { bundle } from "./bundle";
+export { breakpoint, type BreakpointOptions } from "./breakpoint";
 export { consolePlugin } from "./console";
 export { display, type DisplayOptions } from "./display";
 export { grab, setGrabbing } from "./grab";
