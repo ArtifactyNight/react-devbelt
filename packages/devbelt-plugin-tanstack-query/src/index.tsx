@@ -2,7 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react";
 import type { QueryClient } from "@tanstack/react-query";
-import { clampLimit, text, type AgentTool } from "react-devbelt/core";
+import { clampLimit, errorResult, text, type AgentTool } from "react-devbelt/core";
 import { definePlugin, type DevBeltPlugin, type ToolbarApi } from "react-devbelt";
 
 import {
@@ -68,7 +68,9 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
     typeof queryClient.getQueryCache !== "function" ||
     typeof queryClient.getMutationCache !== "function"
   ) {
-    throw new Error("devbelt-plugin-tanstack-query: pass the app's QueryClient, e.g. tanstackQuery(queryClient).");
+    throw new Error(
+      "devbelt-plugin-tanstack-query: pass the app's TanStack Query v5 QueryClient, e.g. tanstackQuery(queryClient). Only v5 is supported.",
+    );
   }
   const id = options.id ?? DEFAULT_ID;
   const max = options.maxEntries ?? DEFAULT_MAX;
@@ -116,15 +118,15 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
   } as const;
   type Action = keyof typeof ACTIONS;
 
-  /** The cached query whose key prints as `keyText`, first match winning. */
-  const findQuery = (keyString: string) =>
-    queryClient.getQueryCache().getAll().find((q) => keyText(q.queryKey) === keyString);
-
-  const act = (action: Action, keyString: string): boolean => {
-    const query = findQuery(keyString);
-    if (!query) return false;
-    void ACTIONS[action](query.queryKey).catch(() => {});
-    return true;
+  /** Why an action did not run, or null once it has been requested. */
+  const act = (action: Action, keyString: string): string | null => {
+    const matches = queryClient.getQueryCache().getAll().filter((q) => keyText(q.queryKey) === keyString);
+    if (matches.length === 0) return `No query with key ${keyString}.`;
+    if (matches.length > 1) {
+      return `Ambiguous: more than one query prints as ${keyString}; nothing was changed.`;
+    }
+    void ACTIONS[action](matches[0].queryKey).catch(() => {});
+    return null;
   };
 
   const QueriesTable = ({ rows }: { rows: QueryRow[] }) =>
@@ -239,7 +241,7 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
             ? ["None."]
             : mutations
                 .slice(0, limit)
-                .map((r) => `- ${r.key} — ${r.status} · ${plural(r.failureCount, "failure")}${err(r.error)}`)),
+                .map((r) => `- ${r.key ? `${r.key} — ` : ""}${r.status} · ${plural(r.failureCount, "failure")}${err(r.error)}`)),
         ].join("\n"),
       );
     },
@@ -256,20 +258,19 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
     writes: true,
     run: async (input) => {
       const key = typeof input.key === "string" ? input.key : "";
-      if (!act(action, key)) return text(`No query with key ${key}.`);
+      const problem = act(action, key);
+      if (problem) return errorResult(problem);
       return text(`Requested ${action} of ${key}.`);
     },
   });
 
-  // Write tools do not exist unless the app opts in (ADR 0003).
-  const writeTools =
-    options.agent?.write === true
-      ? [
-          writeTool("refetch", "Refetch", "Runs its query function again."),
-          writeTool("invalidate", "Invalidate", "Marks it stale and refetches it if it is in use."),
-          writeTool("reset", "Reset", "Returns it to its initial state, discarding its data."),
-        ]
-      : [];
+  // Marked `writes: true`: the Belt only offers them to agents once the plugin's
+  // `agent.write` is true, whether set by the option or by the app spreading the plugin (ADR 0003).
+  const writeTools = [
+    writeTool("refetch", "Refetch", "Runs its query function again."),
+    writeTool("invalidate", "Invalidate", "Marks it stale and refetches it if it is in use."),
+    writeTool("reset", "Reset", "Returns it to its initial state, discarding its data."),
+  ];
 
   return definePlugin({
     id,
