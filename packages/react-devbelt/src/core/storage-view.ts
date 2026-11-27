@@ -11,7 +11,11 @@ export type StorageEntry = { store: StorageStore; key: string; value: string; si
 
 const OWN_PREFIX = "devbelt:";
 
-function readWebStorage(store: "localStorage" | "sessionStorage"): StorageEntry[] {
+export type StorageUnavailable = Partial<Record<StorageStore, string>>;
+
+const reasonOf = (e: unknown) => (e instanceof Error && e.message ? e.message : "blocked by the browser");
+
+function readWebStorage(store: "localStorage" | "sessionStorage", unavailable: StorageUnavailable): StorageEntry[] {
   try {
     const area = window[store];
     const entries: StorageEntry[] = [];
@@ -22,12 +26,13 @@ function readWebStorage(store: "localStorage" | "sessionStorage"): StorageEntry[
       entries.push({ store, key, value, size: value.length });
     }
     return entries;
-  } catch {
-    return []; // blocked storage (private window, sandboxed frame)
+  } catch (e) {
+    unavailable[store] = reasonOf(e); // blocked storage (private window, sandboxed frame)
+    return [];
   }
 }
 
-function readCookies(): StorageEntry[] {
+function readCookies(unavailable: StorageUnavailable): StorageEntry[] {
   try {
     return document.cookie
       .split(";")
@@ -40,21 +45,40 @@ function readCookies(): StorageEntry[] {
         return { store: "cookies" as const, key, value, size: value.length };
       })
       .filter((entry) => !entry.key.startsWith(OWN_PREFIX));
-  } catch {
+  } catch (e) {
+    unavailable.cookies = reasonOf(e);
     return [];
   }
 }
 
+export type StorageState = { entries: StorageEntry[]; unavailable: StorageUnavailable };
+
+/** Every visible entry of the three stores, plus which stores could not be read and why. */
+export function readStorageState(): StorageState {
+  const unavailable: StorageUnavailable = {};
+  if (typeof window === "undefined") return { entries: [], unavailable };
+  const entries = [
+    ...readWebStorage("localStorage", unavailable),
+    ...readWebStorage("sessionStorage", unavailable),
+    ...readCookies(unavailable),
+  ];
+  return { entries, unavailable };
+}
+
 /** Every visible entry of the three stores, grouped in store order. */
 export function readStorageEntries(): StorageEntry[] {
-  if (typeof window === "undefined") return [];
-  return [...readWebStorage("localStorage"), ...readWebStorage("sessionStorage"), ...readCookies()];
+  return readStorageState().entries;
 }
 
 export type StorageViewOptions = {
   /** Keys matching this are Redacted. Default: the shared Redaction pattern. */
   pattern?: RegExp;
+  /** Stores that could not be read; they are reported instead of shown as empty. */
+  unavailable?: StorageUnavailable;
 };
+
+export const AGENT_DEFAULT_LIMIT = 50;
+export const AGENT_MAX_LIMIT = 100;
 
 export const HTTP_ONLY_NOTE =
   "HttpOnly cookies cannot be seen: the browser hides them from page scripts.";
@@ -74,24 +98,50 @@ function grouped(entries: StorageEntry[]) {
   }));
 }
 
-/** Markdown for an Agent tool: values, with Redacted ones reduced to name and length. */
+const unavailableLine = (reason: string) => `Unavailable: ${reason}.`;
+
+/**
+ * Markdown for an Agent tool: values, with Redacted ones reduced to name and
+ * length. Narrow with `store` and `prefix`; at most `limit` entries (default
+ * 50, never more than 100) are listed.
+ */
 export function formatStorageForAgent(
   entries: StorageEntry[],
-  { pattern }: StorageViewOptions = {},
+  {
+    pattern,
+    unavailable = {},
+    store,
+    prefix,
+    limit,
+  }: StorageViewOptions & { store?: StorageStore; prefix?: string; limit?: number } = {},
 ): string {
-  const sections = grouped(entries).map(({ store, entries: list }) =>
-    [
-      `## ${STORE_TITLE[store]} (${list.length})`,
-      list.length === 0
-        ? "Empty."
-        : [
-            "| Key | Value |",
-            "| --- | --- |",
-            ...list.map((e) => `| ${cell(e.key)} | ${cell(redact(e.key, e.value, pattern))} |`),
-          ].join("\n"),
-    ].join("\n\n"),
+  const matching = entries.filter(
+    (e) => (!store || e.store === store) && (!prefix || e.key.startsWith(prefix)),
   );
-  return [...sections, HTTP_ONLY_NOTE].join("\n\n");
+  const max = Math.min(
+    typeof limit === "number" && limit > 0 ? Math.floor(limit) : AGENT_DEFAULT_LIMIT,
+    AGENT_MAX_LIMIT,
+  );
+  const shown = matching.slice(0, max);
+  const sections = grouped(shown)
+    .filter(({ store: s }) => !store || s === store)
+    .map(({ store: s, entries: list }) =>
+      [
+        `## ${STORE_TITLE[s]} (${list.length})`,
+        unavailable[s] !== undefined
+          ? unavailableLine(unavailable[s])
+          : list.length === 0
+            ? "Empty."
+            : [
+                "| Key | Value |",
+                "| --- | --- |",
+                ...list.map((e) => `| ${cell(e.key)} | ${cell(redact(e.key, e.value, pattern))} |`),
+              ].join("\n"),
+      ].join("\n\n"),
+    );
+  const note =
+    shown.length < matching.length ? [`Showing ${shown.length} of ${matching.length} entries.`] : [];
+  return [...sections, ...note, HTTP_ONLY_NOTE].join("\n\n");
 }
 
 /**
@@ -100,12 +150,14 @@ export function formatStorageForAgent(
  */
 export function formatStorageBundleSection(
   entries: StorageEntry[],
-  { pattern, includeValues = false }: StorageViewOptions & { includeValues?: boolean } = {},
+  { pattern, unavailable = {}, includeValues = false }: StorageViewOptions & { includeValues?: boolean } = {},
 ): string {
   const sections = grouped(entries).map(({ store, entries: list }) =>
     [
       `### ${STORE_TITLE[store]} (${list.length})`,
-      list.length === 0
+      unavailable[store] !== undefined
+        ? unavailableLine(unavailable[store])
+        : list.length === 0
         ? "Empty."
         : [
             includeValues ? "| Key | Size | Value |" : "| Key | Size |",
