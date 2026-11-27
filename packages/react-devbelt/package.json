@@ -1,6 +1,6 @@
 {
   "name": "react-devbelt",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A pluggable in-browser dev toolbar for React and Next.js: network and console logs, responsive viewport frames, element grab, and agent-readable debug bundles.",
   "keywords": [
     "devtools",
