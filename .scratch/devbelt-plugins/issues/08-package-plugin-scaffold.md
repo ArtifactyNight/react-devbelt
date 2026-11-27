@@ -8,8 +8,8 @@
 
 Spec: `docs/specs/README.md`; see ADR 0003 for the write gate and the Glossary for vocabulary.
 
-- [ ] The package builds, type-checks, tests and lints through the repo's existing scripts
-- [ ] Peer dependencies are declared; the client is passed explicitly
-- [ ] A changeset, README and example usage exist; CI and release cover the new package
-- [ ] An example app can add `tanstackQuery(queryClient)` and the Plugin loads without errors
-- [ ] No private core imports are needed; any missing public API is recorded
+- [x] The package builds, type-checks, tests and lints through the repo's existing scripts
+- [x] Peer dependencies are declared; the client is passed explicitly
+- [x] A changeset, README and example usage exist; CI and release cover the new package
+- [x] An example app can add `tanstackQuery(queryClient)` and the Plugin loads without errors
+- [x] No private core imports are needed; any missing public API is recorded
