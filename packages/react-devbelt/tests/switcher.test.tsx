@@ -147,3 +147,64 @@ test("switcher is not part of defaultPlugins()", async () => {
   expect(defaultPlugins().map((p) => p.id)).not.toContain("role");
   expect(defaultPlugins().some((p) => p.id.startsWith("switcher"))).toBe(false);
 });
+
+// --- review fixes ---
+
+test("a rejected apply shows an error, keeps the current Option and is not unhandled", async () => {
+  const unhandled = vi.fn();
+  process.on("unhandledRejection", unhandled);
+  const { Panel } = setup({
+    reload: true,
+    apply: () => Promise.reject(new Error("sign-in failed")),
+  });
+  render(<Panel />);
+  fireEvent.click(screen.getByRole("radio", { name: /Admin/ }));
+  await waitFor(() => expect(screen.getByRole("alert").textContent).toMatch(/sign-in failed/));
+  expect(screen.getByRole("radio", { name: /Viewer/ }).getAttribute("aria-checked")).toBe("true");
+  expect(reload).not.toHaveBeenCalled();
+  await new Promise((r) => setTimeout(r, 10));
+  process.off("unhandledRejection", unhandled);
+  expect(unhandled).not.toHaveBeenCalled();
+});
+
+test("the apply Agent tool reports a rejected apply and an unknown id as error results", async () => {
+  const { plugin } = setup({ apply: () => Promise.reject(new Error("nope")) });
+  const tool = plugin.agentTools!.find((t) => t.name === "switch_role")!;
+  const failed = await tool.run({ id: "admin" }, undefined as never);
+  expect(failed.isError).toBe(true);
+  expect(failed.content[0].text).toMatch(/nope/);
+  const unknown = await tool.run({ id: "root" }, undefined as never);
+  expect(unknown.isError).toBe(true);
+});
+
+test("a throwing current does not crash the panel or the Debug bundle", () => {
+  const { plugin, Panel } = setup({
+    current: () => {
+      throw new Error("boom");
+    },
+  });
+  expect(() => render(<Panel />)).not.toThrow();
+  const entries = plugin.debugContext!();
+  expect(entries[0].value).toMatch(/could not be read/i);
+  const Status = plugin.Status!;
+  expect(() => render(<Status />)).not.toThrow();
+  const list = plugin.agentTools!.find((t) => t.name === "list_role_options")!;
+  expect(() => list.run({}, undefined as never)).not.toThrow();
+});
+
+test("the Plugin id is derived from the Axis id with a fixed prefix", () => {
+  expect(setup({ id: "network" }).plugin.id).toBe("switcher-network");
+});
+
+test("duplicate Option ids are rejected with a clear message", () => {
+  expect(() =>
+    setup({ options: [{ id: "a", label: "A" }, { id: "a", label: "Again" }] }),
+  ).toThrow(/role.*"a"/);
+});
+
+test("two Switchers for the same Axis are rejected when installed together", async () => {
+  const { installPlugins } = await import("../src/install-plugins");
+  const a = setup().plugin;
+  const b = setup().plugin;
+  expect(() => installPlugins([a, b])).toThrow(/switcher-role/);
+});
