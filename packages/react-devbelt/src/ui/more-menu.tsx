@@ -41,6 +41,8 @@ export const menuItemClass =
 // kept mounted so labels line up; hidden while unchecked
 export const menuIndicatorClass =
   "inline-flex size-3.5 items-center justify-center data-unchecked:invisible";
+// the leading icon of a menu row
+export const menuIconClass = "size-3.5 shrink-0 text-fg-icon";
 export const menuSeparatorClass = "my-1 h-px bg-hover";
 
 /**

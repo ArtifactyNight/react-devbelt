@@ -11,9 +11,12 @@ import {
   MenuSeparator,
 } from "@ui-sdk/react/menu";
 
+import { PinOffIcon, PlayIcon, SquareArrowOutUpRightIcon } from "lucide-react";
+
 import type { DevBeltPlugin } from "../plugin";
 import {
   menuContentClass,
+  menuIconClass,
   menuItemClass,
   menuLabelClass,
   menuSeparatorClass,
@@ -48,9 +51,19 @@ export function ItemMenu({ plugin, onOpen, onUnpin, children }: Props) {
         className={menuContentClass}
       >
         <MenuGroup>
-          <MenuGroupLabel className={menuLabelClass}>{plugin.name}</MenuGroupLabel>
+          <MenuGroupLabel className={`${menuLabelClass} flex items-center gap-1.5`}>
+            <span className="inline-flex shrink-0 [&_svg]:size-3" aria-hidden="true">
+              {plugin.icon}
+            </span>
+            {plugin.name}
+          </MenuGroupLabel>
           {plugin.window || plugin.run ? (
             <MenuItem value="open" className={menuItemClass} onSelect={onOpen}>
+              {plugin.window ? (
+                <SquareArrowOutUpRightIcon className={menuIconClass} aria-hidden="true" />
+              ) : (
+                <PlayIcon className={menuIconClass} aria-hidden="true" />
+              )}
               {plugin.window ? "Open" : "Run"}
             </MenuItem>
           ) : null}
@@ -63,6 +76,7 @@ export function ItemMenu({ plugin, onOpen, onUnpin, children }: Props) {
         ) : null}
         <MenuSeparator className={menuSeparatorClass} />
         <MenuItem value="unpin" className={menuItemClass} onSelect={onUnpin}>
+          <PinOffIcon className={menuIconClass} aria-hidden="true" />
           Unpin from toolbar
         </MenuItem>
       </MenuContent>

@@ -16,7 +16,17 @@ import {
   MenuRadioGroup,
   MenuRadioItem,
 } from "@ui-sdk/react/menu";
-import { CheckIcon, MonitorSmartphoneIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ExpandIcon,
+  LaptopIcon,
+  MonitorIcon,
+  MonitorSmartphoneIcon,
+  RulerIcon,
+  SmartphoneIcon,
+  TabletIcon,
+  type LucideIcon,
+} from "lucide-react";
 
 import { text } from "../../core/agent-tools";
 import {
@@ -29,6 +39,7 @@ import {
   menuIndicatorClass,
   menuItemClass,
   menuLabelClass,
+  menuIconClass,
 } from "../../ui/more-menu";
 import { useToolbarTransition } from "../../ui/motion";
 import { kbdClass, toolbarItemClass, tooltipClass } from "../../ui/styles";
@@ -220,6 +231,15 @@ function ViewportOverlay() {
   );
 }
 
+const VIEWPORT_ICONS: Record<string, LucideIcon> = {
+  full: ExpandIcon,
+  mobile: SmartphoneIcon,
+  ipad: TabletIcon,
+  macbook: LaptopIcon,
+  pc: MonitorIcon,
+  custom: RulerIcon,
+};
+
 function ViewportMenuSection() {
   const state = useViewportState();
   return (
@@ -229,14 +249,18 @@ function ViewportMenuSection() {
       onValueChange={selectViewport}
     >
       <MenuGroupLabel className={menuLabelClass}>Viewport</MenuGroupLabel>
-      {VIEWPORTS.map((v) => (
-        <MenuRadioItem key={v.id} value={v.id} className={menuItemClass}>
-          <MenuItemIndicator keepMounted className={menuIndicatorClass}>
-            <CheckIcon className="size-3.5" aria-hidden="true" />
-          </MenuItemIndicator>
-          {v.label}
-        </MenuRadioItem>
-      ))}
+      {VIEWPORTS.map((v) => {
+        const Icon = VIEWPORT_ICONS[v.id] ?? MonitorIcon;
+        return (
+          <MenuRadioItem key={v.id} value={v.id} className={menuItemClass}>
+            <MenuItemIndicator keepMounted className={menuIndicatorClass}>
+              <CheckIcon className="size-3.5" aria-hidden="true" />
+            </MenuItemIndicator>
+            <Icon className={menuIconClass} aria-hidden="true" />
+            {v.label}
+          </MenuRadioItem>
+        );
+      })}
     </MenuRadioGroup>
   );
 }

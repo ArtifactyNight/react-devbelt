@@ -15,7 +15,7 @@ import {
   TooltipShortcut,
   TooltipTrigger,
 } from "@ui-sdk/react/tooltip";
-import { CheckIcon, CrosshairIcon } from "lucide-react";
+import { CheckIcon, CopyIcon, CrosshairIcon } from "lucide-react";
 
 import type { AiTool } from "../../core/ai-tools";
 import { formatRecentProblems } from "../../core/debug-bundle";
@@ -24,12 +24,13 @@ import { definePlugin } from "../../plugin";
 import { useToolbar } from "../../ui/context";
 import { MorphText } from "../../ui/morph-text";
 import {
+  menuIconClass,
   menuIndicatorClass,
   menuItemClass,
   menuLabelClass,
 } from "../../ui/more-menu";
 import { kbdClass, toolbarItemClass, tooltipClass } from "../../ui/styles";
-import { handOff } from "../ai-handoff";
+import { AiToolIcon, handOff } from "../ai-handoff";
 import { presetOf, useViewportState } from "../viewport/store";
 import { DevGrabPicker } from "./dev-grab-picker";
 
@@ -114,6 +115,11 @@ function GrabMenuSection() {
           <MenuItemIndicator keepMounted className={menuIndicatorClass}>
             <CheckIcon className="size-3.5" aria-hidden="true" />
           </MenuItemIndicator>
+          {option.id === "none" ? (
+            <CopyIcon className={menuIconClass} aria-hidden="true" />
+          ) : (
+            <AiToolIcon id={option.id} className={menuIconClass} />
+          )}
           {option.label}
         </MenuRadioItem>
       ))}

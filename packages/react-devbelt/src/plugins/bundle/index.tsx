@@ -7,9 +7,9 @@ import { text } from "../../core/agent-tools";
 import { formatDebugBundle } from "../../core/debug-bundle";
 import { definePlugin, type ToolbarApi } from "../../plugin";
 import { useToolbar } from "../../ui/context";
-import { menuItemClass, menuLabelClass } from "../../ui/more-menu";
+import { menuIconClass, menuItemClass, menuLabelClass } from "../../ui/more-menu";
 import { MorphText } from "../../ui/morph-text";
-import { createFlash, handOff } from "../ai-handoff";
+import { AiToolIcon, createFlash, handOff } from "../ai-handoff";
 
 const flash = createFlash();
 
@@ -41,6 +41,7 @@ function BundleMenuSection() {
             );
           }}
         >
+          <AiToolIcon id={tool.id} className={menuIconClass} />
           {tool.label}
         </MenuItem>
       ))}

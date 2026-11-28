@@ -4,11 +4,19 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { MenuGroup, MenuGroupLabel, MenuItem } from "@ui-sdk/react/menu";
 import { ToolbarButton } from "@ui-sdk/react/toolbar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui-sdk/react/tooltip";
-import { CameraIcon, CircleIcon, CropIcon, SquareIcon } from "lucide-react";
+import {
+  ArrowDownToLineIcon,
+  CameraIcon,
+  CircleIcon,
+  CopyIcon,
+  CropIcon,
+  DownloadIcon,
+  SquareIcon,
+} from "lucide-react";
 
 import { definePlugin } from "../../plugin";
 import { useToolbar } from "../../ui/context";
-import { menuItemClass, menuLabelClass } from "../../ui/more-menu";
+import { menuIconClass, menuItemClass, menuLabelClass } from "../../ui/more-menu";
 import { MorphText } from "../../ui/morph-text";
 import { toolbarItemClass, tooltipClass } from "../../ui/styles";
 import { createFlash } from "../ai-handoff";
@@ -302,6 +310,7 @@ function makeMenuSection(scale: number | undefined) {
           className={menuItemClass}
           onSelect={() => void screenshot("copy", false, scale)}
         >
+          <CopyIcon className={menuIconClass} aria-hidden="true" />
           Copy screenshot
         </MenuItem>
         <MenuItem
@@ -309,6 +318,7 @@ function makeMenuSection(scale: number | undefined) {
           className={menuItemClass}
           onSelect={() => setSelecting(true)}
         >
+          <CropIcon className={menuIconClass} aria-hidden="true" />
           Screenshot a region
         </MenuItem>
         <MenuItem
@@ -316,6 +326,7 @@ function makeMenuSection(scale: number | undefined) {
           className={menuItemClass}
           onSelect={() => void screenshot("download", false, scale)}
         >
+          <DownloadIcon className={menuIconClass} aria-hidden="true" />
           Save screenshot
         </MenuItem>
         <MenuItem
@@ -323,6 +334,7 @@ function makeMenuSection(scale: number | undefined) {
           className={menuItemClass}
           onSelect={() => void screenshot("download", true, scale)}
         >
+          <ArrowDownToLineIcon className={menuIconClass} aria-hidden="true" />
           Save full-page screenshot
         </MenuItem>
         {canRecord() ? (
@@ -331,6 +343,11 @@ function makeMenuSection(scale: number | undefined) {
             className={menuItemClass}
             onSelect={() => void toggleRecording()}
           >
+            {current ? (
+              <SquareIcon className={`${menuIconClass} fill-current`} aria-hidden="true" />
+            ) : (
+              <CircleIcon className={menuIconClass} aria-hidden="true" />
+            )}
             {current ? "Stop recording" : "Record screen"}
           </MenuItem>
         ) : null}
