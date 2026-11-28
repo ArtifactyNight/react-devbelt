@@ -1,5 +1,26 @@
 # devbelt-plugin-tanstack-query
 
+## 0.1.1
+
+### Patch Changes
+
+- 72b3ab4: Bigger click targets: toolbar buttons get a 40px-tall target, window header buttons and switches are easier to hit, the Storage panel's text buttons, the Console rows and the TanStack Query filter fields are at least 24px tall, and the window's resize corner and Grab's numbered markers are 24px.
+- 7919014: Text that changes on the toolbar (request and error counts, the breakpoint and frame size readouts, "Copied" and other confirmations, the recording timer) morphs between values with Torph. Plugins can use `MorphText` from `react-devbelt/ui`.
+- bef8079: Scrolling areas in the toolbar (windows, panels, the More tools menu) get a slim, rounded scrollbar that matches the dark theme.
+- 9979ad3: Show the TanStack Query logo on the toolbar item, which was blank.
+- Updated dependencies [c95f85b]
+- Updated dependencies [f1e0bc4]
+- Updated dependencies [66ae4d9]
+- Updated dependencies [2db112d]
+- Updated dependencies [26f2490]
+- Updated dependencies [72b3ab4]
+- Updated dependencies [5871c3c]
+- Updated dependencies [7919014]
+- Updated dependencies [a0fb5a6]
+- Updated dependencies [bef8079]
+- Updated dependencies [2db112d]
+  - react-devbelt@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes
