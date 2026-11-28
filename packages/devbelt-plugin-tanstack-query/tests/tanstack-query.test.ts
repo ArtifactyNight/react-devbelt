@@ -24,6 +24,12 @@ describe("tanstackQuery(queryClient)", () => {
     expect(() => definePlugin(plugin)).not.toThrow();
   });
 
+  it("has an icon, so its toolbar item is not blank", () => {
+    const plugin = tanstackQuery(new QueryClient());
+    stop = plugin.install?.(); // releases the plugin id again in afterEach
+    expect(plugin.icon).toBeTruthy();
+  });
+
   it("has a window and a read Agent tool, and no write tools", () => {
     const plugin = tanstackQuery(new QueryClient());
     stop = plugin.install?.();
