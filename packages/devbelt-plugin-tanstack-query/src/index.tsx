@@ -78,7 +78,7 @@ const STATUSES = [...QUERY_STATUSES, ...MUTATION_STATUSES];
 // Only layout and inherited colour: the toolbar's stylesheet cannot be extended, so
 // anything this plugin needs beyond the shared `react-devbelt/ui` classes lives here.
 const STYLES = `
-.tq-window{font-size:12px;padding:8px;overflow:auto;height:100%}
+.tq-window{font-size:12px;padding:8px;overflow:auto;height:100%;scrollbar-width:thin;scrollbar-color:color-mix(in oklab,currentColor 25%,transparent) transparent}
 .tq-tabs{display:flex;gap:4px;margin-bottom:8px}
 .tq-filters{display:flex;gap:6px;margin-bottom:8px}
 .tq-filter{font:inherit;min-width:0}

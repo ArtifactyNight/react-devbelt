@@ -145,7 +145,7 @@ function Body({ value, title }: { value: string | null; title: string }) {
               <XIcon className="size-3.5" aria-hidden="true" />
             </DialogClose>
           </div>
-          <div className="min-h-0 flex-1 overflow-auto p-4 [&_pre]:text-[13px]">
+          <div className="min-h-0 flex-1 scrollbar-slim overflow-auto p-4 [&_pre]:text-[13px]">
             <JsonCode code={text} />
           </div>
         </DialogContent>
@@ -345,18 +345,18 @@ function EntryDetail({ entry }: { entry: NetworkEntry }) {
             Headers
           </TabsTab>
         </TabsList>
-        <TabsPanel value="request" className="min-h-0 flex-1 overflow-auto p-3">
+        <TabsPanel value="request" className="min-h-0 flex-1 scrollbar-slim overflow-auto p-3">
           <Body value={entry.requestBody} title={`Request body · ${name}`} />
         </TabsPanel>
         <TabsPanel
           value="response"
-          className="min-h-0 flex-1 overflow-auto p-3"
+          className="min-h-0 flex-1 scrollbar-slim overflow-auto p-3"
         >
           <Body value={entry.responseBody} title={`Response body · ${name}`} />
         </TabsPanel>
         <TabsPanel
           value="headers"
-          className="min-h-0 flex-1 space-y-3 overflow-auto p-3"
+          className="min-h-0 flex-1 space-y-3 scrollbar-slim overflow-auto p-3"
         >
           <h3 className="font-medium text-fg-secondary">Request</h3>
           <HeaderList headers={entry.requestHeaders} />
@@ -488,7 +488,7 @@ function NetworkList({
         </span>
       </div>
       <div
-        className={`min-h-0 overflow-auto ${selectedOpen ? "max-h-[40%] shrink-0 border-b border-line" : "flex-1"}`}
+        className={`min-h-0 scrollbar-slim overflow-auto ${selectedOpen ? "max-h-[40%] shrink-0 border-b border-line" : "flex-1"}`}
       >
         {visible.length === 0 ? (
           <p className="p-3 text-fg-tertiary">

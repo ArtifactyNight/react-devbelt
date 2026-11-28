@@ -176,7 +176,7 @@ export function StoragePanel({
             </TabsTab>
           ))}
         </TabsList>
-        <TabsPanel value={store} className="min-h-0 flex-1 overflow-auto p-3">
+        <TabsPanel value={store} className="min-h-0 flex-1 scrollbar-slim overflow-auto p-3">
           {(() => {
           const all = entries.filter((e) => e.store === store);
           const needle = query.trim().toLowerCase();

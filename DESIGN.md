@@ -107,6 +107,7 @@ These are still plain Tailwind scales, applied consistently:
   Depth comes from shadow plus a `line` border, never from a lighter surface alone.
 - **Type:** `ui-sans-serif` at 12px (`text-xs`), `text-[11px]` for dense rows and chips, `font-mono`
   for data (URLs, headers, storage values), `tabular-nums` for changing numbers.
+- **Scrollbars:** `scrollbar-slim` (defined in `global.css`) on every scrolling area: a thin rounded `track` thumb on a transparent track, brighter on hover.
 - **Motion:** springs from `src/ui/motion.ts`. Respect `prefers-reduced-motion`.
 
 ## Exceptions

@@ -70,7 +70,7 @@ export function DisplayPanel({
   );
 
   return (
-    <div className="min-h-0 flex-1 overflow-auto p-3">
+    <div className="min-h-0 flex-1 scrollbar-slim overflow-auto p-3">
       <label className={rowClass}>
         <span>
           Rotate

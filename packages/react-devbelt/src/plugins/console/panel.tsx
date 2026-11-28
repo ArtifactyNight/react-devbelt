@@ -125,7 +125,7 @@ export function ConsolePanel() {
         </Button>
       </div>
       <div
-        className={`min-h-0 overflow-auto ${selected ? "max-h-[40%] shrink-0 border-b border-line" : "flex-1"}`}
+        className={`min-h-0 scrollbar-slim overflow-auto ${selected ? "max-h-[40%] shrink-0 border-b border-line" : "flex-1"}`}
       >
         {visible.length === 0 ? (
           <p className="p-3 text-fg-tertiary">
@@ -155,7 +155,7 @@ export function ConsolePanel() {
 
 function EntryDetail({ entry }: { entry: ConsoleEntry }) {
   return (
-    <div className="min-h-0 flex-1 overflow-auto p-3">
+    <div className="min-h-0 flex-1 scrollbar-slim overflow-auto p-3">
       <div className="mb-2 flex items-start gap-2">
         <p className="min-w-0 flex-1 text-fg-secondary">
           {entry.viewport} · {entry.pageUrl}
