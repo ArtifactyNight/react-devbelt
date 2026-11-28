@@ -44,6 +44,7 @@ const written: Blob[] = [];
 const clipboardWrite = vi.fn();
 
 beforeEach(() => {
+  recorderStarts.length = 0;
   downloads.length = 0;
   written.length = 0;
   domToBlob.mockClear();
@@ -73,6 +74,8 @@ afterEach(() => {
 });
 
 const plugins = [capture()];
+// the toolbar is hidden while recording by default; these tests need its Stop button to stay in reach
+const visiblePlugins = [capture({ hideWhileRecording: false })];
 // userEvent.setup() puts its own clipboard stub on navigator, so ours goes on after it
 const renderToolbar = () => {
   Object.defineProperty(navigator, "clipboard", {
@@ -228,6 +231,14 @@ test("a screenshot that cannot be made says so", async () => {
   expect(written).toHaveLength(0);
 });
 
+// what the toolbar looked like at the moment the recorder took its first frame
+const recorderStarts: (string | undefined)[] = [];
+const toolbarDisplay = () =>
+  (document.querySelector('[data-dock="toolbar"]')?.parentElement?.parentElement as
+    | HTMLElement
+    | null
+    | undefined)?.style.display;
+
 class FakeRecorder {
   static isTypeSupported = (type: string) => type === "video/webm;codecs=vp9";
   state: "inactive" | "recording" = "inactive";
@@ -242,6 +253,7 @@ class FakeRecorder {
   }
   start() {
     this.state = "recording";
+    recorderStarts.push(toolbarDisplay());
   }
   stop() {
     this.state = "inactive";
@@ -268,7 +280,7 @@ function fakeScreenShare() {
 test("the circle records the screen and saves a video when stopped", async () => {
   const user = userEvent.setup();
   const { track, getDisplayMedia } = fakeScreenShare();
-  renderToolbar();
+  render(<ToolbarImpl plugins={visiblePlugins} isolation="none" />);
 
   await user.click(screen.getByRole("button", { name: "Record screen" }));
   const stop = await screen.findByRole("button", { name: "Stop recording" });
@@ -287,7 +299,7 @@ test("the circle records the screen and saves a video when stopped", async () =>
 test("stopping the share from the browser ends the recording too", async () => {
   const user = userEvent.setup();
   const { track } = fakeScreenShare();
-  renderToolbar();
+  render(<ToolbarImpl plugins={visiblePlugins} isolation="none" />);
 
   await user.click(screen.getByRole("button", { name: "Record screen" }));
   await screen.findByRole("button", { name: "Stop recording" });
@@ -317,4 +329,81 @@ test("without screen capture in the browser there is no record button", () => {
   renderToolbar();
   expect(screen.getByRole("button", { name: "Take screenshot" })).toBeTruthy();
   expect(screen.queryByRole("button", { name: "Record screen" })).toBeNull();
+});
+
+test("the toolbar is gone before the first frame is recorded, and back when the recording ends", async () => {
+  const user = userEvent.setup();
+  const { track } = fakeScreenShare();
+  renderToolbar();
+  expect(toolbarDisplay()).toBe("contents");
+
+  await user.click(screen.getByRole("button", { name: "Record screen" }));
+  await vi.waitFor(() => expect(recorderStarts).toHaveLength(1));
+  // hidden when the recorder started, so it is not in the video
+  expect(recorderStarts[0]).toBe("none");
+  expect(toolbarDisplay()).toBe("none");
+
+  // the toolbar is out of reach, so end it from the browser's own bar
+  act(() => {
+    track.dispatchEvent(new Event("ended"));
+  });
+  await vi.waitFor(() => expect(toolbarDisplay()).toBe("contents"));
+  expect(downloads).toHaveLength(1);
+});
+
+test("hideWhileRecording: false leaves the toolbar on screen", async () => {
+  const user = userEvent.setup();
+  fakeScreenShare();
+  render(
+    <ToolbarImpl plugins={[capture({ hideWhileRecording: false })]} isolation="none" />,
+  );
+
+  await user.click(screen.getByRole("button", { name: "Record screen" }));
+  await vi.waitFor(() => expect(recorderStarts).toHaveLength(1));
+  expect(recorderStarts[0]).toBe("contents");
+  // still there to press, and ends the recording (the module keeps recording state between tests)
+  await user.click(await screen.findByRole("button", { name: "Stop recording" }));
+  await screen.findByText("Recording saved");
+});
+
+test("the toolbar comes back if recording cannot start after it was hidden", async () => {
+  const user = userEvent.setup();
+  fakeScreenShare();
+  // the recorder refuses to start
+  const originalStart = FakeRecorder.prototype.start;
+  FakeRecorder.prototype.start = function () {
+    throw new Error("cannot record");
+  };
+  try {
+    renderToolbar();
+    await user.click(screen.getByRole("button", { name: "Record screen" }));
+    await vi.waitFor(() => expect(toolbarDisplay()).toBe("contents"));
+    expect(await screen.findByText("Recording failed")).toBeTruthy();
+  } finally {
+    FakeRecorder.prototype.start = originalStart;
+  }
+});
+
+test("More tools has a saved choice to hide the toolbar while recording, which wins over the option", async () => {
+  const user = userEvent.setup();
+  fakeScreenShare();
+  render(
+    <ToolbarImpl plugins={[capture({ hideWhileRecording: true })]} isolation="none" />,
+  );
+  await user.click(screen.getByRole("button", { name: "More tools" }));
+  const hide = screen.getByRole("menuitemcheckbox", { name: "Hide toolbar while recording" });
+  expect(hide.getAttribute("aria-checked")).toBe("true");
+
+  await user.click(hide);
+  expect(window.localStorage.getItem("devbelt:capture-hide")).toBe("0");
+  await user.keyboard("{Escape}");
+
+  await user.click(screen.getByRole("button", { name: "Record screen" }));
+  await vi.waitFor(() => expect(recorderStarts).toHaveLength(1));
+  expect(recorderStarts[0]).toBe("contents");
+
+  // put the module's saved choice back for the tests that follow
+  await user.click(screen.getByRole("button", { name: "More tools" }));
+  await user.click(screen.getByRole("menuitemcheckbox", { name: "Hide toolbar while recording" }));
+  expect(window.localStorage.getItem("devbelt:capture-hide")).toBe("1");
 });

@@ -25,6 +25,13 @@ export interface ToolbarApi {
   aiTools: readonly AiTool[];
   /** Overlays that handle Esc themselves call this; the returned function releases it. */
   holdEscape(): () => void;
+  /**
+   * Hides the toolbar, its windows and popovers (what ⌘/ does), or shows them again. For a plugin
+   * that needs the screen clear, like recording it. Whoever hides it should show it again.
+   */
+  setHidden(hidden: boolean): void;
+  /** Whether the toolbar is hidden right now. */
+  isHidden(): boolean;
   /** The element the toolbar renders into: inside its shadow root, or a div on the page. */
   container: HTMLElement;
   /** The shadow root or document the toolbar lives in, for queries. */

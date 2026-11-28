@@ -144,3 +144,9 @@
     white-space: nowrap;
   }
 }
+
+/* While the toolbar is hidden, its transient pop-ups (the size HUD) are hidden with it. Not in a
+   layer, so it beats the `grid` and `flex` utilities those pop-ups are laid out with. */
+[data-devbelt-hidden] [data-devbelt-hud] {
+  display: none;
+}

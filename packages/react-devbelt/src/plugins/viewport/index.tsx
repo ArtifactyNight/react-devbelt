@@ -176,6 +176,7 @@ function ViewportOverlay() {
         <div
           key={hud.key}
           aria-hidden="true"
+          data-devbelt-hud
           className="pointer-events-none fixed inset-0 z-[10001] grid place-items-center"
         >
           <motion.div

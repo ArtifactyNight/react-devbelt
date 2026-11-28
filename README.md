@@ -187,13 +187,14 @@ breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 }, base: "xs", outlin
 
 ### Screenshot and recording (opt-in)
 
-`capture()` adds a camera, a region picker and a record button. The camera copies a PNG of the page without the toolbar (the device Frame's page while one is up). The crop button lets you drag over the page to copy just that region (Esc cancels; over a Frame, the part outside it is left out). More tools also saves a screenshot or a full-page one. It is rendered from the DOM with [modern-screenshot](https://github.com/qq15725/modern-screenshot), loaded on first use, so it needs no permission prompt; cross-origin images without CORS headers come out blank. The record button uses the browser's own screen sharing: the browser asks what to share and shows its own indicator, and stopping saves a `.webm` (`.mp4` where that is all the browser can record). It is hidden where screen capture is not available. Paste a copied screenshot straight into an AI chat.
+`capture()` adds a camera, a region picker and a record button. The camera copies a PNG of the page without the toolbar (the device Frame's page while one is up). The crop button lets you drag over the page to copy just that region (Esc cancels; over a Frame, the part outside it is left out). More tools also saves a screenshot or a full-page one. It is rendered from the DOM with [modern-screenshot](https://github.com/qq15725/modern-screenshot), loaded on first use, so it needs no permission prompt; cross-origin images without CORS headers come out blank. The record button uses the browser's own screen sharing: the browser asks what to share and shows its own indicator, and stopping saves a `.webm` (`.mp4` where that is all the browser can record). It is hidden where screen capture is not available. While it records, the toolbar, its windows and popovers (and the size HUD) are hidden so they are not in the video, and come back when you stop; turn that off with `capture({ hideWhileRecording: false })` or per person in More tools ("Hide toolbar while recording", saved, wins over the option). To stop with the toolbar hidden, use the browser's own "Stop sharing" bar, or bring the toolbar back with `Ctrl`/`⌘` + `.`. Paste a copied screenshot straight into an AI chat.
 
 ```tsx
 import { capture } from "react-devbelt/plugins";
 
 capture(); // screenshots at the screen's pixel ratio
 capture({ scale: 1 }); // smaller files
+capture({ hideWhileRecording: false }); // keep the toolbar in the video
 ```
 
 ### Storage (opt-in)

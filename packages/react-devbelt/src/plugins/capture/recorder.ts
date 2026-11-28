@@ -29,7 +29,15 @@ export const videoExtension = (blob: Blob) => (blob.type.includes("mp4") ? "mp4"
  * dismisses the browser's prompt. Ends when `stop` is called or when they stop
  * sharing from the browser's own indicator.
  */
-export async function startRecording(): Promise<ActiveRecording> {
+export async function startRecording(
+  hooks: {
+    /**
+     * Runs once the person has picked what to share, before the first frame is recorded. Whatever
+     * should not be in the video (the toolbar) is taken away here.
+     */
+    beforeStart?: () => Promise<void>;
+  } = {},
+): Promise<ActiveRecording> {
   // `preferCurrentTab` and the like are Chromium hints; other browsers ignore them
   const stream = await navigator.mediaDevices.getDisplayMedia({
     video: { frameRate: 30 },
@@ -58,6 +66,18 @@ export async function startRecording(): Promise<ActiveRecording> {
   };
   // "Stop sharing" in the browser's own bar
   stream.getVideoTracks()[0]?.addEventListener("ended", stop);
+
+  try {
+    await hooks.beforeStart?.();
+  } catch (error) {
+    for (const track of stream.getTracks()) track.stop();
+    throw error;
+  }
+  // sharing may have been stopped while we waited
+  if (stream.getVideoTracks()[0]?.readyState === "ended") {
+    for (const track of stream.getTracks()) track.stop();
+    throw new DOMException("The screen share ended", "AbortError");
+  }
 
   recorder.start(1_000);
   return { stop, done };

@@ -15,6 +15,8 @@ export function stubApi(overrides: Partial<ToolbarApi> = {}): ToolbarApi {
     debugContext: () => [],
     debugSections: () => [],
     holdEscape: () => () => {},
+    setHidden() {},
+    isHidden: () => false,
     aiTools: defaultAiTools,
     ...overrides,
   };

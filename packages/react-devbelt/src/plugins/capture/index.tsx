@@ -1,22 +1,36 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { MenuGroup, MenuGroupLabel, MenuItem } from "@ui-sdk/react/menu";
+import {
+  MenuCheckboxItem,
+  MenuGroup,
+  MenuGroupLabel,
+  MenuItem,
+  MenuItemIndicator,
+} from "@ui-sdk/react/menu";
 import { ToolbarButton } from "@ui-sdk/react/toolbar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui-sdk/react/tooltip";
 import {
   ArrowDownToLineIcon,
   CameraIcon,
+  CheckIcon,
   CircleIcon,
   CopyIcon,
   CropIcon,
   DownloadIcon,
+  EyeOffIcon,
   SquareIcon,
 } from "lucide-react";
 
-import { definePlugin } from "../../plugin";
+import { readString, writeString } from "../../core/storage";
+import { definePlugin, type ToolbarApi } from "../../plugin";
 import { useToolbar } from "../../ui/context";
-import { menuIconClass, menuItemClass, menuLabelClass } from "../../ui/more-menu";
+import {
+  menuIconClass,
+  menuIndicatorClass,
+  menuItemClass,
+  menuLabelClass,
+} from "../../ui/more-menu";
 import { MorphText } from "../../ui/morph-text";
 import { toolbarItemClass, tooltipClass } from "../../ui/styles";
 import { createFlash } from "../ai-handoff";
@@ -33,9 +47,45 @@ import {
 export type CaptureOptions = {
   /** Pixel ratio of screenshots. Default: the screen's, e.g. 2 on a retina display. */
   scale?: number;
+  /**
+   * Hide the toolbar, its windows and popovers while the screen is recorded, so they are not in
+   * the video. They come back when the recording ends. The person can change this in More tools,
+   * and their choice wins. Default true.
+   */
+  hideWhileRecording?: boolean;
 };
 
 const flash = createFlash();
+
+// "Hide the toolbar while recording": the person's saved choice, else the app's option.
+const HIDE_KEY = "capture-hide";
+let savedHide: boolean | null = (() => {
+  const saved = readString(HIDE_KEY);
+  return saved === null ? null : saved === "1";
+})();
+const hideListeners = new Set<() => void>();
+const setSavedHide = (next: boolean) => {
+  savedHide = next;
+  writeString(HIDE_KEY, next ? "1" : "0");
+  for (const listener of hideListeners) listener();
+};
+const useSavedHide = () =>
+  useSyncExternalStore(
+    (listener) => {
+      hideListeners.add(listener);
+      return () => {
+        hideListeners.delete(listener);
+      };
+    },
+    () => savedHide,
+    () => null,
+  );
+
+/** Two frames: the toolbar's removal has been committed and painted. */
+const afterPaint = () =>
+  new Promise<void>((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+  );
 
 // Recording state is shared by the toolbar item, the menu and the collapsed chip.
 let recording: { startedAt: number; active: ActiveRecording } | null = null;
@@ -98,20 +148,37 @@ async function screenshot(
   }
 }
 
-async function toggleRecording() {
+async function toggleRecording(api: ToolbarApi, hideByDefault: boolean) {
   if (recording) return recording.active.stop();
   if (starting) return;
   starting = true;
+  // Only what we hid is shown again: a toolbar the person had hidden stays hidden.
+  let weHid = false;
+  const showAgain = () => {
+    if (!weHid) return;
+    weHid = false;
+    api.setHidden(false);
+  };
   try {
-    const active = await startRecording();
+    const active = await startRecording({
+      // after the person has picked what to share, before the first frame
+      beforeStart: async () => {
+        if (!(savedHide ?? hideByDefault) || api.isHidden()) return;
+        api.setHidden(true);
+        weHid = true;
+        await afterPaint();
+      },
+    });
     setRecording({ startedAt: Date.now(), active });
     void active.done.then((blob) => {
+      showAgain();
       setRecording(null);
       saveFile(blob, fileName("recording", captureTarget().label, videoExtension(blob)));
       flash.show("Recording saved");
     });
   } catch (error) {
     // the person closed the browser's prompt
+    showAgain();
     const refused = error instanceof DOMException && error.name === "NotAllowedError";
     flash.show(refused ? "Recording cancelled" : "Recording failed");
   } finally {
@@ -223,8 +290,9 @@ function makeRegionOverlay(scale: number | undefined) {
   };
 }
 
-function makeItem(scale: number | undefined) {
+function makeItem({ scale, hideWhileRecording = true }: CaptureOptions) {
   return function CaptureItem() {
+    const api = useToolbar();
     const current = useRecording();
     const picking = useSelecting();
     const line = flash.use();
@@ -270,7 +338,7 @@ function makeItem(scale: number | undefined) {
                 <ToolbarButton
                   aria-label={current ? "Stop recording" : "Record screen"}
                   aria-pressed={current !== null}
-                  onClick={() => void toggleRecording()}
+                  onClick={() => void toggleRecording(api, hideWhileRecording)}
                 />
               }
               className={`${toolbarItemClass} ${current ? "text-danger-fg" : ""}`}
@@ -299,9 +367,11 @@ function makeItem(scale: number | undefined) {
   };
 }
 
-function makeMenuSection(scale: number | undefined) {
+function makeMenuSection({ scale, hideWhileRecording = true }: CaptureOptions) {
   return function CaptureMenuSection() {
+    const api = useToolbar();
     const current = useRecording();
+    const hide = useSavedHide() ?? hideWhileRecording;
     return (
       <MenuGroup>
         <MenuGroupLabel className={menuLabelClass}>Capture</MenuGroupLabel>
@@ -341,7 +411,7 @@ function makeMenuSection(scale: number | undefined) {
           <MenuItem
             value="capture:record"
             className={menuItemClass}
-            onSelect={() => void toggleRecording()}
+            onSelect={() => void toggleRecording(api, hideWhileRecording)}
           >
             {current ? (
               <SquareIcon className={`${menuIconClass} fill-current`} aria-hidden="true" />
@@ -350,6 +420,20 @@ function makeMenuSection(scale: number | undefined) {
             )}
             {current ? "Stop recording" : "Record screen"}
           </MenuItem>
+        ) : null}
+        {canRecord() ? (
+          <MenuCheckboxItem
+            value="capture:hide"
+            checked={hide}
+            onCheckedChange={setSavedHide}
+            className={menuItemClass}
+          >
+            <MenuItemIndicator keepMounted className={menuIndicatorClass}>
+              <CheckIcon className="size-3.5" aria-hidden="true" />
+            </MenuItemIndicator>
+            <EyeOffIcon className={menuIconClass} aria-hidden="true" />
+            Hide toolbar while recording
+          </MenuCheckboxItem>
         ) : null}
       </MenuGroup>
     );
@@ -379,9 +463,9 @@ export function capture(options: CaptureOptions = {}) {
     name: "Screenshot & recording",
     label: "Screenshot and recording",
     icon: <CameraIcon className="size-4" aria-hidden="true" />,
-    Item: makeItem(options.scale),
+    Item: makeItem(options),
     Overlay: makeRegionOverlay(options.scale),
-    MenuSection: makeMenuSection(options.scale),
+    MenuSection: makeMenuSection(options),
     ChipStatus: CaptureChip,
   });
 }

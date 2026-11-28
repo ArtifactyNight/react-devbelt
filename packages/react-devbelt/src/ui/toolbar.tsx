@@ -146,6 +146,8 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
                   return [];
                 }
               }),
+            setHidden: (next) => setHidden(next),
+            isHidden: () => live.current.hidden,
             holdEscape: () => {
               escapeHolds.current++;
               let released = false;
@@ -203,6 +205,12 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
       return !current;
     });
   const toggleHidden = () => setHidden((current) => !current);
+
+  // Overlays stay while the toolbar is hidden (the device Frame is the page), but the toolbar's
+  // own pop-ups, like the size HUD, go: they mark themselves `data-devbelt-hud`.
+  useEffect(() => {
+    mount?.container.toggleAttribute("data-devbelt-hidden", hidden);
+  }, [mount, hidden]);
 
   // ⌘. collapses to the chip (or brings back a hidden toolbar); ⌘/ hides everything.
   // They also arrive as events from the viewport frame.
