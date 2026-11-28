@@ -12,7 +12,7 @@ export type WindowSize = {
 
 /** What a plugin can ask the toolbar to do. Get it from `useToolbar()` or `run()`. */
 export interface ToolbarApi {
-  /** Opens the floating window of the plugin with this id. */
+  /** Opens the window of the plugin with this id, as a floating window or a popover (the panel mode). */
   openWindow(pluginId: string): void;
   closeWindow(pluginId: string): void;
   toggleWindow(pluginId: string): void;
@@ -71,7 +71,10 @@ export interface DevBeltPlugin {
   /** Accessible name of the default toggle or button. Default: `name`. */
   label?: string;
 
-  /** A floating, draggable, resizable window. */
+  /**
+   * The plugin's panel: a floating, draggable, resizable window, or, in popover
+   * panel mode, a popover on its toolbar item at `size.width` × `size.height`.
+   */
   window?: {
     title?: string;
     size: WindowSize;

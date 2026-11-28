@@ -169,6 +169,7 @@ breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 }, base: "xs", outlin
 | ----------- | ---------- | --------------------------------------------------------------------------- |
 | `plugins`   | built-ins  | The tools to show                                                           |
 | `isolation` | `"shadow"` | `"none"` renders in a plain div; import `react-devbelt/styles.css` yourself |
+| `panelMode` | `"window"` | How tools open: `"window"` is a floating window; `"popover"` is a panel on the tool's toolbar item, one at a time. People switch it in More tools, and that choice is remembered |
 | `enabled`   | `true`     | Switch the toolbar off in development without removing it                   |
 
 ## Security

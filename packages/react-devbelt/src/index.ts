@@ -9,5 +9,6 @@ export {
 } from "./plugin";
 export { useToolbar } from "./ui/context";
 export type { Isolation } from "./ui/toolbar-root";
+export type { PanelMode } from "./ui/use-dev-layout";
 export type { AgentTool, ToolResult } from "./core/agent-tools";
 export type { DebugEntry } from "./core/debug-bundle";

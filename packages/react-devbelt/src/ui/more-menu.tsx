@@ -9,6 +9,8 @@ import {
   MenuGroupLabel,
   MenuItem,
   MenuItemIndicator,
+  MenuRadioGroup,
+  MenuRadioItem,
   MenuSeparator,
   MenuTrigger,
 } from "@ui-sdk/react/menu";
@@ -18,17 +20,20 @@ import { CheckIcon, EllipsisIcon } from "lucide-react";
 
 import type { DevBeltPlugin } from "../plugin";
 import { toolbarItemClass, tooltipClass } from "./styles";
+import type { PanelMode } from "./use-dev-layout";
 
 type Props = {
   plugins: readonly DevBeltPlugin[];
   isPinned: (plugin: DevBeltPlugin) => boolean;
+  mode: PanelMode;
+  onMode: (mode: PanelMode) => void;
   onRun: (plugin: DevBeltPlugin) => void;
   onPin: (id: string, pinned: boolean) => void;
   onReset: () => void;
 };
 
 const contentClass =
-  "m-0 min-w-56 rounded-xl border border-white/10 bg-neutral-950 p-1 text-xs text-white shadow-2xl";
+  "m-0 max-h-(--available-height) min-w-56 overflow-y-auto rounded-xl border border-line bg-surface p-1 text-xs text-fg shadow-2xl";
 export const menuLabelClass =
   "px-2 pt-1.5 pb-1 text-[10px] tracking-wide text-fg-tertiary uppercase";
 export const menuItemClass =
@@ -43,7 +48,15 @@ export const menuSeparatorClass = "my-1 h-px bg-hover";
  * the checkboxes decide which tools the toolbar shows. Plugins add their own
  * sections through `MenuSection`.
  */
-export function MoreMenu({ plugins, isPinned, onRun, onPin, onReset }: Props) {
+export function MoreMenu({
+  plugins,
+  isPinned,
+  mode,
+  onMode,
+  onRun,
+  onPin,
+  onReset,
+}: Props) {
   const runnable = plugins.filter((p) => p.window || p.run);
 
   return (
@@ -92,6 +105,25 @@ export function MoreMenu({ plugins, isPinned, onRun, onPin, onReset }: Props) {
             </Fragment>
           ) : null,
         )}
+        <MenuRadioGroup
+          value={mode}
+          onValueChange={(value) => onMode(value as PanelMode)}
+        >
+          <MenuGroupLabel className={menuLabelClass}>Open tools as</MenuGroupLabel>
+          {(["window", "popover"] as const).map((option) => (
+            <MenuRadioItem
+              key={option}
+              value={option}
+              className={menuItemClass}
+            >
+              <MenuItemIndicator keepMounted className={menuIndicatorClass}>
+                <CheckIcon className="size-3.5" aria-hidden="true" />
+              </MenuItemIndicator>
+              {option === "window" ? "Window" : "Popover"}
+            </MenuRadioItem>
+          ))}
+        </MenuRadioGroup>
+        <MenuSeparator className={menuSeparatorClass} />
         <MenuGroup>
           <MenuGroupLabel className={menuLabelClass}>
             Pinned to toolbar

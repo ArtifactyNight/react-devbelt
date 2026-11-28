@@ -33,6 +33,7 @@ export function DefaultItem({
           render={
             <Toggle
               aria-label={label}
+              data-devbelt-item={plugin.id}
               pressed={open}
               onPressedChange={onToggle}
             />

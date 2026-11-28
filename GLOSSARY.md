@@ -24,8 +24,11 @@ A Plugin published as its own package because it needs an optional third-party l
 What a Plugin places on the Toolbar: a button, a toggle, or a custom control.
 
 **Window**:
-A floating panel a Plugin opens, which a person can drag, resize and stack.
+A panel a Plugin opens. In window mode it floats and a person can drag, resize and stack it; in popover mode it opens on the Plugin's Item, one at a time, at its default size.
 _Avoid_: modal, popup (those are ui-sdk's menus and dialogs)
+
+**Panel mode**:
+Whether Windows open as floating windows or as popovers. The app sets the default (`panelMode`); a person's choice in More tools wins and is remembered.
 
 **Overlay**:
 Something a Plugin draws over the page itself, such as the Frame or the Grab picker.

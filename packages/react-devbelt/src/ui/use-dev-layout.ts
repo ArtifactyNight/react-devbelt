@@ -7,13 +7,21 @@ import type { DevBeltPlugin, WindowSize } from "../plugin";
 
 export type Rect = { x: number; y: number; width: number; height: number };
 
+/** How a plugin's panel opens: a floating window, or a popover on its toolbar item. */
+export type PanelMode = "window" | "popover";
+
 export type DevLayout = {
   // plugin id -> pinned or not, only where it differs from the plugin's default
   pinned: Record<string, boolean>;
-  // plugin ids; last is in front
+  // plugin ids; last is in front. A popover shows one at a time.
   open: string[];
   rects: Record<string, Rect>;
+  // the person's choice; absent until they make one, so the app's default applies
+  mode?: PanelMode;
 };
+
+const isPanelMode = (value: unknown): value is PanelMode =>
+  value === "window" || value === "popover";
 
 const STORAGE_KEY = "layout";
 const MARGIN = 8;
@@ -50,6 +58,7 @@ function read(windows: ReadonlySet<string>): DevLayout {
       ? parsed.open.filter((id): id is string => windows.has(id as string))
       : [],
     rects,
+    ...(isPanelMode(parsed.mode) ? { mode: parsed.mode } : {}),
   };
 }
 
@@ -90,7 +99,10 @@ export function defaultRect(size: WindowSize, index: number): Rect {
   });
 }
 
-export function useDevLayout(plugins: readonly DevBeltPlugin[]) {
+export function useDevLayout(
+  plugins: readonly DevBeltPlugin[],
+  defaultMode: PanelMode = "window",
+) {
   const sizes = new Map<string, WindowSize>();
   for (const plugin of plugins) {
     if (plugin.window) sizes.set(plugin.id, plugin.window.size);
@@ -111,13 +123,19 @@ export function useDevLayout(plugins: readonly DevBeltPlugin[]) {
   const open = (id: string) => {
     const size = sizeOf(id);
     if (!size) return;
-    update((current) => ({
-      ...current,
-      open: [...current.open.filter((w) => w !== id), id],
-      rects: current.rects[id]
-        ? current.rects
-        : { ...current.rects, [id]: defaultRect(size, current.open.length) },
-    }));
+    update((current) => {
+      // a popover has no position of its own and shows one tool at a time
+      if ((current.mode ?? defaultMode) === "popover") {
+        return { ...current, open: [id] };
+      }
+      return {
+        ...current,
+        open: [...current.open.filter((w) => w !== id), id],
+        rects: current.rects[id]
+          ? current.rects
+          : { ...current.rects, [id]: defaultRect(size, current.open.length) },
+      };
+    });
   };
 
   const close = (id: string) =>
@@ -128,6 +146,14 @@ export function useDevLayout(plugins: readonly DevBeltPlugin[]) {
 
   return {
     layout,
+    mode: layout.mode ?? defaultMode,
+    setMode: (mode: PanelMode) =>
+      update((current) => ({
+        ...current,
+        mode,
+        // switching to a popover keeps only the tool in front
+        open: mode === "popover" ? current.open.slice(-1) : current.open,
+      })),
     isOpen: (id: string) => layout.open.includes(id),
     isPinned: (plugin: DevBeltPlugin) =>
       layout.pinned[plugin.id] ?? plugin.pinned ?? true,

@@ -6,6 +6,7 @@ import { defaultPlugins } from "../plugins";
 import type { DevBeltPlugin } from "../plugin";
 import ToolbarImpl from "./toolbar";
 import type { Isolation } from "./toolbar-root";
+import type { PanelMode } from "./use-dev-layout";
 
 let defaults: DevBeltPlugin[] | null = null;
 
@@ -13,10 +14,12 @@ let defaults: DevBeltPlugin[] | null = null;
 export default function ToolbarEntry({
   plugins,
   isolation,
+  panelMode,
 }: {
   plugins?: readonly DevBeltPlugin[];
   isolation: Isolation;
+  panelMode?: PanelMode;
 }) {
   const list = useMemo(() => plugins ?? (defaults ??= defaultPlugins()), [plugins]);
-  return <ToolbarImpl plugins={list} isolation={isolation} />;
+  return <ToolbarImpl plugins={list} isolation={isolation} panelMode={panelMode} />;
 }

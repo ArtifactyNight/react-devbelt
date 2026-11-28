@@ -13,11 +13,17 @@ import ToolbarImpl from "../src/ui/toolbar";
 // Rendered without a shadow root so Testing Library can see inside it.
 function DevViewportSwitcher({
   plugins,
+  panelMode,
 }: {
   plugins?: readonly DevBeltPlugin[];
+  panelMode?: "window" | "popover";
 }) {
   return (
-    <ToolbarImpl plugins={plugins ?? defaultPlugins()} isolation="none" />
+    <ToolbarImpl
+      plugins={plugins ?? defaultPlugins()}
+      isolation="none"
+      panelMode={panelMode}
+    />
   );
 }
 import {
@@ -937,6 +943,75 @@ test("the toolbar button toggles its window and Escape closes it", async () => {
   await user.click(button);
   await user.click(button);
   expect(screen.queryByRole("region", { name: "Network" })).toBeNull();
+});
+
+test("in popover mode a tool opens as a popover, one at a time", async () => {
+  const user = userEvent.setup();
+  render(<DevViewportSwitcher panelMode="popover" />);
+  const network = screen.getByRole("button", { name: "Network requests" });
+  const consoleButton = screen.getByRole("button", {
+    name: "Console errors and warnings",
+  });
+
+  await user.click(network);
+  expect(screen.getByRole("dialog", { name: "Network" })).toBeTruthy();
+  expect(screen.queryByRole("region", { name: "Network" })).toBeNull();
+  expect(network.getAttribute("aria-pressed")).toBe("true");
+
+  // another tool takes the popover over
+  await user.click(consoleButton);
+  expect(screen.getByRole("dialog", { name: "Console" })).toBeTruthy();
+  expect(screen.queryByRole("dialog", { name: "Network" })).toBeNull();
+  expect(network.getAttribute("aria-pressed")).toBe("false");
+
+  // its own button closes it, and Escape does too
+  await user.click(consoleButton);
+  expect(screen.queryByRole("dialog", { name: "Console" })).toBeNull();
+  await user.click(network);
+  await user.keyboard("{Escape}");
+  expect(screen.queryByRole("dialog", { name: "Network" })).toBeNull();
+});
+
+test("More tools switches between window and popover and remembers it", async () => {
+  const user = userEvent.setup();
+  render(<DevViewportSwitcher />);
+  const open = async (name: string) => {
+    await user.click(screen.getByRole("button", { name: "More tools" }));
+    await user.click(screen.getByRole("menuitemradio", { name }));
+    // a radio keeps the menu open
+    await user.keyboard("{Escape}");
+  };
+
+  await open("Popover");
+  expect(JSON.parse(window.localStorage.getItem("devbelt:layout")!).mode).toBe(
+    "popover",
+  );
+  await user.click(screen.getByRole("button", { name: "Network requests" }));
+  expect(screen.getByRole("dialog", { name: "Network" })).toBeTruthy();
+
+  // switching back keeps the tool open, now as a window
+  await open("Window");
+  expect(screen.queryByRole("dialog", { name: "Network" })).toBeNull();
+  expect(windowEl("Network")).toBeTruthy();
+  expect(JSON.parse(window.localStorage.getItem("devbelt:layout")!).mode).toBe(
+    "window",
+  );
+});
+
+test("a saved mode beats the app's default, and Reset layout restores it", async () => {
+  window.localStorage.setItem(
+    "devbelt:layout",
+    JSON.stringify({ pinned: {}, open: [], rects: {}, mode: "window" }),
+  );
+  const user = userEvent.setup();
+  render(<DevViewportSwitcher panelMode="popover" />);
+  await user.click(screen.getByRole("button", { name: "Network requests" }));
+  expect(windowEl("Network")).toBeTruthy();
+
+  await user.click(screen.getByRole("button", { name: "More tools" }));
+  await user.click(screen.getByRole("menuitem", { name: "Reset layout" }));
+  await user.click(screen.getByRole("button", { name: "Network requests" }));
+  expect(screen.getByRole("dialog", { name: "Network" })).toBeTruthy();
 });
 
 test("a window is dragged by its header and keeps where it was left", async () => {

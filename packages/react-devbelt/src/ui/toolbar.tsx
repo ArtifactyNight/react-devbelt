@@ -27,10 +27,16 @@ import { DefaultItem } from "./default-item";
 import { FloatingWindow } from "./floating-window";
 import { MoreMenu } from "./more-menu";
 import { PluginBoundary } from "./plugin-boundary";
+import { PluginPopover } from "./plugin-popover";
 import { useToolbarTransition } from "./motion";
 import { tooltipClass } from "./styles";
 import { ToolbarPortal, useMount, type Isolation } from "./toolbar-root";
-import { clampRect, defaultRect, useDevLayout } from "./use-dev-layout";
+import {
+  clampRect,
+  defaultRect,
+  useDevLayout,
+  type PanelMode,
+} from "./use-dev-layout";
 import { useDockPosition } from "./use-dock-position";
 
 const COLLAPSE_KEY = "collapsed";
@@ -41,23 +47,31 @@ const OPEN_POPUP =
 export type ToolbarProps = {
   plugins: readonly DevBeltPlugin[];
   isolation: Isolation;
+  /** How tools open until the person picks a mode in More tools. Default `"window"`. */
+  panelMode?: PanelMode;
 };
 
 /**
  * Installs the plugins in this frame. Inside the viewport iframe that is all
  * it does: the toolbar itself lives in the top window.
  */
-export default function ToolbarImpl({ plugins, isolation }: ToolbarProps) {
+export default function ToolbarImpl({
+  plugins,
+  isolation,
+  panelMode,
+}: ToolbarProps) {
   const [embedded] = useState(() => window.self !== window.top);
   // identity of the list, so an inline `plugins={[...]}` doesn't reinstall
   const key = plugins.map((p) => p.id).join("|");
 
   useEffect(() => installPlugins(plugins), [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return embedded ? null : <TopToolbar plugins={plugins} isolation={isolation} />;
+  return embedded ? null : (
+    <TopToolbar plugins={plugins} isolation={isolation} panelMode={panelMode} />
+  );
 }
 
-function TopToolbar({ plugins, isolation }: ToolbarProps) {
+function TopToolbar({ plugins, isolation, panelMode }: ToolbarProps) {
   const pluginCss = useMemo(
     () => plugins.flatMap((p) => (p.styles ? [p.styles] : [])),
     [plugins],
@@ -68,7 +82,7 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
     () => readString(COLLAPSE_KEY) === "1",
   );
   const dock = useDockPosition(collapsed);
-  const layout = useDevLayout(plugins);
+  const layout = useDevLayout(plugins, panelMode);
 
   // Latest state for the stable API object and the Esc listener below.
   const live = useRef({ layout, plugins });
@@ -162,6 +176,10 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
 
   const pinned = plugins.filter((p) => layout.isPinned(p));
   const byId = new Map(plugins.map((p) => [p.id, p]));
+  // a popover points at the toolbar, so it waits while the toolbar is tucked away
+  const popoverId =
+    layout.mode === "popover" && !collapsed ? layout.layout.open.at(-1) : undefined;
+  const popover = popoverId ? byId.get(popoverId) : undefined;
 
   return (
     <ToolbarContext.Provider value={api}>
@@ -174,7 +192,21 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
           ) : null,
         )}
 
-        {layout.layout.open.map((id, index) => {
+        {popover?.window ? (
+          <PluginPopover
+            key={popover.id}
+            id={popover.id}
+            title={popover.window.title ?? popover.name}
+            icon={popover.icon}
+            size={popover.window.size}
+            root={api.root}
+            onClose={() => layout.close(popover.id)}
+          >
+            <popover.window.Component />
+          </PluginPopover>
+        ) : null}
+
+        {layout.mode === "window" ? layout.layout.open.map((id, index) => {
           const plugin = byId.get(id);
           if (!plugin?.window) return null;
           const { Component, size, title } = plugin.window;
@@ -201,7 +233,7 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
               </PluginBoundary>
             </FloatingWindow>
           );
-        })}
+        }) : null}
 
         {dock.guides.x !== null ? (
           <div
@@ -333,6 +365,8 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
             <MoreMenu
               plugins={plugins}
               isPinned={layout.isPinned}
+              mode={layout.mode}
+              onMode={layout.setMode}
               onRun={run}
               onPin={layout.setPinned}
               onReset={layout.reset}

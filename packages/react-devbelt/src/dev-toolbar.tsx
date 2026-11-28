@@ -4,6 +4,7 @@ import { lazy, Suspense, useSyncExternalStore } from "react";
 
 import type { DevBeltPlugin } from "./plugin";
 import type { Isolation } from "./ui/toolbar-root";
+import type { PanelMode } from "./ui/use-dev-layout";
 
 export type DevBeltProps = {
   /**
@@ -17,6 +18,12 @@ export type DevBeltProps = {
    * to import `react-devbelt/styles.css`.
    */
   isolation?: Isolation;
+  /**
+   * How tools open: `"window"` (default) is a floating, draggable, resizable
+   * window; `"popover"` is a panel on the tool's toolbar item, one at a time.
+   * People can change it in More tools, and their choice is remembered.
+   */
+  panelMode?: PanelMode;
   /** Turn the toolbar off without removing it, e.g. `enabled={!isDemo}`. Default true. */
   enabled?: boolean;
 };
@@ -37,6 +44,7 @@ const noopSubscribe = () => () => {};
 export function DevBelt({
   plugins,
   isolation = "shadow",
+  panelMode,
   enabled = true,
 }: DevBeltProps) {
   const isClient = useSyncExternalStore(
@@ -47,7 +55,7 @@ export function DevBelt({
   if (!ToolbarImpl || !isClient || !enabled) return null;
   return (
     <Suspense fallback={null}>
-      <ToolbarImpl plugins={plugins} isolation={isolation} />
+      <ToolbarImpl plugins={plugins} isolation={isolation} panelMode={panelMode} />
     </Suspense>
   );
 }
