@@ -142,6 +142,7 @@ Create the array once at module level, not inside a component. With your own lis
 ### Toolbar tips
 
 - Right-click (or long-press) a pinned tool for its own options (the same section as in More tools) and **Unpin from toolbar**.
+- `Ctrl`/`⌘` + `.` collapses the toolbar to its chip (and brings back a hidden one); `Ctrl`/`⌘` + `/` hides everything, windows included, until you press it again. Both work with focus in a text field or in the framed page, and both are in More tools. Hiding is not saved: a reload shows the toolbar again.
 - Text that changes while you watch it, such as the request count, the breakpoint readout and the "Copied" confirmations, morphs between values with [Torph](https://torph.lochie.me).
 
 ### Opt-in plugins

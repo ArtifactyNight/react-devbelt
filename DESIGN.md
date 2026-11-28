@@ -107,6 +107,10 @@ These are still plain Tailwind scales, applied consistently:
   Depth comes from shadow plus a `line` border, never from a lighter surface alone.
 - **Type:** `ui-sans-serif` at 12px (`text-xs`), `text-[11px]` for dense rows and chips, `font-mono`
   for data (URLs, headers, storage values), `tabular-nums` for changing numbers.
+- **Hover:** one highlight per strip or menu that glides from item to item (Fluid Functionalism's fluid
+  hover, `ui/use-fluid-hover.ts` and `ui/fluid-hover-highlight.tsx`, copied from its registry). The toolbar
+  strip registers every enabled button; a menu follows ui-sdk's `data-highlighted` (`ui/menu-highlight.tsx`),
+  so arrows and the pointer move the same fill. Items carry no `hover:bg-*` of their own.
 - **Cursor:** the pointer on anything pressable (a base rule in `global.css`); `cursor-grab` on drag handles, `cursor-default` on menu items.
 - **Scrollbars:** `scrollbar-slim` (defined in `global.css`) on every scrolling area: a thin rounded `track` thumb on a transparent track, brighter on hover.
 - **Motion:** the three Fluid Functionalism tiers in `src/ui/springs.ts`: `fast` (0.08s: colour fades,

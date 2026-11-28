@@ -20,6 +20,8 @@ import { CheckIcon, EllipsisIcon } from "lucide-react";
 
 import type { DevBeltPlugin } from "../plugin";
 import { toolbarItemClass, tooltipClass } from "./styles";
+import { MenuHighlight } from "./menu-highlight";
+import { collapseLabel, hideLabel } from "./toolbar-shortcuts";
 import type { PanelMode } from "./use-dev-layout";
 
 type Props = {
@@ -30,6 +32,8 @@ type Props = {
   onRun: (plugin: DevBeltPlugin) => void;
   onPin: (id: string, pinned: boolean) => void;
   onReset: () => void;
+  onCollapse: () => void;
+  onHide: () => void;
 };
 
 export const menuContentClass =
@@ -37,10 +41,13 @@ export const menuContentClass =
 export const menuLabelClass =
   "px-2 pt-1.5 pb-1 text-[10px] tracking-wide text-fg-tertiary uppercase";
 export const menuItemClass =
-  "flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 outline-none data-highlighted:bg-hover";
+  "relative flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 outline-none";
 // kept mounted so labels line up; hidden while unchecked
 export const menuIndicatorClass =
   "inline-flex size-3.5 items-center justify-center data-unchecked:invisible";
+// the shortcut at the end of a menu row
+const shortcutHintClass = "ms-auto ps-6 text-[10px] text-fg-tertiary tabular-nums";
+
 // the leading icon of a menu row
 export const menuIconClass = "size-3.5 shrink-0 text-fg-icon";
 export const menuSeparatorClass = "my-1 h-px bg-hover";
@@ -58,6 +65,8 @@ export function MoreMenu({
   onRun,
   onPin,
   onReset,
+  onCollapse,
+  onHide,
 }: Props) {
   const runnable = plugins.filter((p) => p.window || p.run);
 
@@ -81,6 +90,7 @@ export function MoreMenu({
         data-react-grab-ignore
         className={menuContentClass}
       >
+        <MenuHighlight />
         {runnable.length > 0 ? (
           <>
             <MenuGroup>
@@ -149,6 +159,17 @@ export function MoreMenu({
         <MenuItem value="reset" className={menuItemClass} onSelect={onReset}>
           Reset layout
         </MenuItem>
+        <MenuSeparator className={menuSeparatorClass} />
+        <MenuGroup>
+          <MenuItem value="collapse" className={menuItemClass} onSelect={onCollapse}>
+            Collapse toolbar
+            <span className={shortcutHintClass}>{collapseLabel()}</span>
+          </MenuItem>
+          <MenuItem value="hide" className={menuItemClass} onSelect={onHide}>
+            Hide toolbar
+            <span className={shortcutHintClass}>{hideLabel()}</span>
+          </MenuItem>
+        </MenuGroup>
       </MenuContent>
     </Menu>
   );

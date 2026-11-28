@@ -14,6 +14,7 @@ import {
 import { PinOffIcon, PlayIcon, SquareArrowOutUpRightIcon } from "lucide-react";
 
 import type { DevBeltPlugin } from "../plugin";
+import { MenuHighlight } from "./menu-highlight";
 import {
   menuContentClass,
   menuIconClass,
@@ -50,6 +51,7 @@ export function ItemMenu({ plugin, onOpen, onUnpin, children }: Props) {
         data-react-grab-ignore
         className={menuContentClass}
       >
+        <MenuHighlight />
         <MenuGroup>
           <MenuGroupLabel className={`${menuLabelClass} flex items-center gap-1.5`}>
             <span className="inline-flex shrink-0 [&_svg]:size-3" aria-hidden="true">

@@ -1082,6 +1082,103 @@ test("right-clicking a tool with a window can open it", async () => {
   expect(windowEl("Network")).toBeTruthy();
 });
 
+test("a line separates every two pinned tools", () => {
+  render(<DevViewportSwitcher />);
+  const toolbar = screen.getByRole("toolbar", { name: "Dev tools" });
+  const separators = toolbar.querySelectorAll('[role="separator"]');
+  const pinned = Array.from(toolbar.querySelectorAll("[aria-label]")).filter((el) =>
+    ["Viewport", "Grab element", "Network requests", "Console errors and warnings"].includes(
+      el.getAttribute("aria-label") ?? "",
+    ),
+  );
+  expect(pinned).toHaveLength(4);
+  // 3 between the 4 tools, and 1 before More tools
+  expect(separators.length).toBe(4);
+});
+
+const chip = () => screen.getByRole("button", { name: /^(Show|Hide) dev tools$/ });
+// the wrapper around everything but the overlays; by selector, as hidden content is not "accessible"
+const chrome = () =>
+  document.querySelector('[data-dock="toolbar"]')!.parentElement!.parentElement as HTMLElement;
+
+test("Ctrl+. collapses the toolbar to the chip and brings it back", async () => {
+  const user = userEvent.setup();
+  render(<DevViewportSwitcher />);
+  expect(chip().getAttribute("aria-expanded")).toBe("true");
+
+  await user.keyboard("{Control>}.{/Control}");
+  expect(chip().getAttribute("aria-expanded")).toBe("false");
+  expect(window.localStorage.getItem("devbelt:collapsed")).toBe("1");
+
+  await user.keyboard("{Control>}.{/Control}");
+  expect(chip().getAttribute("aria-expanded")).toBe("true");
+});
+
+test("Ctrl+/ hides everything and the same key shows it again, without being remembered", async () => {
+  const user = userEvent.setup();
+  render(<DevViewportSwitcher />);
+  await user.click(screen.getByRole("button", { name: "Network requests" }));
+  expect(chrome().style.display).toBe("contents");
+
+  await user.keyboard("{Control>}/{/Control}");
+  expect(chrome().style.display).toBe("none");
+  // a reload would show it again: nothing about hiding is saved
+  expect(JSON.stringify(Object.entries(window.localStorage))).not.toMatch(/hidden/);
+
+  // Escape does not close a window you cannot see
+  await user.keyboard("{Escape}");
+
+  await user.keyboard("{Control>}/{/Control}");
+  expect(chrome().style.display).toBe("contents");
+  expect(windowEl("Network")).toBeTruthy();
+});
+
+test("the collapse shortcut also brings back a hidden toolbar", async () => {
+  const user = userEvent.setup();
+  render(<DevViewportSwitcher />);
+  await user.keyboard("{Control>}/{/Control}");
+  expect(chrome().style.display).toBe("none");
+
+  await user.keyboard("{Control>}.{/Control}");
+  expect(chrome().style.display).toBe("contents");
+  // it only showed it: still expanded
+  expect(chip().getAttribute("aria-expanded")).toBe("true");
+});
+
+test("the shortcuts work from a text field, ignore Shift and Alt, and work from the frame", async () => {
+  const user = userEvent.setup();
+  render(
+    <>
+      <input aria-label="note" />
+      <DevViewportSwitcher />
+    </>,
+  );
+  await user.click(screen.getByRole("textbox", { name: "note" }));
+  await user.keyboard("{Control>}.{/Control}");
+  expect(chip().getAttribute("aria-expanded")).toBe("false");
+
+  await user.keyboard("{Control>}{Shift>}.{/Shift}{/Control}");
+  await user.keyboard("{Control>}{Alt>}.{/Alt}{/Control}");
+  expect(chip().getAttribute("aria-expanded")).toBe("false");
+
+  // the viewport frame sends the same shortcut to the top window as an event
+  act(() => {
+    window.dispatchEvent(new CustomEvent("devbelt:toolbar-collapse"));
+  });
+  expect(chip().getAttribute("aria-expanded")).toBe("true");
+});
+
+test("More tools lists the two shortcuts and runs them", async () => {
+  const user = userEvent.setup();
+  render(<DevViewportSwitcher />);
+  await user.click(screen.getByRole("button", { name: "More tools" }));
+  expect(screen.getByRole("menuitem", { name: /Collapse toolbar/ }).textContent).toMatch(/Ctrl\+\./);
+  expect(screen.getByRole("menuitem", { name: /Hide toolbar/ }).textContent).toMatch(/Ctrl\+\//);
+
+  await user.click(screen.getByRole("menuitem", { name: /Collapse toolbar/ }));
+  expect(chip().getAttribute("aria-expanded")).toBe("false");
+});
+
 test("a window is dragged by its header and keeps where it was left", async () => {
   const user = userEvent.setup();
   render(<DevViewportSwitcher />);

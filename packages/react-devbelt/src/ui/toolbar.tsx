@@ -8,9 +8,9 @@ import {
   type CSSProperties,
 } from "react";
 import { MotionConfig, motion } from "motion/react";
+import { ariaKeyshortcuts } from "@ui-sdk/core/shortcuts";
 import { Button } from "@ui-sdk/react/button";
 import {
-  Toolbar,
   ToolbarButton,
   ToolbarSeparator,
 } from "@ui-sdk/react/toolbar";
@@ -27,11 +27,21 @@ import { ToolbarContext } from "./context";
 import { DefaultItem } from "./default-item";
 import { FloatingWindow } from "./floating-window";
 import { ItemMenu } from "./item-menu";
+import { ToolbarStrip } from "./toolbar-strip";
 import { MoreMenu } from "./more-menu";
 import { PluginBoundary } from "./plugin-boundary";
 import { PluginPopover } from "./plugin-popover";
 import { spring } from "./springs";
-import { tooltipClass } from "./styles";
+import {
+  COLLAPSE_EVENT,
+  COLLAPSE_SHORTCUT,
+  collapseLabel,
+  forwardToTop,
+  HIDE_EVENT,
+  hideLabel,
+  installToolbarShortcuts,
+} from "./toolbar-shortcuts";
+import { kbdClass, tooltipClass } from "./styles";
 import { ToolbarPortal, useMount, type Isolation } from "./toolbar-root";
 import {
   clampRect,
@@ -71,6 +81,18 @@ export default function ToolbarImpl({
 
   useEffect(() => installPlugins(plugins), [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // inside the viewport frame the shortcuts still work: the top window owns the toolbar
+  useEffect(
+    () =>
+      embedded
+        ? installToolbarShortcuts({
+            collapse: () => forwardToTop(COLLAPSE_EVENT),
+            hide: () => forwardToTop(HIDE_EVENT),
+          })
+        : undefined,
+    [embedded],
+  );
+
   return embedded ? null : (
     <TopToolbar
       plugins={plugins}
@@ -91,14 +113,16 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
   const [collapsed, setCollapsed] = useState(
     () => readString(COLLAPSE_KEY) === "1",
   );
+  // Hidden is for the session only: a reload brings the toolbar back, so it is never lost.
+  const [hidden, setHidden] = useState(false);
   const dock = useDockPosition(collapsed);
   const layout = useDevLayout(plugins, panelMode);
 
   // Latest state for the stable API object and the Esc listener below.
-  const live = useRef({ layout, plugins, aiTools });
+  const live = useRef({ layout, plugins, aiTools, hidden });
   const escapeHolds = useRef(0);
   useEffect(() => {
-    live.current = { layout, plugins, aiTools };
+    live.current = { layout, plugins, aiTools, hidden };
   });
 
   const api = useMemo<ToolbarApi | null>(
@@ -159,7 +183,9 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape" || event.defaultPrevented) return;
       const { layout: current } = live.current;
-      if (escapeHolds.current > 0 || current.layout.open.length === 0) return;
+      if (live.current.hidden || escapeHolds.current > 0 || current.layout.open.length === 0) {
+        return;
+      }
       const root = mount?.root ?? document;
       if (root.querySelector(OPEN_POPUP) || document.querySelector(OPEN_POPUP)) {
         return;
@@ -176,6 +202,29 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
       writeString(COLLAPSE_KEY, current ? "0" : "1");
       return !current;
     });
+  const toggleHidden = () => setHidden((current) => !current);
+
+  // ⌘. collapses to the chip (or brings back a hidden toolbar); ⌘/ hides everything.
+  // They also arrive as events from the viewport frame.
+  const shortcutActions = useRef({ collapse: () => {}, hide: () => {} });
+  useEffect(() => {
+    shortcutActions.current = {
+      collapse: () => (live.current.hidden ? setHidden(false) : toggleCollapsed()),
+      hide: toggleHidden,
+    };
+  });
+  useEffect(() => {
+    const collapse = () => shortcutActions.current.collapse();
+    const hide = () => shortcutActions.current.hide();
+    const off = installToolbarShortcuts({ collapse, hide });
+    window.addEventListener(COLLAPSE_EVENT, collapse);
+    window.addEventListener(HIDE_EVENT, hide);
+    return () => {
+      off();
+      window.removeEventListener(COLLAPSE_EVENT, collapse);
+      window.removeEventListener(HIDE_EVENT, hide);
+    };
+  }, []);
 
   const run = (plugin: DevBeltPlugin) => {
     if (!api) return;
@@ -205,6 +254,7 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
           ) : null,
         )}
 
+        <div style={{ display: hidden ? "none" : "contents" }}>
         {popover?.window ? (
           <PluginPopover
             key={popover.id}
@@ -285,11 +335,17 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
             transition={spring.moderate}
             className="pointer-events-none fixed inset-x-0 bottom-4 z-[10000] mx-auto flex w-fit"
           >
-            <Button
-              onPointerDown={dock.startDrag}
-              aria-label={collapsed ? "Show dev tools" : "Hide dev tools"}
-              aria-expanded={!collapsed}
-              onClick={toggleCollapsed}
+            <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  onPointerDown={dock.startDrag}
+                  aria-label={collapsed ? "Show dev tools" : "Hide dev tools"}
+                  aria-expanded={!collapsed}
+                  aria-keyshortcuts={ariaKeyshortcuts(COLLAPSE_SHORTCUT)}
+                  onClick={toggleCollapsed}
+                />
+              }
               className="pointer-events-auto flex h-7 w-fit items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-3 text-xs font-medium text-fg shadow-lg hover:bg-surface-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >
               <motion.span
@@ -316,7 +372,18 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
                   )}
                 </motion.span>
               ) : null}
-            </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={8} className={`${tooltipClass} flex-col items-start`}>
+              <span className="flex items-center gap-2">
+                {collapsed ? "Show the toolbar" : "Collapse the toolbar"}
+                <kbd className={kbdClass}>{collapseLabel()}</kbd>
+              </span>
+              <span className="flex items-center gap-2 text-fg-secondary">
+                Hide everything
+                <kbd className={kbdClass}>{hideLabel()}</kbd>
+              </span>
+            </TooltipContent>
+            </Tooltip>
           </motion.div>
 
           <motion.div
@@ -327,7 +394,7 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
             transition={collapsed ? spring.slow.exit : spring.slow}
             className="pointer-events-none fixed inset-x-0 bottom-4 z-[10000] mx-auto w-fit"
           >
-          <Toolbar
+          <ToolbarStrip
             aria-label="Dev tools"
             inert={collapsed}
             className="pointer-events-auto relative flex w-fit items-center gap-1 rounded-full border border-line bg-surface p-1 text-xs text-fg shadow-lg"
@@ -342,7 +409,7 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
                     onDoubleClick={dock.reset}
                   />
                 }
-                className="inline-flex h-8 w-6 cursor-grab touch-none items-center justify-center rounded-full text-fg-icon select-none hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus active:cursor-grabbing"
+                className="inline-flex h-8 w-6 cursor-grab touch-none items-center justify-center rounded-full text-fg-icon select-none focus-visible:outline-2 focus-visible:outline-focus active:cursor-grabbing"
               >
                 <GripVerticalIcon className="size-4" aria-hidden="true" />
               </TooltipTrigger>
@@ -373,8 +440,8 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
                     />
                   )}
                 </ItemMenu>
-                {plugin.separatorAfter && index < pinned.length - 1 ? (
-                  <ToolbarSeparator className="mx-1 h-4 w-px bg-pressed" />
+                {index < pinned.length - 1 ? (
+                  <ToolbarSeparator className="h-4 w-px bg-pressed" />
                 ) : null}
               </PluginBoundary>
             ))}
@@ -386,6 +453,8 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
               isPinned={layout.isPinned}
               mode={layout.mode}
               onMode={layout.setMode}
+              onCollapse={toggleCollapsed}
+              onHide={toggleHidden}
               onRun={run}
               onPin={layout.setPinned}
               onReset={layout.reset}
@@ -398,8 +467,9 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
                 </PluginBoundary>
               ) : null,
             )}
-          </Toolbar>
+          </ToolbarStrip>
           </motion.div>
+        </div>
         </div>
       </ToolbarPortal>
       </MotionConfig>

@@ -41,7 +41,7 @@ export interface DevBeltPlugin {
   icon: ReactNode;
   /** Whether the toolbar shows this plugin by default. Default true. People can change it in More tools. */
   pinned?: boolean;
-  /** Draw a divider after this plugin's item. */
+  /** Not used: the toolbar draws a divider between every two plugins. */
   separatorAfter?: boolean;
 
   /**
