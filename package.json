@@ -4,12 +4,12 @@
   "packageManager": "pnpm@12.18.0",
   "engines": { "node": ">=22" },
   "scripts": {
-    "build": "pnpm --filter react-devbelt build && pnpm --filter devbelt-plugin-tanstack-query build",
-    "test": "pnpm --filter react-devbelt test && pnpm --filter devbelt-plugin-tanstack-query test",
-    "typecheck": "pnpm --filter react-devbelt typecheck && pnpm --filter devbelt-plugin-tanstack-query typecheck",
+    "build": "pnpm -r --filter \"./packages/*\" build",
+    "test": "pnpm -r --filter \"./packages/*\" test",
+    "typecheck": "pnpm -r --filter \"./packages/*\" typecheck",
     "lint": "oxlint packages examples",
     "format": "oxfmt",
-    "check:package": "pnpm --filter react-devbelt check:package && pnpm --filter devbelt-plugin-tanstack-query check:package",
+    "check:package": "pnpm -r --filter \"./packages/*\" check:package",
     "changeset": "changeset",
     "release": "pnpm build && changeset publish"
   },
