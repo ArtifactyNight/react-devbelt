@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@ui-sdk/react/tooltip";
 
 import type { DevBeltPlugin, ToolbarApi } from "../plugin";
 import { toolbarItemClass, tooltipClass } from "./styles";
+import { MorphText } from "./morph-text";
 
 const FLASH_MS = 1_500;
 
@@ -72,7 +73,11 @@ export function DefaultItem({
           className={toolbarItemClass}
         >
           {plugin.icon}
-          {flash ? <span>{flash}</span> : null}
+          {flash ? (
+            <span>
+              <MorphText>{flash}</MorphText>
+            </span>
+          ) : null}
           {Badge ? <Badge /> : null}
         </TooltipTrigger>
         <TooltipContent side="top" sideOffset={8} className={tooltipClass}>

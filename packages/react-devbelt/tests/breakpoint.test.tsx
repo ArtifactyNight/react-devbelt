@@ -64,9 +64,11 @@ test("the Toolbar shows the breakpoint and width and follows resizes", () => {
   setWidth(812);
   const Item = breakpoint().Item!;
   const { container } = render(<Item />);
-  expect(container.textContent).toBe("md · 812px");
+  // Torph keeps the full text in a screen-reader span next to its animated pieces
+  const readout = () => container.querySelector("[torph-sr]")?.textContent;
+  expect(readout()).toBe("md · 812px");
   act(() => setWidth(1300));
-  expect(container.textContent).toBe("xl · 1300px");
+  expect(readout()).toBe("xl · 1300px");
 });
 
 test("the Debug bundle carries the breakpoint and width", () => {

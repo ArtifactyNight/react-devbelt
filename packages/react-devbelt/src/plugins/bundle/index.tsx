@@ -8,6 +8,7 @@ import { formatDebugBundle } from "../../core/debug-bundle";
 import { definePlugin, type ToolbarApi } from "../../plugin";
 import { useToolbar } from "../../ui/context";
 import { menuItemClass, menuLabelClass } from "../../ui/more-menu";
+import { MorphText } from "../../ui/morph-text";
 import { createFlash, handOff } from "../ai-handoff";
 
 const flash = createFlash();
@@ -50,7 +51,11 @@ function BundleMenuSection() {
 /** What the last "open in" did, at the end of the toolbar for a few seconds. */
 function BundleStatus() {
   const line = flash.use();
-  return line ? <span className="px-2 text-fg">{line}</span> : null;
+  return line ? (
+    <span className="px-2 text-fg">
+      <MorphText>{line}</MorphText>
+    </span>
+  ) : null;
 }
 
 /** One button that copies page, viewport, errors and failed requests for an AI assistant. */

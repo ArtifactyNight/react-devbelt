@@ -9,6 +9,7 @@ import {
   installConsoleLog,
 } from "../../core/console-log";
 import { definePlugin } from "../../plugin";
+import { MorphText } from "../../ui/morph-text";
 import { ConsolePanel, useConsoleSummary } from "./panel";
 
 function ConsoleBadge() {
@@ -17,7 +18,7 @@ function ConsoleBadge() {
     <span
       className={`min-w-4 text-[10px] tabular-nums ${errors > 0 ? "text-danger-fg" : "text-warning-fg"}`}
     >
-      {total}
+      <MorphText>{total}</MorphText>
     </span>
   ) : null;
 }

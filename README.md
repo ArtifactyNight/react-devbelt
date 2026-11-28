@@ -120,6 +120,11 @@ export const Toolbar = () => <DevBelt plugins={plugins} />;
 
 Create the array once at module level, not inside a component. With your own list, do not also `import "react-devbelt/install"`; whichever runs first decides each plugin's options.
 
+### Toolbar tips
+
+- Right-click (or long-press) a pinned tool for its own options (the same section as in More tools) and **Unpin from toolbar**.
+- Text that changes while you watch it, such as the request count, the breakpoint readout and the "Copied" confirmations, morphs between values with [Torph](https://torph.lochie.me).
+
 ### Opt-in plugins
 
 These are not in `defaultPlugins()`; add them by name: `[...defaultPlugins(), storage(), breakpoint(), capture()]`.

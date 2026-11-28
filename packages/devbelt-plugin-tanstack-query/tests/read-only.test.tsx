@@ -115,11 +115,13 @@ describe("Badge and Hint", () => {
         </span>
       </>,
     );
-    expect(screen.getByTestId("badge").textContent).toBe("2");
+    // Torph keeps the full text in a screen-reader span next to its animated pieces
+    const badge = () => screen.getByTestId("badge").querySelector("[torph-sr]")?.textContent;
+    expect(badge()).toBe("2");
     expect(screen.getByTestId("hint").textContent).toMatch(/1 fetching/);
 
     await fail(["d"], "z");
-    await waitFor(() => expect(screen.getByTestId("badge").textContent).toBe("3"));
+    await waitFor(() => expect(badge()).toBe("3"));
   });
 
   it("shows no badge when nothing fails", async () => {

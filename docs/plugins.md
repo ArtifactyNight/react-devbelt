@@ -47,7 +47,7 @@ The toolbar's stylesheet is compiled once and only contains the Tailwind classes
 - reuse the shared class names from `react-devbelt/ui` (`toolbarItemClass`, `chipClass`, `iconButtonClass`, `tooltipClass`, `kbdClass`), or
 - ship CSS in `styles`; it is injected into the shadow root next to the toolbar's.
 
-`react-devbelt/ui` also re-exports the ui-sdk parts the toolbar uses (Button, Toggle, Tooltip, Tabs, Popover, ...). Import them from there, not from `@ui-sdk/*`, so your plugin and the toolbar share one copy.
+`react-devbelt/ui` exports `MorphText` too: wrap text that changes while it is on screen (a count, a size, a status line) in `<MorphText>{value}</MorphText>` and it morphs between values with [Torph](https://torph.lochie.me), and skips the motion for people who prefer reduced motion. It also re-exports the ui-sdk parts the toolbar uses (Button, Toggle, Tooltip, Tabs, Popover, ...). Import them from there, not from `@ui-sdk/*`, so your plugin and the toolbar share one copy.
 
 ## The toolbar API
 

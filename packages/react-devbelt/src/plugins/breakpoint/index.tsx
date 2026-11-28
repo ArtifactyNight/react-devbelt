@@ -14,6 +14,7 @@ import {
 } from "../../core/breakpoints";
 import { readString, writeString } from "../../core/storage";
 import { definePlugin } from "../../plugin";
+import { MorphText } from "../../ui/morph-text";
 import { toolbarItemClass } from "../../ui/styles";
 import {
   getFrameDocument,
@@ -120,7 +121,9 @@ export function breakpoint(options: BreakpointOptions = {}) {
     }, [on, active, src, frameVersion]);
     return (
       <>
-        <span className="px-2 text-fg tabular-nums">{describe(width)}</span>
+        <span className="px-2 text-fg tabular-nums">
+          <MorphText>{describe(width)}</MorphText>
+        </span>
         <button
           type="button"
           aria-label="Outline all elements"
@@ -136,7 +139,11 @@ export function breakpoint(options: BreakpointOptions = {}) {
   }
 
   function BreakpointChip() {
-    return <span className="tabular-nums">{describe(useWidth())}</span>;
+    return (
+      <span className="tabular-nums">
+        <MorphText>{describe(useWidth())}</MorphText>
+      </span>
+    );
   }
 
   return definePlugin({

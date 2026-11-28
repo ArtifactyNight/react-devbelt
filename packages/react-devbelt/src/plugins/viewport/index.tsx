@@ -24,6 +24,7 @@ import {
   VIEWPORTS,
 } from "../../core/viewports";
 import { definePlugin } from "../../plugin";
+import { MorphText } from "../../ui/morph-text";
 import {
   menuIndicatorClass,
   menuItemClass,
@@ -245,8 +246,9 @@ function ViewportStatus() {
   const scale = useFrameScale(preset?.width, preset?.height);
   return preset?.width ? (
     <span className="px-2 text-fg tabular-nums">
-      {preset.width}×{preset.height}
-      {scale < 1 ? ` · ${Math.round(scale * 100)}%` : ""}
+      <MorphText>
+        {`${preset.width}×${preset.height}${scale < 1 ? ` · ${Math.round(scale * 100)}%` : ""}`}
+      </MorphText>
     </span>
   ) : null;
 }
@@ -255,11 +257,11 @@ function ViewportChip() {
   const preset = presetOf(useViewportState());
   return (
     <>
-      <span>{preset?.label ?? "Full"}</span>
+      <MorphText>{preset?.label ?? "Full"}</MorphText>
       {preset?.width ? (
-        <span className="text-fg-secondary tabular-nums">
-          {preset.width}×{preset.height}
-        </span>
+        <MorphText className="text-fg-secondary tabular-nums">
+          {`${preset.width}×${preset.height}`}
+        </MorphText>
       ) : null}
     </>
   );

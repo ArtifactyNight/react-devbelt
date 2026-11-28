@@ -22,6 +22,7 @@ import { formatRecentProblems } from "../../core/debug-bundle";
 import { readString, writeString } from "../../core/storage";
 import { definePlugin } from "../../plugin";
 import { useToolbar } from "../../ui/context";
+import { MorphText } from "../../ui/morph-text";
 import {
   menuIndicatorClass,
   menuItemClass,
@@ -135,7 +136,11 @@ function GrabItem() {
         className={`${toolbarItemClass} data-pressed:bg-accent/20 data-pressed:[&_svg]:text-accent-fg`}
       >
         <CrosshairIcon className="size-4" aria-hidden="true" />
-        {result ? <span>{result}</span> : null}
+        {result ? (
+          <span>
+            <MorphText>{result}</MorphText>
+          </span>
+        ) : null}
       </TooltipTrigger>
       <TooltipContent
         side="top"

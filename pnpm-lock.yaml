@@ -337,6 +337,9 @@ importers:
       react-grab:
         specifier: ^0.2.0
         version: 0.2.0(react@19.3.1)
+      torph:
+        specifier: ^0.1.4
+        version: 0.1.4(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.5
@@ -2573,6 +2576,23 @@ packages:
     resolution: {integrity: sha512-IFk9SJW/EhTZMpJA1zRdP+69JK4NmJbMx1aRdJvLBR9em1k62eWiwolSWlDRpRdkaAnZ1dDCwFPmRPBNuLGGHA==}
     hasBin: true
 
+  torph@0.1.4:
+    resolution: {integrity: sha512-pZ/+7Ta42yjB+XmHrWQCsWvt+mii8J2OgzlJSA/vvxlQcTPdWaiZ8GeFlA+C82jM7mC6fJwNrK/LgIhs0h9Y/Q==}
+    peerDependencies:
+      react: '>=18'
+      react-dom: '>=18'
+      svelte: '>=5'
+      vue: '>=3'
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
+
   tough-cookie@6.1.0:
     resolution: {integrity: sha512-FTxc8u8Kl2tz0Lat1u8ksvcy8bwHRyEMawwTWybo51JqaC6O7SvfuhAKg+Ld6VqyIe2QRJBzY9HA7y2WyFRT2w==}
     engines: {node: '>=16'}
@@ -4526,6 +4546,11 @@ snapshots:
   tldts@7.6.0:
     dependencies:
       tldts-core: 7.6.0
+
+  torph@0.1.4(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
+    optionalDependencies:
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
 
   tough-cookie@6.1.0:
     dependencies:

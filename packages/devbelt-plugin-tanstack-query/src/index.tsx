@@ -4,7 +4,7 @@ import { useState, useSyncExternalStore } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 import { clampLimit, errorResult, text, type AgentTool } from "react-devbelt/core";
 import { definePlugin, type DevBeltPlugin, type ToolbarApi } from "react-devbelt";
-import { chipClass, JsonCode } from "react-devbelt/ui";
+import { chipClass, JsonCode, MorphText } from "react-devbelt/ui";
 
 import {
   dataJson,
@@ -166,7 +166,7 @@ export function tanstackQuery(queryClient: QueryClient, options: TanstackQueryOp
   function Badge() {
     useVersion();
     const { failing } = summarize(queryClient);
-    return failing > 0 ? <span className="tq-badge">{failing}</span> : null;
+    return failing > 0 ? <MorphText className="tq-badge">{failing}</MorphText> : null;
   }
 
   function Hint() {

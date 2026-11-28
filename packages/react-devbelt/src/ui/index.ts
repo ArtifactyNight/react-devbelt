@@ -9,6 +9,7 @@ export {
 } from "./styles";
 export { JsonCode } from "./json-code";
 export { useToolbar } from "./context";
+export { MorphText } from "./morph-text";
 export * from "@ui-sdk/react/button";
 export * from "@ui-sdk/react/checkbox";
 export * from "@ui-sdk/react/input";

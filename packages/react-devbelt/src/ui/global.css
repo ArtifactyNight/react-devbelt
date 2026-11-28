@@ -131,3 +131,16 @@
     cursor: pointer;
   }
 }
+
+/* Torph's screen-reader copy of a morphing text. Its own stylesheet hides it, and is copied into the
+   shadow root as Torph mounts (see morph-text.tsx); this covers the first frame before that. */
+@layer base {
+  [data-devbelt] [torph-sr] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

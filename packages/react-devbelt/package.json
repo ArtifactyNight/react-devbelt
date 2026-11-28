@@ -83,7 +83,8 @@
     "lucide-react": "^1.74.0",
     "modern-screenshot": "^4.7.0",
     "motion": "^14.14.0",
-    "react-grab": "^0.2.0"
+    "react-grab": "^0.2.0",
+    "torph": "^0.1.4"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

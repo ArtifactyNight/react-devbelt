@@ -9,6 +9,7 @@ import { CameraIcon, CircleIcon, CropIcon, SquareIcon } from "lucide-react";
 import { definePlugin } from "../../plugin";
 import { useToolbar } from "../../ui/context";
 import { menuItemClass, menuLabelClass } from "../../ui/more-menu";
+import { MorphText } from "../../ui/morph-text";
 import { toolbarItemClass, tooltipClass } from "../../ui/styles";
 import { createFlash } from "../ai-handoff";
 import { canRecord, startRecording, videoExtension, type ActiveRecording } from "./recorder";
@@ -121,7 +122,7 @@ function Elapsed({ since }: { since: number }) {
     const timer = window.setInterval(() => setNow(Date.now()), 500);
     return () => window.clearInterval(timer);
   }, []);
-  return <span className="tabular-nums">{clock(now - since)}</span>;
+  return <MorphText className="tabular-nums">{clock(now - since)}</MorphText>;
 }
 
 type Point = { x: number; y: number };
@@ -280,7 +281,11 @@ function makeItem(scale: number | undefined) {
             </TooltipContent>
           </Tooltip>
         ) : null}
-        {line ? <span className="px-2 text-fg">{line}</span> : null}
+        {line ? (
+          <span className="px-2 text-fg">
+            <MorphText>{line}</MorphText>
+          </span>
+        ) : null}
       </>
     );
   };

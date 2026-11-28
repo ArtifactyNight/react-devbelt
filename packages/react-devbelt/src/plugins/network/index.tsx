@@ -11,6 +11,7 @@ import {
   type NetworkLogOptions,
 } from "../../core/network-log";
 import { definePlugin } from "../../plugin";
+import { MorphText } from "../../ui/morph-text";
 import { NetworkPanel, useNetworkSummary } from "./panel";
 
 function NetworkBadge() {
@@ -19,7 +20,7 @@ function NetworkBadge() {
     <span
       className={`min-w-4 text-[10px] tabular-nums ${failed > 0 ? "text-danger-fg" : "text-fg"}`}
     >
-      {total}
+      <MorphText>{total}</MorphText>
     </span>
   ) : null;
 }
