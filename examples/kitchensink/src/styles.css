@@ -1,0 +1,56 @@
+:root {
+  --bg: #fff;
+  --fg: #16181d;
+  --muted: #5c6370;
+  --card: #f4f5f7;
+  --line: #d9dce1;
+  font-family: system-ui, sans-serif;
+}
+
+/* Display's Dark mode toggle puts this class on <html> */
+:root.dark {
+  --bg: #0e1013;
+  --fg: #e8eaed;
+  --muted: #9aa0a9;
+  --card: #1a1d22;
+  --line: #2c3038;
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.page {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 32px 20px 120px;
+}
+
+h1 { margin: 0 0 4px; }
+.lead { margin: 0 0 12px; font-size: 18px; }
+.hint { margin: 0 0 10px; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.section { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); }
+.section h2 { margin: 0 0 4px; font-size: 18px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+output { color: var(--muted); font-size: 13px; }
+button {
+  font: inherit;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--card);
+  color: inherit;
+  cursor: pointer;
+}
+kbd { padding: 1px 5px; border: 1px solid var(--line); border-radius: 4px; font-size: 12px; }
+
+/* Same breakpoints as the Breakpoint plugin's default (Tailwind v4): sm 40rem, md 48rem, lg 64rem */
+.cards { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.card { padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+.card h3 { margin: 0 0 4px; font-size: 15px; }
+.card p { margin: 0; color: var(--muted); font-size: 13px; }
+@media (min-width: 48rem) { .cards { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 64rem) { .cards { grid-template-columns: repeat(3, 1fr); } }
