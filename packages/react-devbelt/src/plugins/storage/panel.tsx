@@ -22,7 +22,7 @@ import {
   type StorageStore,
 } from "../../core/storage-view";
 import { JsonCode } from "../../ui/json-code";
-import { iconButtonClass } from "../../ui/styles";
+import { iconButtonClass, textButtonClass } from "../../ui/styles";
 
 // List rows stay short. The detail starts clipped too, and Expand shows the rest.
 const PREVIEW_CHARS = 80;
@@ -64,7 +64,7 @@ function EntryDetail({
         {!hidden && full.length > DETAIL_CHARS ? (
           <Button
             aria-label={expanded ? "Collapse value" : "Expand value"}
-            className="text-fg-secondary"
+            className={`${textButtonClass} text-fg-secondary`}
             onClick={() => setExpanded((current) => !current)}
           >
             {expanded ? "Collapse" : "Expand"}
@@ -200,7 +200,7 @@ export function StoragePanel({
                     Clear all of {TITLE[store]}?
                     <Button
                       aria-label={`Confirm clearing ${TITLE[store]}`}
-                      className="text-danger-fg"
+                      className={`${textButtonClass} text-danger-fg`}
                       onClick={() => {
                         setConfirming(null);
                         attempt(() => clearStorageStore(store));
@@ -210,7 +210,7 @@ export function StoragePanel({
                     </Button>
                     <Button
                       aria-label={`Cancel clearing ${TITLE[store]}`}
-                      className="text-fg-secondary"
+                      className={`${textButtonClass} text-fg-secondary`}
                       onClick={() => setConfirming(null)}
                     >
                       Cancel
@@ -219,14 +219,14 @@ export function StoragePanel({
                 ) : all.length > 0 ? (
                   <Button
                     aria-label={`Clear ${TITLE[store]}`}
-                    className="ml-auto text-fg-secondary"
+                    className={`${textButtonClass} ml-auto text-fg-secondary`}
                     onClick={() => setConfirming(store)}
                   >
                     Clear
                   </Button>
                 ) : null}
                 {unavailable[store] === undefined && !adding ? (
-                  <Button aria-label="Add entry" className="text-fg-secondary" onClick={() => setAdding(true)}>
+                  <Button aria-label="Add entry" className={`${textButtonClass} text-fg-secondary`} onClick={() => setAdding(true)}>
                     Add
                   </Button>
                 ) : null}
@@ -252,12 +252,12 @@ export function StoragePanel({
                     }}
                     className="h-7 min-w-0 flex-1 rounded-md border border-line bg-hover-subtle px-2 text-xs text-fg"
                   />
-                  <Button aria-label="Save new entry" className="text-fg" onClick={saveNew}>
+                  <Button aria-label="Save new entry" className={`${textButtonClass} text-fg`} onClick={saveNew}>
                     Save
                   </Button>
                   <Button
                     aria-label="Cancel new entry"
-                    className="text-fg-secondary"
+                    className={`${textButtonClass} text-fg-secondary`}
                     onClick={() => {
                       setAdding(false);
                       setNewKey("");
@@ -292,7 +292,7 @@ export function StoragePanel({
                         <dt className="truncate" title={e.key}>
                           <Button
                             aria-pressed={selected?.store === e.store && selected.key === e.key}
-                            className="max-w-full truncate text-fg"
+                            className={`${textButtonClass} max-w-full truncate text-fg`}
                             onClick={() =>
                               setSelected(
                                 selected?.store === e.store && selected.key === e.key

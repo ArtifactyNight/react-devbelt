@@ -43,7 +43,7 @@ export function writeLocale(locale: LocaleOptions, value: string) {
 
 const rowClass = "flex items-center justify-between gap-3 py-1.5";
 const switchClass =
-  "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-track p-0.5 transition-colors duration-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus data-checked:bg-inverse data-disabled:opacity-40";
+  "relative inline-flex h-5 w-9 shrink-0 items-center after:absolute after:inset-x-0 after:-inset-y-0.5 rounded-full bg-track p-0.5 transition-colors duration-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus data-checked:bg-inverse data-disabled:opacity-40";
 const thumbClass =
   "block size-4 rounded-full bg-inverse shadow data-checked:bg-surface";
 

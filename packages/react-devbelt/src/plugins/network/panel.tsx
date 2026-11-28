@@ -411,7 +411,7 @@ const NetworkRow = memo(function NetworkRow({
     <ListboxItem
       value={String(entry.id)}
       label={`${entry.method} ${displayPath(entry.url)}`}
-      className={`${ROW_GRID} cursor-default rounded-md px-2 py-1 font-mono text-[11px] text-fg data-highlighted:bg-hover-subtle data-selected:bg-accent/15`}
+      className={`${ROW_GRID} min-h-6 cursor-default rounded-md px-2 py-1 font-mono text-[11px] text-fg data-highlighted:bg-hover-subtle data-selected:bg-accent/15`}
     >
       <span
         className={`font-semibold ${METHOD_CLASS[entry.method] ?? "text-fg"}`}

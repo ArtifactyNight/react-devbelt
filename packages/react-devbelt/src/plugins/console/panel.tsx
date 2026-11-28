@@ -34,7 +34,7 @@ const ConsoleRow = memo(function ConsoleRow({
     <ListboxItem
       value={String(entry.id)}
       label={`${entry.level} ${line}`}
-      className="grid cursor-default grid-cols-[3.25rem_minmax(0,1fr)_2rem_4.5rem] items-center gap-2 rounded-md px-2 py-1 font-mono text-[11px] text-fg data-highlighted:bg-hover-subtle data-selected:bg-accent/15"
+      className="grid cursor-default grid-cols-[3.25rem_minmax(0,1fr)_2rem_4.5rem] min-h-6 items-center gap-2 rounded-md px-2 py-1 font-mono text-[11px] text-fg data-highlighted:bg-hover-subtle data-selected:bg-accent/15"
     >
       <span className={`font-semibold ${LEVEL_CLASS[entry.level]}`}>
         {entry.level}

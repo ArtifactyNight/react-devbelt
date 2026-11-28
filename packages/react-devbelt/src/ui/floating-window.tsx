@@ -163,7 +163,7 @@ export function FloatingWindow({
           aria-label={`Move ${title}`}
           title="Drag the header to move · Alt+arrows nudge · add Ctrl to resize"
           onKeyDown={onKeyDown}
-          className={`${iconButtonClass} size-6 cursor-grab`}
+          className={`${iconButtonClass} relative after:absolute after:-inset-1 size-6 cursor-grab`}
         >
           <GripHorizontalIcon className="size-3.5" aria-hidden="true" />
         </Button>
@@ -176,7 +176,7 @@ export function FloatingWindow({
         <Button
           aria-label={`Close ${title}`}
           onClick={onClose}
-          className={`${iconButtonClass} size-6`}
+          className={`${iconButtonClass} relative after:absolute after:-inset-1 size-6`}
         >
           <XIcon className="size-3.5" aria-hidden="true" />
         </Button>
@@ -195,7 +195,7 @@ export function FloatingWindow({
       <div
         aria-hidden="true"
         onPointerDown={startResize("se")}
-        className="absolute right-0 bottom-0 size-3.5 cursor-nwse-resize touch-none"
+        className="absolute right-0 bottom-0 size-6 cursor-nwse-resize touch-none"
       />
     </section>
   );

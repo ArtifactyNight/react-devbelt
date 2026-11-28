@@ -111,6 +111,10 @@ These are still plain Tailwind scales, applied consistently:
   hover, `ui/use-fluid-hover.ts` and `ui/fluid-hover-highlight.tsx`, copied from its registry). The toolbar
   strip registers every enabled button; a menu follows ui-sdk's `data-highlighted` (`ui/menu-highlight.tsx`),
   so arrows and the pointer move the same fill. Items carry no `hover:bg-*` of their own.
+- **Targets:** at least 24×24px (WCAG 2.5.8), measured on the element or on an `after:` pseudo-element that
+  extends it: toolbar items are 32px with a 40px target (`toolbarItemClass`), window header buttons 24px with 32px,
+  switches 20px with 24px. Text buttons use `textButtonClass`, list rows and fields `min-h-6`. An extended area
+  never reaches another control. The window's edge resize handles stay 6px: wider ones would cover the scrollbar.
 - **Cursor:** the pointer on anything pressable (a base rule in `global.css`); `cursor-grab` on drag handles, `cursor-default` on menu items.
 - **Scrollbars:** `scrollbar-slim` (defined in `global.css`) on every scrolling area: a thin rounded `track` thumb on a transparent track, brighter on hover.
 - **Motion:** the three Fluid Functionalism tiers in `src/ui/springs.ts`: `fast` (0.08s: colour fades,

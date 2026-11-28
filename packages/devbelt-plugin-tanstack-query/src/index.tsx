@@ -81,7 +81,7 @@ const STYLES = `
 .tq-window{font-size:12px;padding:8px;overflow:auto;height:100%;scrollbar-width:thin;scrollbar-color:color-mix(in oklab,currentColor 25%,transparent) transparent}
 .tq-tabs{display:flex;gap:4px;margin-bottom:8px}
 .tq-filters{display:flex;gap:6px;margin-bottom:8px}
-.tq-filter{font:inherit;min-width:0}
+.tq-filter{font:inherit;min-width:0;min-height:24px}
 .tq-table{width:100%;border-collapse:collapse}
 .tq-table td,.tq-table th{padding:2px 6px;text-align:left;vertical-align:top}
 .tq-key{font-family:ui-monospace,monospace;word-break:break-all}

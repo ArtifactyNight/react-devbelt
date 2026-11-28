@@ -88,7 +88,7 @@ export function PluginPopover({
           </PopoverTitle>
           <PopoverClose
             aria-label={`Close ${title}`}
-            className={`${iconButtonClass} size-6`}
+            className={`${iconButtonClass} relative after:absolute after:-inset-1 size-6`}
           >
             <XIcon className="size-3.5" aria-hidden="true" />
           </PopoverClose>

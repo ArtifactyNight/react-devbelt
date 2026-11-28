@@ -47,7 +47,7 @@ export function GrabPickNote({
         aria-label={`Add context to ${label}`}
         title={note ? note : "Add context"}
         style={markerStyle}
-        className="pointer-events-auto fixed z-[9999] inline-flex h-5 min-w-5 items-center justify-center gap-0.5 rounded-full bg-success-strong px-1.5 font-mono text-[11px] leading-none font-semibold text-fg shadow-md outline-none hover:bg-success focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        className="pointer-events-auto fixed z-[9999] inline-flex h-6 min-w-6 items-center justify-center gap-0.5 rounded-full bg-success-strong px-1.5 font-mono text-[11px] leading-none font-semibold text-fg shadow-md outline-none hover:bg-success focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
       >
         {index}
         {note ? (
