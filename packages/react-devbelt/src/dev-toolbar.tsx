@@ -2,6 +2,7 @@
 
 import { lazy, Suspense, useSyncExternalStore } from "react";
 
+import type { AiTool } from "./core/ai-tools";
 import type { DevBeltPlugin } from "./plugin";
 import type { Isolation } from "./ui/toolbar-root";
 import type { PanelMode } from "./ui/use-dev-layout";
@@ -24,6 +25,12 @@ export type DevBeltProps = {
    * People can change it in More tools, and their choice is remembered.
    */
   panelMode?: PanelMode;
+  /**
+   * The AI tools offered for "open in …" (Grab, Copy debug bundle). Default:
+   * Cursor, Claude Code and Codex. Add your own with `{ id, label, link }`;
+   * create the array once, at module level.
+   */
+  aiTools?: readonly AiTool[];
   /** Turn the toolbar off without removing it, e.g. `enabled={!isDemo}`. Default true. */
   enabled?: boolean;
 };
@@ -45,6 +52,7 @@ export function DevBelt({
   plugins,
   isolation = "shadow",
   panelMode,
+  aiTools,
   enabled = true,
 }: DevBeltProps) {
   const isClient = useSyncExternalStore(
@@ -55,7 +63,7 @@ export function DevBelt({
   if (!ToolbarImpl || !isClient || !enabled) return null;
   return (
     <Suspense fallback={null}>
-      <ToolbarImpl plugins={plugins} isolation={isolation} panelMode={panelMode} />
+      <ToolbarImpl plugins={plugins} isolation={isolation} panelMode={panelMode} aiTools={aiTools} />
     </Suspense>
   );
 }

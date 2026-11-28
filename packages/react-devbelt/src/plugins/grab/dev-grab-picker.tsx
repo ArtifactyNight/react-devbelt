@@ -50,6 +50,8 @@ const MIN_INSIDE_RATIO = 0.6;
 type Props = {
   // text appended after the grabbed elements, e.g. recent errors
   appendix?: () => string;
+  /** Called with the copied text, e.g. to open it in an AI tool. */
+  onCopied?: (text: string) => void;
   /** Active device preset label (e.g. "Mobile"), or "Full" when unframed. */
   viewportLabel: string;
   onDone: (result: "copied" | "failed" | "cancelled") => void;
@@ -165,7 +167,12 @@ function Box({
   );
 }
 
-export function DevGrabPicker({ viewportLabel, appendix, onDone }: Props) {
+export function DevGrabPicker({
+  viewportLabel,
+  appendix,
+  onCopied,
+  onDone,
+}: Props) {
   const { container, holdEscape } = useToolbar();
   // Grab's own Esc cancels the pick, so the toolbar keeps its hands off Esc.
   useEffect(() => holdEscape(), [holdEscape]);
@@ -309,6 +316,7 @@ export function DevGrabPicker({ viewportLabel, appendix, onDone }: Props) {
         .join("\n\n");
       const text = `${header}\n${body}${problems ? `\n\n${problems}` : ""}`;
       const copied = copyContent(text);
+      if (copied) onCopied?.(text);
       setSelected(
         elements.map((el, key) => {
           const bounds = getElementBounds(el);

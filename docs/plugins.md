@@ -51,7 +51,7 @@ The toolbar's stylesheet is compiled once and only contains the Tailwind classes
 
 ## The toolbar API
 
-Inside any plugin component, `useToolbar()` gives you `openWindow(id)`, `closeWindow(id)`, `toggleWindow(id)`, `debugContext()`, `debugSections()`, `holdEscape()` (an overlay that handles Esc calls it so the toolbar doesn't close windows underneath) and `container` / `root` (where the toolbar renders). `run(api)` and agent tools receive the same object.
+Inside any plugin component, `useToolbar()` gives you `openWindow(id)`, `closeWindow(id)`, `toggleWindow(id)`, `debugContext()`, `debugSections()`, `aiTools` (the AI tools the app offers; pass one to `openInAiTool` from `react-devbelt/core` to open a prompt in it), `holdEscape()` (an overlay that handles Esc calls it so the toolbar doesn't close windows underneath) and `container` / `root` (where the toolbar renders). `run(api)` and agent tools receive the same object.
 
 ## Sharing state and capturing early
 

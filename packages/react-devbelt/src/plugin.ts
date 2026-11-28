@@ -1,6 +1,7 @@
 import type { ComponentType, ReactNode } from "react";
 
 import type { AgentTool } from "./core/agent-tools";
+import type { AiTool } from "./core/ai-tools";
 import type { DebugEntry } from "./core/debug-bundle";
 
 export type WindowSize = {
@@ -20,6 +21,8 @@ export interface ToolbarApi {
   debugContext(): DebugEntry[];
   /** The Markdown sections plugins add to the end of the debug bundle. */
   debugSections(): string[];
+  /** The AI tools the app offers for "open in …" (the `aiTools` prop). Pass one to `openInAiTool`. */
+  aiTools: readonly AiTool[];
   /** Overlays that handle Esc themselves call this; the returned function releases it. */
   holdEscape(): () => void;
   /** The element the toolbar renders into: inside its shadow root, or a div on the page. */

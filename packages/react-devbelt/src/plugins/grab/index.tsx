@@ -1,6 +1,12 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import {
+  MenuGroupLabel,
+  MenuItemIndicator,
+  MenuRadioGroup,
+  MenuRadioItem,
+} from "@ui-sdk/react/menu";
 import { registerShortcut } from "@ui-sdk/core/shortcuts";
 import { Toggle } from "@ui-sdk/react/toggle";
 import {
@@ -9,11 +15,20 @@ import {
   TooltipShortcut,
   TooltipTrigger,
 } from "@ui-sdk/react/tooltip";
-import { CrosshairIcon } from "lucide-react";
+import { CheckIcon, CrosshairIcon } from "lucide-react";
 
+import type { AiTool } from "../../core/ai-tools";
 import { formatRecentProblems } from "../../core/debug-bundle";
+import { readString, writeString } from "../../core/storage";
 import { definePlugin } from "../../plugin";
+import { useToolbar } from "../../ui/context";
+import {
+  menuIndicatorClass,
+  menuItemClass,
+  menuLabelClass,
+} from "../../ui/more-menu";
 import { kbdClass, toolbarItemClass, tooltipClass } from "../../ui/styles";
+import { handOff } from "../ai-handoff";
 import { presetOf, useViewportState } from "../viewport/store";
 import { DevGrabPicker } from "./dev-grab-picker";
 
@@ -45,11 +60,64 @@ export function setGrabbing(active: boolean) {
   set({ active });
 }
 
+// What to do with the copied text besides copying it: an AI tool's id, or none.
+const OPEN_IN_KEY = "grab-open-in";
+let openIn: string | null = readString(OPEN_IN_KEY);
+const openInListeners = new Set<() => void>();
+const setOpenIn = (id: string | null) => {
+  openIn = id;
+  writeString(OPEN_IN_KEY, id);
+  for (const listener of openInListeners) listener();
+};
+const useOpenIn = () =>
+  useSyncExternalStore(
+    (listener) => {
+      openInListeners.add(listener);
+      return () => {
+        openInListeners.delete(listener);
+      };
+    },
+    () => openIn,
+    () => null,
+  );
+
+// The line that replaces "Copied" when the text was also handed to an AI tool.
+let handedOff: string | null = null;
+
 function finish(result: "copied" | "failed" | "cancelled") {
   set({ active: false });
   if (result === "cancelled") return;
-  set({ result: result === "copied" ? "Copied" : "Copy failed" });
+  const line = result === "copied" ? (handedOff ?? "Copied") : "Copy failed";
+  handedOff = null;
+  set({ result: line });
   window.setTimeout(() => set({ result: null }), RESULT_MS);
+}
+
+function GrabMenuSection() {
+  const { aiTools } = useToolbar();
+  const chosen = useOpenIn();
+  // a saved tool the app no longer offers counts as none
+  const value = aiTools.some((tool) => tool.id === chosen) ? chosen! : "none";
+  return (
+    <MenuRadioGroup
+      name="grab-open-in"
+      value={value}
+      onValueChange={(next) => setOpenIn(next === "none" ? null : next)}
+    >
+      <MenuGroupLabel className={menuLabelClass}>After grabbing</MenuGroupLabel>
+      {[{ id: "none", label: "Copy only" }, ...aiTools.map(({ id, label }) => ({
+        id,
+        label: `Copy and open in ${label}`,
+      }))].map((option) => (
+        <MenuRadioItem key={option.id} value={option.id} className={menuItemClass}>
+          <MenuItemIndicator keepMounted className={menuIndicatorClass}>
+            <CheckIcon className="size-3.5" aria-hidden="true" />
+          </MenuItemIndicator>
+          {option.label}
+        </MenuRadioItem>
+      ))}
+    </MenuRadioGroup>
+  );
 }
 
 function GrabItem() {
@@ -88,6 +156,7 @@ function GrabItem() {
 
 function GrabOverlay() {
   const { active } = useGrab();
+  const { aiTools } = useToolbar();
   const viewport = useViewportState();
   if (!active) return null;
   return (
@@ -96,6 +165,13 @@ function GrabOverlay() {
       appendix={
         viewport.display.attachProblems ? () => formatRecentProblems() : undefined
       }
+      onCopied={(copied) => {
+        const tool: AiTool | undefined = aiTools.find((t) => t.id === openIn);
+        if (!tool) return;
+        void handOff(tool, copied).then(({ line }) => {
+          handedOff = line;
+        });
+      }}
       onDone={finish}
     />
   );
@@ -129,6 +205,7 @@ export function grab() {
     },
     Item: GrabItem,
     Overlay: GrabOverlay,
+    MenuSection: GrabMenuSection,
     run: () => setGrabbing(true),
   });
 }

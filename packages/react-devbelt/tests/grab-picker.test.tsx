@@ -125,6 +125,19 @@ afterEach(() => {
   document.body.querySelectorAll("[data-n]").forEach((n) => n.remove());
 });
 
+test("a copy is reported with its text, so Grab can hand it to an AI tool", async () => {
+  const user = userEvent.setup();
+  const onCopied = vi.fn();
+  render(
+    <DevGrabPicker viewportLabel="Mobile" onCopied={onCopied} onDone={onDone} />,
+  );
+  await click(user, target("button", 0, "Save"));
+
+  await vi.waitFor(() => expect(onCopied).toHaveBeenCalledTimes(1));
+  expect(onCopied.mock.calls[0][0]).toBe(state.copied[0]);
+  await vi.waitFor(() => expect(onDone).toHaveBeenCalledWith("copied"));
+});
+
 test("a plain click still copies the one element straight away", async () => {
   const user = userEvent.setup();
   render(<DevGrabPicker viewportLabel="Mobile" onDone={onDone} />);

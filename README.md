@@ -170,7 +170,38 @@ breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 }, base: "xs", outlin
 | `plugins`   | built-ins  | The tools to show                                                           |
 | `isolation` | `"shadow"` | `"none"` renders in a plain div; import `react-devbelt/styles.css` yourself |
 | `panelMode` | `"window"` | How tools open: `"window"` is a floating window; `"popover"` is a panel on the tool's toolbar item, one at a time. People switch it in More tools, and that choice is remembered |
+| `aiTools` | Cursor, Claude Code, Codex | The AI tools offered by "Open debug bundle in" and Grab's "After grabbing" in More tools. See [AI tools](#ai-tools) |
 | `enabled`   | `true`     | Switch the toolbar off in development without removing it                   |
+
+## AI tools
+
+**Open debug bundle in** (More tools) and **After grabbing** (a saved choice that also opens what Grab copied) hand a prompt to an AI coding tool installed on the same machine, through its deep link. The prompt is filled in, not sent; the person reads it and presses Enter.
+
+| Tool | Link | Notes |
+| --- | --- | --- |
+| Cursor | `cursor://anysphere.cursor-deeplink/prompt?text=…` | Opens in the focused Cursor window |
+| Claude Code | `claude-cli://open?q=…` | Works once Claude Code has run an interactive session on the machine, which registers the link handler |
+| Codex | `codex://new?prompt=…` | The Codex app |
+
+A prompt over 5,000 characters does not fit in a link, so it is copied instead, the tool is opened empty where it has such a link (Claude Code), and the toolbar says "Copied · paste into …". Add your own tool, or drop one, with the `aiTools` prop; create the array once, at module level:
+
+```tsx
+import { defaultAiTools } from "react-devbelt/core";
+
+const aiTools = [
+  ...defaultAiTools,
+  {
+    id: "my-editor",
+    label: "My editor",
+    link: (prompt: string) => `my-editor://chat?prompt=${encodeURIComponent(prompt)}`,
+    maxPrompt: 4000, // optional, default 5000
+  },
+];
+
+<DevBelt aiTools={aiTools} />;
+```
+
+A plugin can use the same list: `openInAiTool(tool, text)` from `react-devbelt/core`, with the tools from `useToolbar().aiTools`.
 
 ## Security
 

@@ -30,6 +30,9 @@ _Avoid_: modal, popup (those are ui-sdk's menus and dialogs)
 **Panel mode**:
 Whether Windows open as floating windows or as popovers. The app sets the default (`panelMode`); a person's choice in More tools wins and is remembered.
 
+**AI tool**:
+A coding assistant installed on the same machine (Cursor, Claude Code, Codex) that the Belt opens through its deep link with a prompt filled in. Apps can add their own through `aiTools`.
+
 **Overlay**:
 Something a Plugin draws over the page itself, such as the Frame or the Grab picker.
 

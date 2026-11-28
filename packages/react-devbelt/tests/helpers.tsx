@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { defaultAiTools } from "../src/core/ai-tools";
 import type { ToolbarApi } from "../src/plugin";
 import { ToolbarContext } from "../src/ui/context";
 
@@ -14,6 +15,7 @@ export function stubApi(overrides: Partial<ToolbarApi> = {}): ToolbarApi {
     debugContext: () => [],
     debugSections: () => [],
     holdEscape: () => () => {},
+    aiTools: defaultAiTools,
     ...overrides,
   };
 }

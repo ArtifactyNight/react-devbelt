@@ -1,5 +1,16 @@
 // The framework-free half: capture, formatting and storage. No React in here.
 export {
+  claudeCode,
+  codex,
+  cursor,
+  defaultAiTools,
+  describeAiResult,
+  openInAiTool,
+  type AiOpenDeps,
+  type AiOpenResult,
+  type AiTool,
+} from "./ai-tools";
+export {
   clampLimit,
   errorResult,
   exposedAgentTools,

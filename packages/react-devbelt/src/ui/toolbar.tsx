@@ -17,6 +17,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui-sdk/react/tooltip";
 import { ChevronDownIcon, GripVerticalIcon } from "lucide-react";
 
+import { defaultAiTools, type AiTool } from "../core/ai-tools";
 import { exposedAgentTools, registerAgentTools } from "../core/agent-tools";
 import type { DebugEntry } from "../core/debug-bundle";
 import { readString, writeString } from "../core/storage";
@@ -49,6 +50,8 @@ export type ToolbarProps = {
   isolation: Isolation;
   /** How tools open until the person picks a mode in More tools. Default `"window"`. */
   panelMode?: PanelMode;
+  /** The AI tools offered for "open in …". Default: Cursor, Claude Code and Codex. */
+  aiTools?: readonly AiTool[];
 };
 
 /**
@@ -59,6 +62,7 @@ export default function ToolbarImpl({
   plugins,
   isolation,
   panelMode,
+  aiTools,
 }: ToolbarProps) {
   const [embedded] = useState(() => window.self !== window.top);
   // identity of the list, so an inline `plugins={[...]}` doesn't reinstall
@@ -67,11 +71,16 @@ export default function ToolbarImpl({
   useEffect(() => installPlugins(plugins), [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return embedded ? null : (
-    <TopToolbar plugins={plugins} isolation={isolation} panelMode={panelMode} />
+    <TopToolbar
+      plugins={plugins}
+      isolation={isolation}
+      panelMode={panelMode}
+      aiTools={aiTools}
+    />
   );
 }
 
-function TopToolbar({ plugins, isolation, panelMode }: ToolbarProps) {
+function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
   const pluginCss = useMemo(
     () => plugins.flatMap((p) => (p.styles ? [p.styles] : [])),
     [plugins],
@@ -85,10 +94,10 @@ function TopToolbar({ plugins, isolation, panelMode }: ToolbarProps) {
   const layout = useDevLayout(plugins, panelMode);
 
   // Latest state for the stable API object and the Esc listener below.
-  const live = useRef({ layout, plugins });
+  const live = useRef({ layout, plugins, aiTools });
   const escapeHolds = useRef(0);
   useEffect(() => {
-    live.current = { layout, plugins };
+    live.current = { layout, plugins, aiTools };
   });
 
   const api = useMemo<ToolbarApi | null>(
@@ -100,6 +109,9 @@ function TopToolbar({ plugins, isolation, panelMode }: ToolbarProps) {
             openWindow: (id) => live.current.layout.open(id),
             closeWindow: (id) => live.current.layout.close(id),
             toggleWindow: (id) => live.current.layout.toggle(id),
+            get aiTools() {
+              return live.current.aiTools ?? defaultAiTools;
+            },
             debugContext: () => collectDebugContext(live.current.plugins),
             debugSections: () =>
               live.current.plugins.flatMap((p) => {

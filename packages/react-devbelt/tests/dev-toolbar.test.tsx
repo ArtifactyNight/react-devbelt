@@ -1014,6 +1014,45 @@ test("a saved mode beats the app's default, and Reset layout restores it", async
   expect(screen.getByRole("dialog", { name: "Network" })).toBeTruthy();
 });
 
+test("More tools opens the debug bundle in an AI tool through its link", async () => {
+  const links: string[] = [];
+  const click = vi
+    .spyOn(HTMLAnchorElement.prototype, "click")
+    .mockImplementation(function (this: HTMLAnchorElement) {
+      links.push(this.href);
+    });
+  const user = userEvent.setup();
+  render(<DevViewportSwitcher />);
+  await act(async () => {
+    console.error("Boom for the bundle");
+  });
+
+  await user.click(screen.getByRole("button", { name: "More tools" }));
+  await user.click(screen.getByRole("menuitem", { name: "Claude Code" }));
+
+  expect(links).toHaveLength(1);
+  expect(links[0]).toMatch(/^claude-cli:\/\/open\?q=/);
+  expect(decodeURIComponent(links[0].split("?q=")[1])).toContain("Boom for the bundle");
+  expect(await screen.findByText("Opened in Claude Code")).toBeTruthy();
+  click.mockRestore();
+});
+
+test("Grab can also open what it copied in an AI tool, and remembers the choice", async () => {
+  const user = userEvent.setup();
+  render(<DevViewportSwitcher />);
+
+  await user.click(screen.getByRole("button", { name: "More tools" }));
+  expect(screen.getByRole("menuitemradio", { name: "Copy only" }).getAttribute("aria-checked")).toBe("true");
+  await user.click(screen.getByRole("menuitemradio", { name: "Copy and open in Cursor" }));
+  expect(window.localStorage.getItem("devbelt:grab-open-in")).toBe("cursor");
+  expect(
+    screen.getByRole("menuitemradio", { name: "Copy and open in Cursor" }).getAttribute("aria-checked"),
+  ).toBe("true");
+
+  await user.click(screen.getByRole("menuitemradio", { name: "Copy only" }));
+  expect(window.localStorage.getItem("devbelt:grab-open-in")).toBeNull();
+});
+
 test("a window is dragged by its header and keeps where it was left", async () => {
   const user = userEvent.setup();
   render(<DevViewportSwitcher />);
