@@ -17,7 +17,7 @@ It renders in a **shadow root** with its own stylesheet, so it needs no Tailwind
 ## Install
 
 ```bash
-npm install -D devbelt
+npm install -D react-devbelt
 ```
 
 Requires React 19 or newer. The toolbar is built on [ui-sdk](https://ui-sdk.dev) and bundles it, so you install nothing else.

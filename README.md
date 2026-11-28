@@ -20,10 +20,29 @@ It renders in a **shadow root** with its own stylesheet, so it needs no Tailwind
 ## Install
 
 ```bash
-npm install -D devbelt
+npm install -D react-devbelt
 ```
 
 Requires React 19 or newer. The toolbar is built on [ui-sdk](https://ui-sdk.dev) and bundles it, so you install nothing else.
+
+### Install with an AI agent
+
+Paste this into Claude Code, Cursor, Codex or any coding agent, from your project's folder. It sets up the default toolbar and leaves the rest of your code alone.
+
+```text
+Install react-devbelt, a dev-only toolbar, in this project. Docs: https://github.com/ArtifactyNight/react-devbelt#readme
+
+1. Read package.json. react-devbelt needs React 19 or newer. If this project uses an older React, stop and tell me; do not upgrade it.
+2. Add `react-devbelt` as a dev dependency with the package manager this repo already uses (check the lockfile).
+3. Set it up for the framework:
+   - Next.js 16.3 or newer: in next.config.ts, wrap the exported config with `withDevBelt` from "react-devbelt/next". In the root layout (app/layout.tsx or src/app/layout.tsx), render `<DevBelt />` from "react-devbelt" once, inside <body> after {children}.
+   - Next.js 15 or older: skip withDevBelt. Add `import "react-devbelt/install";` to instrumentation-client.ts (Next 15.3+; create it at the project root, or in src/ if the project uses src/) or to the top of a client entry. Render <DevBelt /> in the root layout as above.
+   - Vite, Create React App or any other React app: make `import "react-devbelt/install";` the first import of the entry file (for example src/main.tsx), and render <DevBelt /> next to <App />.
+4. Keep every other setting and file as it is. Do not wrap <DevBelt /> in an environment check: it renders nothing on the server and in production builds by itself.
+5. Run the type check, start the dev server, and open the app. Confirm the toolbar shows at the bottom of the page. Then tell me which files you changed. Do not commit.
+```
+
+To add the opt-in tools afterwards (`storage()`, `breakpoint()`, `capture()`), ask the agent to follow [Choosing and configuring plugins](#choosing-and-configuring-plugins).
 
 ## Next.js (16.3+)
 
