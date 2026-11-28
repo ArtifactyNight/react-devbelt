@@ -15,7 +15,8 @@ import { GrabPickNote } from "./grab-pick-note";
 import {
   copyContent,
   getElementAtPoint,
-  getElementBounds as getOwnBounds,
+  // already in top-level window coordinates, scaled through the viewport iframe
+  getElementBounds,
   getElementContext,
   isElementGrabbable,
   type ElementBounds,
@@ -84,35 +85,37 @@ const frameGeometry = () => {
   return { frame, box, scale: scale || 1 };
 };
 
-/** Bounds in host-page coordinates, even for elements inside the viewport frame. */
-const getElementBounds = (element: Element): ElementBounds => {
-  const bounds = getOwnBounds(element);
-  if (element.ownerDocument === document) return bounds;
-  const geo = frameGeometry();
-  if (!geo) return bounds;
-  return {
-    ...bounds,
-    x: geo.box.left + bounds.x * geo.scale,
-    y: geo.box.top + bounds.y * geo.scale,
-    width: bounds.width * geo.scale,
-    height: bounds.height * geo.scale,
-  };
-};
-
 const grabbable = (candidate: Element) =>
   isElementGrabbable(candidate) && !candidate.closest("[data-react-grab-ignore]");
 
-/** Hit test the host page, then continue inside the viewport frame if it was hit. */
+/**
+ * `isElementGrabbable` only understands the host document: it rejects every
+ * element of the viewport frame. A framed element is picked unless it is our
+ * own UI or a document root.
+ */
+const grabbableInFrame = (candidate: Element) =>
+  !candidate.closest("[data-react-grab-ignore]") &&
+  candidate !== candidate.ownerDocument.documentElement &&
+  candidate !== candidate.ownerDocument.body;
+
+/**
+ * Hit test what the viewport shows. While a device frame is up, only the
+ * framed page can be picked: the host page behind it is covered, and the area
+ * around the frame is not part of the page.
+ */
 const hitTest = (x: number, y: number): Element | null => {
-  const hit = getElementAtPoint(x, y, { filter: grabbable });
   const geo = frameGeometry();
-  if (!hit || !geo || hit !== geo.frame) return hit;
+  if (!geo) return getElementAtPoint(x, y, { filter: grabbable });
+  const { box, scale } = geo;
   const doc = getFrameDocument();
-  if (!doc) return hit;
-  const inner = doc
-    .elementsFromPoint((x - geo.box.left) / geo.scale, (y - geo.box.top) / geo.scale)
-    .find(grabbable);
-  return inner ?? hit;
+  if (!doc || x < box.left || x > box.right || y < box.top || y > box.bottom) {
+    return null;
+  }
+  return (
+    doc
+      .elementsFromPoint((x - box.left) / scale, (y - box.top) / scale)
+      .find(grabbableInFrame) ?? null
+  );
 };
 
 type Highlight = { key: number; bounds: ElementBounds; label: string };
