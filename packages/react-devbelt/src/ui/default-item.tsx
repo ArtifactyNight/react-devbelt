@@ -37,7 +37,7 @@ export function DefaultItem({
               onPressedChange={onToggle}
             />
           }
-          className={`${toolbarItemClass} data-pressed:bg-white/15`}
+          className={`${toolbarItemClass} data-pressed:bg-pressed`}
         >
           {plugin.icon}
           {Badge ? <Badge /> : null}

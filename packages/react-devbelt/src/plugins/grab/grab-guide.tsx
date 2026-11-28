@@ -30,7 +30,7 @@ const STEPS: { keys: string[]; text: string }[] = [
 ];
 
 const cardClass =
-  "pointer-events-auto fixed inset-x-0 top-4 z-[10000] mx-auto text-xs text-white shadow-2xl";
+  "pointer-events-auto fixed inset-x-0 top-4 z-[10000] mx-auto text-xs text-fg shadow-2xl";
 
 /**
  * How Grab works, shown when the mode starts. The first time it is a card
@@ -52,26 +52,26 @@ export function GrabGuide({
         data-react-grab-ignore
         role="note"
         aria-label="How Grab works"
-        className={`${cardClass} flex w-fit items-center gap-2 rounded-full border border-white/10 bg-neutral-950 py-1 ps-3.5 pe-1`}
+        className={`${cardClass} flex w-fit items-center gap-2 rounded-full border border-line bg-surface py-1 ps-3.5 pe-1`}
       >
-        <CrosshairIcon className="size-3.5 text-sky-300" aria-hidden="true" />
+        <CrosshairIcon className="size-3.5 text-accent-fg" aria-hidden="true" />
         <span>Click to copy</span>
-        <span className="text-white/40" aria-hidden="true">
+        <span className="text-fg-disabled" aria-hidden="true">
           ·
         </span>
         <span>Drag for a region</span>
-        <span className="text-white/40" aria-hidden="true">
+        <span className="text-fg-disabled" aria-hidden="true">
           ·
         </span>
         <span>{MOD}+click for several</span>
-        <span className="text-white/40" aria-hidden="true">
+        <span className="text-fg-disabled" aria-hidden="true">
           ·
         </span>
         <span>Esc cancels</span>
         <Button
           aria-label="Show how Grab works"
           onClick={onExpand}
-          className="inline-flex size-6 items-center justify-center rounded-full text-neutral-400 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-sky-400"
+          className="inline-flex size-6 items-center justify-center rounded-full text-fg-icon hover:bg-hover hover:text-fg focus-visible:outline-2 focus-visible:outline-focus"
         >
           <InfoIcon className="size-3.5" aria-hidden="true" />
         </Button>
@@ -84,10 +84,10 @@ export function GrabGuide({
       data-react-grab-ignore
       role="note"
       aria-label="How Grab works"
-      className={`${cardClass} w-[min(26rem,calc(100vw-2rem))] rounded-xl border border-white/10 bg-neutral-950 p-3`}
+      className={`${cardClass} w-[min(26rem,calc(100vw-2rem))] rounded-xl border border-line bg-surface p-3`}
     >
       <div className="mb-2 flex items-center gap-2">
-        <CrosshairIcon className="size-4 text-sky-300" aria-hidden="true" />
+        <CrosshairIcon className="size-4 text-accent-fg" aria-hidden="true" />
         <h2 className="text-sm font-semibold">Grab: copy UI for your AI</h2>
       </div>
       <ul className="space-y-1.5">
@@ -97,7 +97,7 @@ export function GrabGuide({
               {step.keys.map((key, i) => (
                 <span key={key} className="flex items-center gap-1">
                   {i > 0 ? (
-                    <span className="text-white/40" aria-hidden="true">
+                    <span className="text-fg-disabled" aria-hidden="true">
                       +
                     </span>
                   ) : null}
@@ -105,15 +105,15 @@ export function GrabGuide({
                 </span>
               ))}
             </span>
-            <span className="text-white/80">{step.text}</span>
+            <span className="text-fg-secondary">{step.text}</span>
           </li>
         ))}
       </ul>
       <div className="mt-3 flex items-center justify-between gap-2">
-        <span className="text-white/50">Press G to turn Grab on or off.</span>
+        <span className="text-fg-tertiary">Press G to turn Grab on or off.</span>
         <Button
           onClick={onDismiss}
-          className="inline-flex h-7 items-center rounded-md bg-white px-3 font-medium text-neutral-950 hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+          className="inline-flex h-7 items-center rounded-md bg-inverse px-3 font-medium text-fg-inverse hover:bg-inverse-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
           Got it
         </Button>

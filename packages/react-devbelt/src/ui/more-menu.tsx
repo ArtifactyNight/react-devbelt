@@ -30,13 +30,13 @@ type Props = {
 const contentClass =
   "m-0 min-w-56 rounded-xl border border-white/10 bg-neutral-950 p-1 text-xs text-white shadow-2xl";
 export const menuLabelClass =
-  "px-2 pt-1.5 pb-1 text-[10px] tracking-wide text-white/50 uppercase";
+  "px-2 pt-1.5 pb-1 text-[10px] tracking-wide text-fg-tertiary uppercase";
 export const menuItemClass =
-  "flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 outline-none data-highlighted:bg-white/10";
+  "flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 outline-none data-highlighted:bg-hover";
 // kept mounted so labels line up; hidden while unchecked
 export const menuIndicatorClass =
   "inline-flex size-3.5 items-center justify-center data-unchecked:invisible";
-export const menuSeparatorClass = "my-1 h-px bg-white/10";
+export const menuSeparatorClass = "my-1 h-px bg-hover";
 
 /**
  * Everything the toolbar can do, pinned or not. Items open or run a tool;

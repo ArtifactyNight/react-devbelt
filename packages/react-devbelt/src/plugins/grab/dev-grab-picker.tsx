@@ -132,13 +132,13 @@ function Box({
   tone: "hover" | "preview" | "selected" | "picked";
 }) {
   const toneClass = {
-    hover: "border-2 border-sky-400 bg-sky-400/15",
-    preview: "border border-sky-400 bg-sky-400/10",
-    selected: "border-2 border-emerald-400 bg-emerald-400/20",
-    picked: "border-2 border-emerald-400 border-dashed bg-emerald-400/10",
+    hover: "border-2 border-accent bg-accent/15",
+    preview: "border border-accent bg-accent/10",
+    selected: "border-2 border-success bg-success/20",
+    picked: "border-2 border-success border-dashed bg-success/10",
   }[tone];
   const labelClass =
-    tone === "selected" || tone === "picked" ? "bg-emerald-500" : "bg-sky-500";
+    tone === "selected" || tone === "picked" ? "bg-success-strong" : "bg-accent-strong";
   return (
     <div
       data-react-grab-ignore
@@ -153,7 +153,7 @@ function Box({
     >
       {label ? (
         <span
-          className={`absolute left-0 rounded px-1.5 py-0.5 font-mono text-[11px] leading-none whitespace-nowrap text-white ${labelClass} ${bounds.y < 24 ? "top-1" : "-top-6"}`}
+          className={`absolute left-0 rounded px-1.5 py-0.5 font-mono text-[11px] leading-none whitespace-nowrap text-fg ${labelClass} ${bounds.y < 24 ? "top-1" : "-top-6"}`}
         >
           {label}
         </span>
@@ -456,7 +456,7 @@ export function DevGrabPicker({ viewportLabel, appendix, onDone }: Props) {
           ))}
           <div
             data-react-grab-ignore
-            className="pointer-events-none fixed z-[9999] border border-dashed border-sky-400 bg-sky-400/5"
+            className="pointer-events-none fixed z-[9999] border border-dashed border-accent bg-accent/5"
             style={{
               left: rect.x,
               top: rect.y,
@@ -464,7 +464,7 @@ export function DevGrabPicker({ viewportLabel, appendix, onDone }: Props) {
               height: rect.height,
             }}
           >
-            <span className="absolute -top-6 left-0 rounded bg-sky-500 px-1.5 py-0.5 font-mono text-[11px] leading-none whitespace-nowrap text-white">
+            <span className="absolute -top-6 left-0 rounded bg-accent-strong px-1.5 py-0.5 font-mono text-[11px] leading-none whitespace-nowrap text-fg">
               {preview.length} selected
             </span>
           </div>
@@ -513,25 +513,25 @@ export function DevGrabPicker({ viewportLabel, appendix, onDone }: Props) {
       {!selected && picks.length > 0 ? (
         <div
           data-react-grab-ignore
-          className="pointer-events-auto fixed inset-x-0 top-4 z-[10000] mx-auto flex w-fit items-center gap-2 rounded-full border border-white/10 bg-neutral-950 py-1 ps-3.5 pe-1 text-xs text-white shadow-lg"
+          className="pointer-events-auto fixed inset-x-0 top-4 z-[10000] mx-auto flex w-fit items-center gap-2 rounded-full border border-line bg-surface py-1 ps-3.5 pe-1 text-xs text-fg shadow-lg"
         >
           <span className="font-medium tabular-nums">
             {picks.length} selected
           </span>
-          <span className="text-white/60">
+          <span className="text-fg-secondary">
             ⌘/Ctrl+click adds · Enter copies
           </span>
           <Button
             aria-label="Copy selection"
             onClick={() => copyPicks()}
-            className="inline-flex h-7 items-center rounded-full bg-white px-3 font-medium text-neutral-950 hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+            className="inline-flex h-7 items-center rounded-full bg-inverse px-3 font-medium text-fg-inverse hover:bg-inverse-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
             Copy
           </Button>
           <Button
             aria-label="Cancel grab"
             onClick={() => onDone("cancelled")}
-            className="inline-flex h-7 items-center rounded-full px-3 text-white/80 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-sky-400"
+            className="inline-flex h-7 items-center rounded-full px-3 text-fg-secondary hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus"
           >
             Cancel
           </Button>

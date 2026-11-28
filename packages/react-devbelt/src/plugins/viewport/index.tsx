@@ -118,7 +118,7 @@ function ViewportItem() {
           initial={false}
           animate={{ x: indicator.box.left, width: indicator.box.width }}
           transition={indicator.animate ? transition : { duration: 0 }}
-          className="pointer-events-none absolute inset-y-0 start-0 rounded-full bg-white shadow-sm"
+          className="pointer-events-none absolute inset-y-0 start-0 rounded-full bg-inverse shadow-sm"
         />
       ) : null}
       <ToggleGroup
@@ -134,14 +134,14 @@ function ViewportItem() {
           <Tooltip key={v.id} shortcut={v.keys}>
             <TooltipTrigger
               render={<Toggle value={v.id} />}
-              className={`${toolbarItemClass} px-3 duration-300 data-pressed:text-neutral-950 data-pressed:hover:bg-transparent`}
+              className={`${toolbarItemClass} px-3 duration-300 data-pressed:text-fg-inverse data-pressed:hover:bg-transparent`}
             >
               {v.label}
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={8} className={tooltipClass}>
               {v.label}
               {v.width ? (
-                <span className="text-white/50 tabular-nums">
+                <span className="text-fg-tertiary tabular-nums">
                   {v.width}×{v.height}
                 </span>
               ) : null}
@@ -165,11 +165,11 @@ function ViewportOverlay() {
     <>
       {preset?.width && preset.height && src ? (
         <div
-          className="fixed inset-0 z-[9000] flex items-start justify-center overflow-hidden bg-neutral-900"
+          className="fixed inset-0 z-[9000] flex items-start justify-center overflow-hidden bg-surface-raised"
           style={{ paddingTop: FRAME_PADDING.top }}
         >
           <div
-            className="overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-white/15"
+            className="overflow-hidden rounded-xl bg-page shadow-2xl ring-1 ring-line-strong"
             style={{
               width: preset.width * scale,
               height: preset.height * scale,
@@ -180,7 +180,7 @@ function ViewportOverlay() {
               onLoad={frameLoaded}
               title={`${preset.label} viewport`}
               src={src}
-              className="block border-0 bg-white"
+              className="block border-0 bg-page"
               style={{
                 width: preset.width,
                 height: preset.height,
@@ -206,12 +206,12 @@ function ViewportOverlay() {
                 : { opacity: 1, scale: 1 }
             }
             transition={transition}
-            className="flex flex-col items-center gap-1 rounded-2xl bg-neutral-950/85 px-6 py-4 text-white shadow-2xl ring-1 ring-white/10 backdrop-blur-md"
+            className="flex flex-col items-center gap-1 rounded-2xl bg-surface-overlay px-6 py-4 text-fg shadow-2xl ring-1 ring-line backdrop-blur-md"
           >
             <span className="text-2xl font-semibold tracking-tight">
               {hud.label}
             </span>
-            <span className="text-sm text-white/60 tabular-nums">{hud.size}</span>
+            <span className="text-sm text-fg-secondary tabular-nums">{hud.size}</span>
           </motion.div>
         </div>
       ) : null}
@@ -244,7 +244,7 @@ function ViewportStatus() {
   const preset = presetOf(useViewportState());
   const scale = useFrameScale(preset?.width, preset?.height);
   return preset?.width ? (
-    <span className="px-2 text-white tabular-nums">
+    <span className="px-2 text-fg tabular-nums">
       {preset.width}×{preset.height}
       {scale < 1 ? ` · ${Math.round(scale * 100)}%` : ""}
     </span>
@@ -257,7 +257,7 @@ function ViewportChip() {
     <>
       <span>{preset?.label ?? "Full"}</span>
       {preset?.width ? (
-        <span className="text-white/60 tabular-nums">
+        <span className="text-fg-secondary tabular-nums">
           {preset.width}×{preset.height}
         </span>
       ) : null}

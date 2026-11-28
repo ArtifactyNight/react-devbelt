@@ -17,7 +17,7 @@ function NetworkBadge() {
   const { total, failed } = useNetworkSummary();
   return total > 0 ? (
     <span
-      className={`min-w-4 text-[10px] tabular-nums ${failed > 0 ? "text-rose-300" : "text-white"}`}
+      className={`min-w-4 text-[10px] tabular-nums ${failed > 0 ? "text-danger-fg" : "text-fg"}`}
     >
       {total}
     </span>

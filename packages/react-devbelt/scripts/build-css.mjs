@@ -12,7 +12,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const input = resolve(root, "src/ui/styles.css");
+const input = resolve(root, "src/ui/global.css");
 const out = resolve(root, "dist/styles.css");
 mkdirSync(dirname(out), { recursive: true });
 

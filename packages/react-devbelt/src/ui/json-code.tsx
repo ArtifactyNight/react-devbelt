@@ -10,11 +10,11 @@ hljs.registerLanguage("json", json);
 const MAX_HIGHLIGHT_CHARS = 200_000;
 
 const TOKEN_CLASSES = [
-  "[&_.hljs-attr]:text-sky-300",
-  "[&_.hljs-string]:text-emerald-300",
-  "[&_.hljs-number]:text-amber-300",
-  "[&_.hljs-literal]:text-violet-300",
-  "[&_.hljs-punctuation]:text-neutral-500",
+  "[&_.hljs-attr]:text-syntax-key",
+  "[&_.hljs-string]:text-syntax-string",
+  "[&_.hljs-number]:text-syntax-number",
+  "[&_.hljs-literal]:text-syntax-literal",
+  "[&_.hljs-punctuation]:text-syntax-punctuation",
 ].join(" ");
 
 export function JsonCode({ code }: { code: string }) {
@@ -26,7 +26,7 @@ export function JsonCode({ code }: { code: string }) {
             .value,
     [code],
   );
-  const className = `font-mono text-[11px] leading-relaxed break-all whitespace-pre-wrap text-white ${TOKEN_CLASSES}`;
+  const className = `font-mono text-[11px] leading-relaxed break-all whitespace-pre-wrap text-fg ${TOKEN_CLASSES}`;
 
   // highlight.js escapes the source, so its HTML output is safe to inject.
   return html === null ? (

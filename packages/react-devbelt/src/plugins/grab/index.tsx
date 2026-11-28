@@ -64,7 +64,7 @@ function GrabItem() {
             onPressedChange={setGrabbing}
           />
         }
-        className={`${toolbarItemClass} data-pressed:bg-sky-400/20 data-pressed:[&_svg]:text-sky-300`}
+        className={`${toolbarItemClass} data-pressed:bg-accent/20 data-pressed:[&_svg]:text-accent-fg`}
       >
         <CrosshairIcon className="size-4" aria-hidden="true" />
         {result ? <span>{result}</span> : null}
@@ -78,7 +78,7 @@ function GrabItem() {
           Grab element
           <TooltipShortcut className={kbdClass} />
         </span>
-        <span className="text-white/70">
+        <span className="text-fg-secondary">
           Click to copy · drag for a region · ⌘/Ctrl+click for several
         </span>
       </TooltipContent>

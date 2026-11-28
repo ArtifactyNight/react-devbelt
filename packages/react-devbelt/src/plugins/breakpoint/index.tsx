@@ -120,14 +120,14 @@ export function breakpoint(options: BreakpointOptions = {}) {
     }, [on, active, src, frameVersion]);
     return (
       <>
-        <span className="px-2 text-white tabular-nums">{describe(width)}</span>
+        <span className="px-2 text-fg tabular-nums">{describe(width)}</span>
         <button
           type="button"
           aria-label="Outline all elements"
           title="Outline all elements"
           aria-pressed={on}
           onClick={() => outline.set(!on)}
-          className={`${toolbarItemClass} px-3 ${on ? "bg-white text-neutral-950 hover:bg-white [&_svg]:text-neutral-950" : ""}`}
+          className={`${toolbarItemClass} px-3 ${on ? "bg-inverse text-fg-inverse hover:bg-inverse [&_svg]:text-fg-inverse" : ""}`}
         >
           <SquareDashedIcon className="size-4" aria-hidden="true" />
         </button>

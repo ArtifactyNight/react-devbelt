@@ -47,7 +47,7 @@ export function GrabPickNote({
         aria-label={`Add context to ${label}`}
         title={note ? note : "Add context"}
         style={markerStyle}
-        className="pointer-events-auto fixed z-[9999] inline-flex h-5 min-w-5 items-center justify-center gap-0.5 rounded-full bg-emerald-500 px-1.5 font-mono text-[11px] leading-none font-semibold text-white shadow-md outline-none hover:bg-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"
+        className="pointer-events-auto fixed z-[9999] inline-flex h-5 min-w-5 items-center justify-center gap-0.5 rounded-full bg-success-strong px-1.5 font-mono text-[11px] leading-none font-semibold text-fg shadow-md outline-none hover:bg-success focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
       >
         {index}
         {note ? (
@@ -62,7 +62,7 @@ export function GrabPickNote({
         // after Done the next Enter copies the selection, so focus stays put
         finalFocus="none"
         data-react-grab-ignore
-        className="m-0 w-72 rounded-xl border border-white/10 bg-neutral-950 p-3 text-xs text-white shadow-2xl"
+        className="m-0 w-72 rounded-xl border border-line bg-surface p-3 text-xs text-fg shadow-2xl"
       >
         <PopoverTitle className="mb-2 text-xs font-semibold">
           Context for {label}
@@ -86,20 +86,20 @@ export function GrabPickNote({
               onOpenChange(false);
             }
           }}
-          className="max-h-40 min-h-16 w-full resize-none rounded-md border border-white/15 bg-white/5 px-2 py-1.5 text-xs text-white outline-none placeholder:text-white/40 focus-visible:outline-2 focus-visible:outline-sky-400"
+          className="max-h-40 min-h-16 w-full resize-none rounded-md border border-line-strong bg-hover-subtle px-2 py-1.5 text-xs text-fg outline-none placeholder:text-fg-disabled focus-visible:outline-2 focus-visible:outline-focus"
         />
         <div className="mt-2 flex items-center justify-between gap-2">
           <Button
             aria-label={`Remove ${label}`}
             onClick={onRemove}
-            className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-rose-300 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-sky-400"
+            className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-danger-fg hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus"
           >
             <Trash2Icon className="size-3.5" aria-hidden="true" />
             Remove
           </Button>
           <Button
             onClick={() => onOpenChange(false)}
-            className="inline-flex h-7 items-center rounded-md bg-white px-3 font-medium text-neutral-950 hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+            className="inline-flex h-7 items-center rounded-md bg-inverse px-3 font-medium text-fg-inverse hover:bg-inverse-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
             Done
           </Button>

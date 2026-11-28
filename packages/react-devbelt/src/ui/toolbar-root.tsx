@@ -15,7 +15,7 @@ const PROPERTY_STYLE_ID = "devbelt-properties";
 // The host sits in the page's tree, so the page's own CSS can reach it. `all:
 // initial` stops inherited font and colour from leaking in, and the base font
 // size keeps `rem` stable whatever the page sets on <html>.
-const HOST_CSS = `:host{all:initial;display:contents;font:12px/1.5 ui-sans-serif,system-ui,sans-serif;color:#fff;-webkit-font-smoothing:antialiased}`;
+const HOST_CSS = `:host{all:initial;display:contents;font:12px/1.5 ui-sans-serif,system-ui,sans-serif;color:var(--color-fg);-webkit-font-smoothing:antialiased}`;
 
 function ensurePropertyStyles() {
   if (document.getElementById(PROPERTY_STYLE_ID)) return;

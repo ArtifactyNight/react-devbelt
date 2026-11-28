@@ -18,8 +18,8 @@ import {
 import { chipClass, iconButtonClass } from "../../ui/styles";
 
 const LEVEL_CLASS: Record<ConsoleLevel, string> = {
-  error: "text-rose-300",
-  warn: "text-amber-300",
+  error: "text-danger-fg",
+  warn: "text-warning-fg",
 };
 
 const firstLine = (message: string) => message.split("\n")[0];
@@ -34,7 +34,7 @@ const ConsoleRow = memo(function ConsoleRow({
     <ListboxItem
       value={String(entry.id)}
       label={`${entry.level} ${line}`}
-      className="grid cursor-default grid-cols-[3.25rem_minmax(0,1fr)_2rem_4.5rem] items-center gap-2 rounded-md px-2 py-1 font-mono text-[11px] text-white data-highlighted:bg-white/5 data-selected:bg-sky-400/15"
+      className="grid cursor-default grid-cols-[3.25rem_minmax(0,1fr)_2rem_4.5rem] items-center gap-2 rounded-md px-2 py-1 font-mono text-[11px] text-fg data-highlighted:bg-hover-subtle data-selected:bg-accent/15"
     >
       <span className={`font-semibold ${LEVEL_CLASS[entry.level]}`}>
         {entry.level}
@@ -45,7 +45,7 @@ const ConsoleRow = memo(function ConsoleRow({
       <span className="text-end tabular-nums">
         {entry.count > 1 ? `×${entry.count}` : ""}
       </span>
-      <span className="text-end text-white/60 tabular-nums">
+      <span className="text-end text-fg-secondary tabular-nums">
         {new Date(entry.at).toLocaleTimeString()}
       </span>
     </ListboxItem>
@@ -84,7 +84,7 @@ export function ConsolePanel() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex flex-wrap items-center gap-2 border-b border-white/10 px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2">
         <ToggleGroup
           aria-label="Filter by level"
           value={[level]}
@@ -125,10 +125,10 @@ export function ConsolePanel() {
         </Button>
       </div>
       <div
-        className={`min-h-0 overflow-auto ${selected ? "max-h-[40%] shrink-0 border-b border-white/10" : "flex-1"}`}
+        className={`min-h-0 overflow-auto ${selected ? "max-h-[40%] shrink-0 border-b border-line" : "flex-1"}`}
       >
         {visible.length === 0 ? (
-          <p className="p-3 text-white/50">
+          <p className="p-3 text-fg-tertiary">
             {entries.length === 0
               ? "Nothing logged. console.error, console.warn and uncaught errors show up here."
               : "Nothing at this level."}
@@ -157,7 +157,7 @@ function EntryDetail({ entry }: { entry: ConsoleEntry }) {
   return (
     <div className="min-h-0 flex-1 overflow-auto p-3">
       <div className="mb-2 flex items-start gap-2">
-        <p className="min-w-0 flex-1 text-white/60">
+        <p className="min-w-0 flex-1 text-fg-secondary">
           {entry.viewport} · {entry.pageUrl}
         </p>
         <Button
@@ -176,7 +176,7 @@ function EntryDetail({ entry }: { entry: ConsoleEntry }) {
         {entry.message}
       </pre>
       {entry.stack ? (
-        <pre className="mt-3 font-mono text-[11px] leading-relaxed break-all whitespace-pre-wrap text-white/60">
+        <pre className="mt-3 font-mono text-[11px] leading-relaxed break-all whitespace-pre-wrap text-fg-secondary">
           {entry.stack}
         </pre>
       ) : null}

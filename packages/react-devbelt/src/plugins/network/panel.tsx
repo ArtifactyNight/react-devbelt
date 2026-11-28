@@ -64,11 +64,11 @@ import { JsonCode } from "../../ui/json-code";
 import { chipClass, iconButtonClass } from "../../ui/styles";
 
 const METHOD_CLASS: Record<string, string> = {
-  GET: "text-sky-300",
-  POST: "text-emerald-300",
-  PUT: "text-amber-300",
-  PATCH: "text-amber-300",
-  DELETE: "text-rose-300",
+  GET: "text-accent-fg",
+  POST: "text-success-fg",
+  PUT: "text-warning-fg",
+  PATCH: "text-warning-fg",
+  DELETE: "text-danger-fg",
 };
 
 const FILTER_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
@@ -84,10 +84,10 @@ function statusLabel(entry: NetworkEntry) {
 }
 
 function statusClass(entry: NetworkEntry) {
-  if (entry.status === null) return "text-white/50";
-  if (entry.status === 0 || entry.status >= 400) return "text-rose-300";
-  if (entry.status >= 300) return "text-amber-300";
-  return "text-emerald-300";
+  if (entry.status === null) return "text-fg-tertiary";
+  if (entry.status === 0 || entry.status >= 400) return "text-danger-fg";
+  if (entry.status >= 300) return "text-warning-fg";
+  return "text-success-fg";
 }
 
 function displayPath(url: string) {
@@ -101,12 +101,12 @@ function displayPath(url: string) {
 
 function HeaderList({ headers }: { headers: Record<string, string> }) {
   const rows = Object.entries(headers);
-  if (rows.length === 0) return <p className="text-white/50">None</p>;
+  if (rows.length === 0) return <p className="text-fg-tertiary">None</p>;
   return (
     <dl className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3 gap-y-1 font-mono text-[11px]">
       {rows.map(([name, value]) => (
         <div key={name} className="contents">
-          <dt className="text-white/50">{name}</dt>
+          <dt className="text-fg-tertiary">{name}</dt>
           <dd className="break-all">{value}</dd>
         </div>
       ))}
@@ -116,21 +116,21 @@ function HeaderList({ headers }: { headers: Record<string, string> }) {
 
 function Body({ value, title }: { value: string | null; title: string }) {
   const text = prettyBody(value);
-  if (!text) return <p className="text-white/50">No body</p>;
+  if (!text) return <p className="text-fg-tertiary">No body</p>;
   return (
     <div className="relative">
       <Dialog>
         <DialogTrigger
           aria-label={`View ${title.toLowerCase()} fullscreen`}
-          className={`${iconButtonClass} sticky top-0 float-end ms-2 bg-neutral-950/80`}
+          className={`${iconButtonClass} sticky top-0 float-end ms-2 bg-surface-sticky`}
         >
           <Maximize2Icon className="size-3.5" aria-hidden="true" />
         </DialogTrigger>
         <DialogContent
           data-react-grab-ignore
-          className="fixed inset-4 m-0 flex h-auto max-h-none w-auto max-w-none flex-col overflow-hidden rounded-xl border border-white/10 bg-neutral-950 p-0 text-xs text-white shadow-2xl transition-[opacity,scale] duration-200 backdrop:bg-black/60 data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0 motion-reduce:transition-none"
+          className="fixed inset-4 m-0 flex h-auto max-h-none w-auto max-w-none flex-col overflow-hidden rounded-xl border border-line bg-surface p-0 text-xs text-fg shadow-2xl transition-[opacity,scale] duration-200 backdrop:bg-scrim data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0 motion-reduce:transition-none"
         >
-          <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2.5">
+          <div className="flex items-center gap-2 border-b border-line px-4 py-2.5">
             <DialogTitle className="min-w-0 flex-1 truncate text-sm font-semibold">
               {title}
             </DialogTitle>
@@ -156,7 +156,7 @@ function Body({ value, title }: { value: string | null; title: string }) {
 }
 
 const tabClass =
-  "rounded-md px-2.5 py-1 text-white/60 hover:text-white data-selected:bg-white/10 data-selected:text-white focus-visible:outline-2 focus-visible:outline-sky-400";
+  "rounded-md px-2.5 py-1 text-fg-secondary hover:text-fg data-selected:bg-hover data-selected:text-fg focus-visible:outline-2 focus-visible:outline-focus";
 
 const COPY_PARTS_KEY = "network-copy-parts";
 const COPY_OPTIONS: { key: keyof CopyParts; label: string }[] = [
@@ -182,7 +182,7 @@ function copyText(text: string) {
 }
 
 const secondaryCopyClass =
-  "inline-flex h-7 flex-1 items-center justify-center rounded-md border border-white/15 font-medium text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400";
+  "inline-flex h-7 flex-1 items-center justify-center rounded-md border border-line-strong font-medium text-fg hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
 
 function CopyMenu({ entry }: { entry: NetworkEntry }) {
   const [parts, setParts] = useState<CopyParts>(readCopyParts);
@@ -208,7 +208,7 @@ function CopyMenu({ entry }: { entry: NetworkEntry }) {
         align="end"
         sideOffset={6}
         data-react-grab-ignore
-        className="m-0 w-52 rounded-lg border border-white/10 bg-neutral-900 p-3 text-xs text-white shadow-xl"
+        className="m-0 w-52 rounded-lg border border-line bg-surface-raised p-3 text-xs text-fg shadow-xl"
       >
         <PopoverTitle className="mb-2 text-xs font-semibold">
           Copy to clipboard
@@ -217,12 +217,12 @@ function CopyMenu({ entry }: { entry: NetworkEntry }) {
           {COPY_OPTIONS.map(({ key, label }) => (
             <label
               key={key}
-              className="flex cursor-pointer items-center gap-2 rounded-md px-1 py-1 hover:bg-white/5"
+              className="flex cursor-pointer items-center gap-2 rounded-md px-1 py-1 hover:bg-hover-subtle"
             >
               <Checkbox
                 checked={parts[key]}
                 onCheckedChange={(checked) => toggle(key, checked === true)}
-                className="inline-flex size-4 items-center justify-center rounded border border-white/30 bg-transparent text-neutral-950 focus-visible:outline-2 focus-visible:outline-sky-400 data-checked:border-white data-checked:bg-white"
+                className="inline-flex size-4 items-center justify-center rounded border border-line-control bg-transparent text-fg-inverse focus-visible:outline-2 focus-visible:outline-focus data-checked:border-line-inverse data-checked:bg-inverse"
               >
                 <CheckboxIndicator>
                   <CheckIcon className="size-3" aria-hidden="true" />
@@ -235,7 +235,7 @@ function CopyMenu({ entry }: { entry: NetworkEntry }) {
         <PopoverClose
           disabled={none}
           onClick={() => copyText(formatEntryForAgent(entry, parts))}
-          className="inline-flex h-7 w-full items-center justify-center gap-1.5 rounded-md bg-white font-medium text-neutral-950 hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 disabled:opacity-40"
+          className="inline-flex h-7 w-full items-center justify-center gap-1.5 rounded-md bg-inverse font-medium text-fg-inverse hover:bg-inverse-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-40"
         >
           <CopyIcon className="size-3.5" aria-hidden="true" />
           Copy
@@ -283,25 +283,25 @@ function ReplayButton({ entry }: { entry: NetworkEntry }) {
       >
         {icon}
       </AlertDialogTrigger>
-      <AlertDialogBackdrop className="bg-black/60" />
+      <AlertDialogBackdrop className="bg-scrim" />
       <AlertDialogContent
         data-react-grab-ignore
-        className="m-0 w-[min(380px,calc(100vw-32px))] rounded-xl border border-white/10 bg-neutral-950 p-4 text-xs text-white shadow-2xl"
+        className="m-0 w-[min(380px,calc(100vw-32px))] rounded-xl border border-line bg-surface p-4 text-xs text-fg shadow-2xl"
       >
         <AlertDialogTitle className="text-sm font-semibold">
           Replay {entry.method} {displayPath(entry.url)}?
         </AlertDialogTitle>
-        <AlertDialogDescription className="mt-1 text-white/70">
+        <AlertDialogDescription className="mt-1 text-fg-secondary">
           This sends the request again and may change data on the server.
         </AlertDialogDescription>
         <div className="mt-4 flex justify-end gap-2">
-          <AlertDialogClose className="inline-flex h-7 items-center rounded-md border border-white/15 px-3 font-medium hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-sky-400">
+          <AlertDialogClose className="inline-flex h-7 items-center rounded-md border border-line-strong px-3 font-medium hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus">
             Cancel
           </AlertDialogClose>
           <AlertDialogClose
             value="confirm"
             onClick={() => replayEntry(entry)}
-            className="inline-flex h-7 items-center rounded-md bg-white px-3 font-medium text-neutral-950 hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+            className="inline-flex h-7 items-center rounded-md bg-inverse px-3 font-medium text-fg-inverse hover:bg-inverse-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
             Replay
           </AlertDialogClose>
@@ -315,13 +315,13 @@ function EntryDetail({ entry }: { entry: NetworkEntry }) {
   const name = `${entry.method} ${displayPath(entry.url)}`;
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-start gap-2 border-b border-white/10 px-3 py-2">
+      <div className="flex items-start gap-2 border-b border-line px-3 py-2">
         <p className="min-w-0 flex-1 font-mono text-[11px] break-all">
           <span className={`font-semibold ${METHOD_CLASS[entry.method] ?? ""}`}>
             {entry.method}
           </span>{" "}
           {entry.url}
-          <span className="block text-white/50">
+          <span className="block text-fg-tertiary">
             <span className={statusClass(entry)}>{statusLabel(entry)}</span>
             {entry.duration != null ? ` · ${entry.duration}ms` : ""}
             {` · ${new Date(entry.startedAt).toLocaleTimeString()}`}
@@ -333,7 +333,7 @@ function EntryDetail({ entry }: { entry: NetworkEntry }) {
       <Tabs defaultValue="response" className="flex min-h-0 flex-1 flex-col">
         <TabsList
           aria-label="Request details"
-          className="flex gap-1 border-b border-white/10 px-2 py-1.5"
+          className="flex gap-1 border-b border-line px-2 py-1.5"
         >
           <TabsTab value="request" className={tabClass}>
             Request
@@ -358,9 +358,9 @@ function EntryDetail({ entry }: { entry: NetworkEntry }) {
           value="headers"
           className="min-h-0 flex-1 space-y-3 overflow-auto p-3"
         >
-          <h3 className="font-medium text-white/70">Request</h3>
+          <h3 className="font-medium text-fg-secondary">Request</h3>
           <HeaderList headers={entry.requestHeaders} />
-          <h3 className="font-medium text-white/70">Response</h3>
+          <h3 className="font-medium text-fg-secondary">Response</h3>
           <HeaderList headers={entry.responseHeaders} />
         </TabsPanel>
       </Tabs>
@@ -372,10 +372,10 @@ const ROW_GRID =
   "grid grid-cols-[3.25rem_minmax(0,1fr)_2.25rem_3.25rem_minmax(0,1.4fr)] items-center gap-2";
 
 function barClass(entry: NetworkEntry) {
-  if (entry.status === null) return "bg-sky-400/60 animate-pulse";
-  if (entry.status === 0 || entry.status >= 400) return "bg-rose-400";
-  if (entry.status >= 300) return "bg-amber-400";
-  return "bg-emerald-400";
+  if (entry.status === null) return "bg-accent/60 animate-pulse";
+  if (entry.status === 0 || entry.status >= 400) return "bg-danger";
+  if (entry.status >= 300) return "bg-warning";
+  return "bg-success";
 }
 
 type Timeline = { start: number; span: number };
@@ -411,10 +411,10 @@ const NetworkRow = memo(function NetworkRow({
     <ListboxItem
       value={String(entry.id)}
       label={`${entry.method} ${displayPath(entry.url)}`}
-      className={`${ROW_GRID} cursor-default rounded-md px-2 py-1 font-mono text-[11px] text-white data-highlighted:bg-white/5 data-selected:bg-sky-400/15`}
+      className={`${ROW_GRID} cursor-default rounded-md px-2 py-1 font-mono text-[11px] text-fg data-highlighted:bg-hover-subtle data-selected:bg-accent/15`}
     >
       <span
-        className={`font-semibold ${METHOD_CLASS[entry.method] ?? "text-white"}`}
+        className={`font-semibold ${METHOD_CLASS[entry.method] ?? "text-fg"}`}
       >
         {entry.method}
       </span>
@@ -424,12 +424,12 @@ const NetworkRow = memo(function NetworkRow({
       <span className={`text-end tabular-nums ${statusClass(entry)}`}>
         {statusLabel(entry)}
       </span>
-      <span className="text-end text-white tabular-nums">
+      <span className="text-end text-fg tabular-nums">
         {pending ? "" : `${entry.duration}ms`}
       </span>
       <div
         aria-hidden="true"
-        className="relative h-4 overflow-hidden rounded-sm bg-white/[0.04]"
+        className="relative h-4 overflow-hidden rounded-sm bg-hover-subtle"
         style={
           {
             "--start": entry.startedAt - origin,
@@ -476,7 +476,7 @@ function NetworkList({
   return (
     <>
       <div
-        className={`${ROW_GRID} border-b border-white/10 px-3 py-1.5 text-[10px] tracking-wide text-white/50 uppercase`}
+        className={`${ROW_GRID} border-b border-line px-3 py-1.5 text-[10px] tracking-wide text-fg-tertiary uppercase`}
       >
         <span>Method</span>
         <span>Path</span>
@@ -488,10 +488,10 @@ function NetworkList({
         </span>
       </div>
       <div
-        className={`min-h-0 overflow-auto ${selectedOpen ? "max-h-[40%] shrink-0 border-b border-white/10" : "flex-1"}`}
+        className={`min-h-0 overflow-auto ${selectedOpen ? "max-h-[40%] shrink-0 border-b border-line" : "flex-1"}`}
       >
         {visible.length === 0 ? (
-          <p className="p-3 text-white/50">
+          <p className="p-3 text-fg-tertiary">
             {total === 0
               ? "No requests yet. API calls show up here as they happen."
               : "No requests match the filter."}
@@ -567,8 +567,8 @@ export function NetworkPanel() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
-        <span className="text-white tabular-nums">
+      <div className="flex items-center gap-2 border-b border-line px-3 py-2">
+        <span className="text-fg tabular-nums">
           {visible.length === entries.length
             ? `${entries.length} requests`
             : `${visible.length} / ${entries.length} requests`}
@@ -578,7 +578,7 @@ export function NetworkPanel() {
           placeholder="Filter by method, URL or status"
           value={query}
           onValueChange={(value) => setQuery(value)}
-          className="ms-auto h-7 w-56 min-w-0 rounded-md border border-white/10 bg-white/5 px-2 text-xs text-white placeholder:text-white/40 focus-visible:outline-2 focus-visible:outline-sky-400"
+          className="ms-auto h-7 w-56 min-w-0 rounded-md border border-line bg-hover-subtle px-2 text-xs text-fg placeholder:text-fg-disabled focus-visible:outline-2 focus-visible:outline-focus"
         />
         <Button
           aria-label="Clear requests"
@@ -591,7 +591,7 @@ export function NetworkPanel() {
           <TrashIcon className="size-3.5" aria-hidden="true" />
         </Button>
       </div>
-      <div className="flex flex-wrap items-center gap-1.5 border-b border-white/10 px-3 py-1.5">
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-line px-3 py-1.5">
         <Toggle
           aria-label="Errors only"
           pressed={errorsOnly}

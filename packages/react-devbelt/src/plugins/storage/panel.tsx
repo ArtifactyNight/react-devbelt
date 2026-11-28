@@ -33,7 +33,7 @@ function preview(value: string): string {
 }
 
 const tabClass =
-  "rounded-md px-2.5 py-1 text-white/60 hover:text-white data-selected:bg-white/10 data-selected:text-white focus-visible:outline-2 focus-visible:outline-sky-400";
+  "rounded-md px-2.5 py-1 text-fg-secondary hover:text-fg data-selected:bg-hover data-selected:text-fg focus-visible:outline-2 focus-visible:outline-focus";
 
 function formatStorageValue(value: string): string {
   try {
@@ -58,20 +58,20 @@ function EntryDetail({
   const clipped = !hidden && !expanded && full.length > DETAIL_CHARS;
   const text = clipped ? `${full.slice(0, DETAIL_CHARS)}…` : full;
   return (
-    <section aria-label={`Details for ${entry.key}`} className="mt-3 border-t border-white/10 pt-3">
+    <section aria-label={`Details for ${entry.key}`} className="mt-3 border-t border-line pt-3">
       <div className="mb-1 flex items-center gap-2">
-        <h3 className="font-semibold text-white">{entry.key}</h3>
+        <h3 className="font-semibold text-fg">{entry.key}</h3>
         {!hidden && full.length > DETAIL_CHARS ? (
           <Button
             aria-label={expanded ? "Collapse value" : "Expand value"}
-            className="text-white/70"
+            className="text-fg-secondary"
             onClick={() => setExpanded((current) => !current)}
           >
             {expanded ? "Collapse" : "Expand"}
           </Button>
         ) : null}
       </div>
-      {hidden ? <p className="font-mono text-[11px] break-all text-white/70">{text}</p> : <JsonCode code={text} />}
+      {hidden ? <p className="font-mono text-[11px] break-all text-fg-secondary">{text}</p> : <JsonCode code={text} />}
     </section>
   );
 }
@@ -159,17 +159,17 @@ export function StoragePanel({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
-        <p className="min-w-0 flex-1 text-white/60">{HTTP_ONLY_NOTE}</p>
+      <div className="flex items-center gap-2 border-b border-line px-3 py-2">
+        <p className="min-w-0 flex-1 text-fg-secondary">{HTTP_ONLY_NOTE}</p>
       </div>
       {error ? (
-        <p role="alert" className="border-b border-white/10 px-3 py-1 text-red-300">
+        <p role="alert" className="border-b border-line px-3 py-1 text-danger-fg">
           {error}
         </p>
       ) : null}
       {store ? (
       <Tabs value={store} onValueChange={selectStore} className="flex min-h-0 flex-1 flex-col">
-        <TabsList aria-label="Stores" className="flex gap-1 border-b border-white/10 px-2 py-1.5">
+        <TabsList aria-label="Stores" className="flex gap-1 border-b border-line px-2 py-1.5">
           {enabled.map((item) => (
             <TabsTab key={item} value={item} className={tabClass}>
               {TITLE[item]}
@@ -183,24 +183,24 @@ export function StoragePanel({
           const list = needle ? all.filter((e) => e.key.toLowerCase().includes(needle)) : all;
           const section = (
             <section aria-label={TITLE[store]} className="mb-4">
-              {store === "cookies" ? <p className="mb-2 text-white/60">{COOKIE_PATH_NOTE}</p> : null}
+              {store === "cookies" ? <p className="mb-2 text-fg-secondary">{COOKIE_PATH_NOTE}</p> : null}
               <Input
                 aria-label="Filter entries"
                 placeholder="Filter by key"
                 value={query}
                 onChange={(ev) => setQuery(ev.target.value)}
-                className="mb-2 h-7 w-full min-w-0 rounded-md border border-white/10 bg-white/5 px-2 text-xs text-white placeholder:text-white/40 focus-visible:outline-2 focus-visible:outline-sky-400"
+                className="mb-2 h-7 w-full min-w-0 rounded-md border border-line bg-hover-subtle px-2 text-xs text-fg placeholder:text-fg-disabled focus-visible:outline-2 focus-visible:outline-focus"
               />
               <div className="mb-1 flex items-center gap-2">
-                <h3 className="font-semibold text-white">
-                  {TITLE[store]} <span className="tabular-nums text-white/50">{list.length}</span>
+                <h3 className="font-semibold text-fg">
+                  {TITLE[store]} <span className="tabular-nums text-fg-tertiary">{list.length}</span>
                 </h3>
                 {all.length > 0 && confirming === store ? (
-                  <span className="ml-auto flex items-center gap-2 text-white">
+                  <span className="ml-auto flex items-center gap-2 text-fg">
                     Clear all of {TITLE[store]}?
                     <Button
                       aria-label={`Confirm clearing ${TITLE[store]}`}
-                      className="text-red-300"
+                      className="text-danger-fg"
                       onClick={() => {
                         setConfirming(null);
                         attempt(() => clearStorageStore(store));
@@ -210,7 +210,7 @@ export function StoragePanel({
                     </Button>
                     <Button
                       aria-label={`Cancel clearing ${TITLE[store]}`}
-                      className="text-white/70"
+                      className="text-fg-secondary"
                       onClick={() => setConfirming(null)}
                     >
                       Cancel
@@ -219,14 +219,14 @@ export function StoragePanel({
                 ) : all.length > 0 ? (
                   <Button
                     aria-label={`Clear ${TITLE[store]}`}
-                    className="ml-auto text-white/70"
+                    className="ml-auto text-fg-secondary"
                     onClick={() => setConfirming(store)}
                   >
                     Clear
                   </Button>
                 ) : null}
                 {unavailable[store] === undefined && !adding ? (
-                  <Button aria-label="Add entry" className="text-white/70" onClick={() => setAdding(true)}>
+                  <Button aria-label="Add entry" className="text-fg-secondary" onClick={() => setAdding(true)}>
                     Add
                   </Button>
                 ) : null}
@@ -238,7 +238,7 @@ export function StoragePanel({
                     placeholder="Key"
                     value={newKey}
                     onChange={(ev) => setNewKey(ev.target.value)}
-                    className="h-7 min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-2 text-xs text-white"
+                    className="h-7 min-w-0 flex-1 rounded-md border border-line bg-hover-subtle px-2 text-xs text-fg"
                     autoFocus
                   />
                   <Input
@@ -250,14 +250,14 @@ export function StoragePanel({
                       if (ev.key === "Enter") saveNew();
                       if (ev.key === "Escape") setAdding(false);
                     }}
-                    className="h-7 min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-2 text-xs text-white"
+                    className="h-7 min-w-0 flex-1 rounded-md border border-line bg-hover-subtle px-2 text-xs text-fg"
                   />
-                  <Button aria-label="Save new entry" className="text-white" onClick={saveNew}>
+                  <Button aria-label="Save new entry" className="text-fg" onClick={saveNew}>
                     Save
                   </Button>
                   <Button
                     aria-label="Cancel new entry"
-                    className="text-white/70"
+                    className="text-fg-secondary"
                     onClick={() => {
                       setAdding(false);
                       setNewKey("");
@@ -269,13 +269,13 @@ export function StoragePanel({
                 </div>
               ) : null}
               {unavailable[store] !== undefined ? (
-                <p role="status" className="text-amber-300">
+                <p role="status" className="text-warning-fg">
                   Unavailable: {unavailable[store]}. This is not an empty store.
                 </p>
               ) : all.length === 0 ? (
-                <p className="text-white/50">Empty.</p>
+                <p className="text-fg-tertiary">Empty.</p>
               ) : list.length === 0 ? (
-                <p className="text-white/50">No matches.</p>
+                <p className="text-fg-tertiary">No matches.</p>
               ) : (
                 <dl className="grid grid-cols-[minmax(0,12rem)_minmax(0,1fr)_auto_auto] gap-x-3 gap-y-1 font-mono text-[11px]">
                   {list.map((e) => {
@@ -292,7 +292,7 @@ export function StoragePanel({
                         <dt className="truncate" title={e.key}>
                           <Button
                             aria-pressed={selected?.store === e.store && selected.key === e.key}
-                            className="max-w-full truncate text-white"
+                            className="max-w-full truncate text-fg"
                             onClick={() =>
                               setSelected(
                                 selected?.store === e.store && selected.key === e.key
@@ -304,7 +304,7 @@ export function StoragePanel({
                             {e.key}
                           </Button>
                         </dt>
-                        <dd className="m-0 break-all text-white/70">
+                        <dd className="m-0 break-all text-fg-secondary">
                           {isEditing ? (
                             <Input
                               aria-label={`Value for ${e.key}`}
@@ -323,7 +323,7 @@ export function StoragePanel({
                             preview(e.value)
                           )}
                         </dd>
-                        <dd className="m-0 tabular-nums text-white/50">{e.size}</dd>
+                        <dd className="m-0 tabular-nums text-fg-tertiary">{e.size}</dd>
                         <dd className="m-0 flex gap-1">
                           {isEditing ? (
                             <>
@@ -404,7 +404,7 @@ export function StoragePanel({
         </TabsPanel>
       </Tabs>
       ) : (
-        <p className="p-3 text-white/50">No stores are enabled.</p>
+        <p className="p-3 text-fg-tertiary">No stores are enabled.</p>
       )}
     </div>
   );

@@ -42,11 +42,11 @@ export function writeLocale(locale: LocaleOptions, value: string) {
 
 const rowClass = "flex items-center justify-between gap-3 py-1.5";
 const switchClass =
-  "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-white/20 p-0.5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 data-checked:bg-white data-disabled:opacity-40";
+  "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-track p-0.5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus data-checked:bg-inverse data-disabled:opacity-40";
 const thumbClass =
-  "block size-4 rounded-full bg-white shadow transition-transform data-checked:translate-x-4 data-checked:bg-neutral-950";
+  "block size-4 rounded-full bg-inverse shadow transition-transform data-checked:translate-x-4 data-checked:bg-surface";
 const sizeInputClass =
-  "h-7 w-full min-w-0 rounded-md border border-white/15 bg-white/5 px-2 text-xs text-white tabular-nums outline-none focus-visible:outline-2 focus-visible:outline-sky-400";
+  "h-7 w-full min-w-0 rounded-md border border-line-strong bg-hover-subtle px-2 text-xs text-fg tabular-nums outline-none focus-visible:outline-2 focus-visible:outline-focus";
 
 export function DisplayPanel({
   locale: localeOptions,
@@ -74,7 +74,7 @@ export function DisplayPanel({
       <label className={rowClass}>
         <span>
           Rotate
-          <span className="block text-white/50">
+          <span className="block text-fg-tertiary">
             {framed ? "Swap width and height" : "Pick a device first"}
           </span>
         </span>
@@ -104,7 +104,7 @@ export function DisplayPanel({
       <label className={rowClass}>
         <span>
           Grab includes errors
-          <span className="block text-white/50">
+          <span className="block text-fg-tertiary">
             Recent console errors and failed requests
           </span>
         </span>
@@ -128,14 +128,14 @@ export function DisplayPanel({
             setLocale(next);
             onLocale(next);
           }}
-          className="relative isolate inline-flex rounded-md border border-white/15 p-0.5"
+          className="relative isolate inline-flex rounded-md border border-line-strong p-0.5"
         >
-          <SegmentedControlIndicator className="pointer-events-none absolute top-(--segmented-control-indicator-top) left-(--segmented-control-indicator-left) z-0 h-(--segmented-control-indicator-height) w-(--segmented-control-indicator-width) rounded bg-white transition-[top,left,width,height] duration-200" />
+          <SegmentedControlIndicator className="pointer-events-none absolute top-(--segmented-control-indicator-top) left-(--segmented-control-indicator-left) z-0 h-(--segmented-control-indicator-height) w-(--segmented-control-indicator-width) rounded bg-inverse transition-[top,left,width,height] duration-200" />
           {localeOptions.options.map((code) => (
             <SegmentedControlItem
               key={code}
               value={code}
-              className="relative z-10 min-w-10 rounded px-2.5 py-1 text-xs font-medium uppercase outline-none focus-visible:outline-2 focus-visible:outline-sky-400 data-checked:text-neutral-950"
+              className="relative z-10 min-w-10 rounded px-2.5 py-1 text-xs font-medium uppercase outline-none focus-visible:outline-2 focus-visible:outline-focus data-checked:text-fg-inverse"
             >
               {code}
             </SegmentedControlItem>
@@ -144,8 +144,8 @@ export function DisplayPanel({
       </div>
       ) : null}
 
-      <div className="mt-1 border-t border-white/10 pt-2">
-        <p className="mb-1.5 text-white/70">Custom size (key 6)</p>
+      <div className="mt-1 border-t border-line pt-2">
+        <p className="mb-1.5 text-fg-secondary">Custom size (key 6)</p>
         <div className="flex items-center gap-2">
           <NumberInput
             {...CUSTOM_SIZE_LIMITS}
@@ -162,7 +162,7 @@ export function DisplayPanel({
               />
             </NumberInputGroup>
           </NumberInput>
-          <span aria-hidden="true" className="text-white/50">
+          <span aria-hidden="true" className="text-fg-tertiary">
             ×
           </span>
           <NumberInput
@@ -182,7 +182,7 @@ export function DisplayPanel({
           </NumberInput>
         </div>
         <Button
-          className="mt-2 inline-flex h-7 w-full items-center justify-center rounded-md border border-white/15 font-medium hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-sky-400"
+          className="mt-2 inline-flex h-7 w-full items-center justify-center rounded-md border border-line-strong font-medium hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus"
           onClick={() => onCustomSize({})}
         >
           Use custom size

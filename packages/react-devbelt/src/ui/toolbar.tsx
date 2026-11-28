@@ -208,7 +208,7 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
             data-react-grab-ignore
             data-dock-guide="x"
             aria-hidden="true"
-            className="pointer-events-none fixed inset-y-0 z-[9999] w-px bg-sky-400/70"
+            className="pointer-events-none fixed inset-y-0 z-[9999] w-px bg-accent/70"
             style={{ left: dock.guides.x }}
           />
         ) : null}
@@ -217,7 +217,7 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
             data-react-grab-ignore
             data-dock-guide="y"
             aria-hidden="true"
-            className="pointer-events-none fixed inset-x-0 z-[9999] h-px bg-sky-400/70"
+            className="pointer-events-none fixed inset-x-0 z-[9999] h-px bg-accent/70"
             style={{ top: dock.guides.y }}
           />
         ) : null}
@@ -245,7 +245,7 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
               aria-label={collapsed ? "Show dev tools" : "Hide dev tools"}
               aria-expanded={!collapsed}
               onClick={toggleCollapsed}
-              className="pointer-events-auto flex h-7 w-fit items-center justify-center gap-1.5 rounded-full border border-white/10 bg-neutral-950 px-3 text-xs font-medium text-white shadow-lg hover:bg-neutral-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+              className="pointer-events-auto flex h-7 w-fit items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-3 text-xs font-medium text-fg shadow-lg hover:bg-surface-raised focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >
               <motion.span
                 initial={false}
@@ -253,7 +253,7 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
                 transition={transition}
                 className="inline-flex"
               >
-                <ChevronDownIcon className="size-3.5 text-neutral-400" aria-hidden="true" />
+                <ChevronDownIcon className="size-3.5 text-fg-icon" aria-hidden="true" />
               </motion.span>
               {collapsed ? (
                 <motion.span
@@ -285,7 +285,7 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
           <Toolbar
             aria-label="Dev tools"
             inert={collapsed}
-            className="pointer-events-auto relative flex w-fit items-center gap-1 rounded-full border border-white/10 bg-neutral-950 p-1 text-xs text-white shadow-lg"
+            className="pointer-events-auto relative flex w-fit items-center gap-1 rounded-full border border-line bg-surface p-1 text-xs text-fg shadow-lg"
           >
             <Tooltip>
               <TooltipTrigger
@@ -297,7 +297,7 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
                     onDoubleClick={dock.reset}
                   />
                 }
-                className="inline-flex h-8 w-6 cursor-grab touch-none items-center justify-center rounded-full text-neutral-400 select-none hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-sky-400 active:cursor-grabbing"
+                className="inline-flex h-8 w-6 cursor-grab touch-none items-center justify-center rounded-full text-fg-icon select-none hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus active:cursor-grabbing"
               >
                 <GripVerticalIcon className="size-4" aria-hidden="true" />
               </TooltipTrigger>
@@ -323,12 +323,12 @@ function TopToolbar({ plugins, isolation }: ToolbarProps) {
                   />
                 )}
                 {plugin.separatorAfter && index < pinned.length - 1 ? (
-                  <ToolbarSeparator className="mx-1 h-4 w-px bg-white/15" />
+                  <ToolbarSeparator className="mx-1 h-4 w-px bg-pressed" />
                 ) : null}
               </PluginBoundary>
             ))}
 
-            <ToolbarSeparator className="mx-1 h-4 w-px bg-white/15" />
+            <ToolbarSeparator className="mx-1 h-4 w-px bg-pressed" />
 
             <MoreMenu
               plugins={plugins}

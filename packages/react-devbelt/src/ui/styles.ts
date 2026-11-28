@@ -1,16 +1,16 @@
 // Icons stay gray and brighten only when their toggle is pressed; small text
 // (keys, counts) is white.
 export const toolbarItemClass =
-  "relative z-10 inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-400 [&_svg]:text-neutral-400 [&_svg]:transition-colors data-pressed:[&_svg]:text-white";
+  "relative z-10 inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium text-fg transition-colors hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus [&_svg]:text-fg-icon [&_svg]:transition-colors data-pressed:[&_svg]:text-fg";
 
 export const tooltipClass =
-  "m-0 flex items-center gap-2 rounded-md border border-white/10 bg-neutral-900 px-2 py-1 text-xs text-white shadow-lg";
+  "m-0 flex items-center gap-2 rounded-md border border-line bg-surface-raised px-2 py-1 text-xs text-fg shadow-lg";
 
 export const kbdClass =
-  "inline-flex h-4 min-w-4 items-center justify-center rounded border border-white/25 px-1 font-sans text-[10px] leading-none text-white";
+  "inline-flex h-4 min-w-4 items-center justify-center rounded border border-line-control px-1 font-sans text-[10px] leading-none text-fg";
 
 export const iconButtonClass =
-  "inline-flex size-7 items-center justify-center rounded-md text-neutral-400 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-sky-400";
+  "inline-flex size-7 items-center justify-center rounded-md text-fg-icon hover:bg-hover hover:text-fg focus-visible:outline-2 focus-visible:outline-focus";
 
 export const chipClass =
-  "inline-flex h-6 items-center gap-1 rounded-full border border-white/15 px-2.5 text-[11px] font-medium text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-sky-400 data-pressed:border-white data-pressed:bg-white data-pressed:text-neutral-950";
+  "inline-flex h-6 items-center gap-1 rounded-full border border-line-strong px-2.5 text-[11px] font-medium text-fg hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus data-pressed:border-line-inverse data-pressed:bg-inverse data-pressed:text-fg-inverse";

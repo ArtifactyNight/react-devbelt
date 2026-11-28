@@ -15,7 +15,7 @@ function ConsoleBadge() {
   const { total, errors } = useConsoleSummary();
   return total > 0 ? (
     <span
-      className={`min-w-4 text-[10px] tabular-nums ${errors > 0 ? "text-rose-300" : "text-amber-300"}`}
+      className={`min-w-4 text-[10px] tabular-nums ${errors > 0 ? "text-danger-fg" : "text-warning-fg"}`}
     >
       {total}
     </span>

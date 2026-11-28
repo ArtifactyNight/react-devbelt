@@ -1,0 +1,93 @@
+/* The toolbar's stylesheet and the single source of its design tokens.
+   Compiled by scripts/build-css.mjs into dist/styles.css and into the string
+   the toolbar injects into its shadow root. Scans the sources for utilities.
+
+   Components never name a palette colour (`bg-neutral-950`, `text-white/70`).
+   They use the semantic utilities defined below (`bg-surface`, `text-fg-secondary`).
+   The rationale, the token table and the rules live in /DESIGN.md. */
+@import "tailwindcss";
+@import "tw-animate-css";
+@source "../";
+
+@source not "./styles.generated.ts";
+
+/* `static` emits every token even when no utility uses it, so the host rule in
+   toolbar-root.tsx and plugin CSS can read them with var(). */
+@theme static {
+  /* Layer 1, primitives: the raw palette the semantic tokens point at.
+     Never used from a component. */
+  --palette-ink: var(--color-neutral-950);
+  --palette-ink-raised: var(--color-neutral-900);
+  --palette-black: var(--color-black);
+  --palette-paper: var(--color-white);
+  --palette-mute: var(--color-neutral-400);
+  --palette-dim: var(--color-neutral-500);
+  --palette-sky: var(--color-sky-400);
+  --palette-sky-strong: var(--color-sky-500);
+  --palette-sky-soft: var(--color-sky-300);
+  --palette-emerald: var(--color-emerald-400);
+  --palette-emerald-strong: var(--color-emerald-500);
+  --palette-emerald-soft: var(--color-emerald-300);
+  --palette-amber: var(--color-amber-400);
+  --palette-amber-soft: var(--color-amber-300);
+  --palette-rose: var(--color-rose-400);
+  --palette-rose-soft: var(--color-rose-300);
+  --palette-violet-soft: var(--color-violet-300);
+
+  /* Layer 2, semantic tokens: named by role. Each generates the colour
+     utilities (`bg-*`, `text-*`, `border-*`, `outline-*`, `ring-*`), and takes
+     an opacity modifier where a translucent step is needed (`bg-accent/15`). */
+
+  /* Surfaces: what things sit on. */
+  --color-surface: var(--palette-ink); /* toolbar, Windows, menus, dialogs */
+  --color-surface-raised: var(--palette-ink-raised); /* tooltips, popovers, Frame backdrop */
+  --color-surface-overlay: color-mix(in oklab, var(--palette-ink) 85%, transparent); /* HUD chips over the page */
+  --color-surface-sticky: color-mix(in oklab, var(--palette-ink) 80%, transparent); /* controls floating over scrolled content */
+  --color-surface-header: color-mix(in oklab, var(--palette-ink-raised) 60%, transparent); /* Window title bar */
+  --color-scrim: color-mix(in oklab, var(--palette-black) 60%, transparent); /* behind modal dialogs */
+  --color-page: var(--palette-paper); /* the page preview inside the Frame, not toolbar chrome */
+
+  /* Foreground: text and icons on a surface, strongest first. */
+  --color-fg: var(--palette-paper);
+  --color-fg-secondary: color-mix(in oklab, var(--palette-paper) 70%, transparent);
+  --color-fg-tertiary: color-mix(in oklab, var(--palette-paper) 50%, transparent);
+  --color-fg-disabled: color-mix(in oklab, var(--palette-paper) 40%, transparent);
+  --color-fg-icon: var(--palette-mute); /* resting icons; brighten to fg when pressed */
+  --color-fg-inverse: var(--palette-ink); /* text on a filled `inverse` control */
+
+  /* Interactive fills. `inverse` is the high-emphasis control: light on dark. */
+  --color-inverse: var(--palette-paper);
+  --color-inverse-hover: color-mix(in oklab, var(--palette-paper) 90%, transparent);
+  --color-hover: color-mix(in oklab, var(--palette-paper) 10%, transparent);
+  --color-hover-subtle: color-mix(in oklab, var(--palette-paper) 5%, transparent);
+  --color-pressed: color-mix(in oklab, var(--palette-paper) 15%, transparent);
+  --color-track: color-mix(in oklab, var(--palette-paper) 20%, transparent); /* switch and slider tracks */
+
+  /* Borders and rings. */
+  --color-line: color-mix(in oklab, var(--palette-paper) 10%, transparent); /* default hairline */
+  --color-line-strong: color-mix(in oklab, var(--palette-paper) 15%, transparent); /* chips, inputs */
+  --color-line-control: color-mix(in oklab, var(--palette-paper) 30%, transparent); /* checkboxes, keycaps */
+  --color-line-inverse: var(--palette-paper); /* selected or pressed outline */
+
+  /* Accent: focus, selection and "this is the live thing". */
+  --color-accent: var(--palette-sky);
+  --color-accent-strong: var(--palette-sky-strong); /* solid badges that carry white text */
+  --color-accent-fg: var(--palette-sky-soft); /* accent-coloured text and icons */
+  --color-focus: var(--color-accent); /* keyboard focus ring */
+
+  /* Status. Pair `status-*` dots and fills with `status-*-fg` text. */
+  --color-success: var(--palette-emerald);
+  --color-success-strong: var(--palette-emerald-strong);
+  --color-success-fg: var(--palette-emerald-soft);
+  --color-warning: var(--palette-amber);
+  --color-warning-fg: var(--palette-amber-soft);
+  --color-danger: var(--palette-rose);
+  --color-danger-fg: var(--palette-rose-soft);
+
+  /* Syntax highlighting inside JSON and code views. */
+  --color-syntax-key: var(--palette-sky-soft);
+  --color-syntax-string: var(--palette-emerald-soft);
+  --color-syntax-number: var(--palette-amber-soft);
+  --color-syntax-literal: var(--palette-violet-soft);
+  --color-syntax-punctuation: var(--palette-dim);
+}

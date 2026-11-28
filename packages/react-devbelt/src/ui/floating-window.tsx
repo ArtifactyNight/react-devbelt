@@ -142,7 +142,7 @@ export function FloatingWindow({
       data-react-grab-ignore
       data-devbelt-window={id}
       onPointerDownCapture={onFocus}
-      className="pointer-events-auto fixed top-(--y) left-(--x) flex h-(--h) w-(--w) flex-col overflow-hidden rounded-xl border border-white/10 bg-neutral-950 text-xs text-white shadow-2xl"
+      className="pointer-events-auto fixed top-(--y) left-(--x) flex h-(--h) w-(--w) flex-col overflow-hidden rounded-xl border border-line bg-surface text-xs text-fg shadow-2xl"
       style={
         {
           "--x": `${rect.x}px`,
@@ -157,7 +157,7 @@ export function FloatingWindow({
     >
       <header
         onPointerDown={startMove}
-        className="flex shrink-0 cursor-grab touch-none items-center gap-2 border-b border-white/10 bg-neutral-900/60 px-2 py-1.5 select-none active:cursor-grabbing"
+        className="flex shrink-0 cursor-grab touch-none items-center gap-2 border-b border-line bg-surface-header px-2 py-1.5 select-none active:cursor-grabbing"
       >
         <Button
           aria-label={`Move ${title}`}
@@ -167,7 +167,7 @@ export function FloatingWindow({
         >
           <GripHorizontalIcon className="size-3.5" aria-hidden="true" />
         </Button>
-        <span className="text-neutral-400" aria-hidden="true">
+        <span className="text-fg-icon" aria-hidden="true">
           {icon}
         </span>
         <h2 className="min-w-0 flex-1 truncate text-xs font-semibold">
