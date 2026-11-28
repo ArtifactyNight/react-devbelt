@@ -9,7 +9,7 @@ type Props = Omit<ComponentProps<typeof TextMorph>, "children"> & {
   children: string | number;
 };
 
-// Ease-out, like the rest of the toolbar's motion.
+// Ease-out. The duration is the moderate tier (0.16s), short travel like the springs in springs.ts.
 const EASE = "cubic-bezier(0.23, 1, 0.32, 1)";
 
 /**
@@ -33,7 +33,7 @@ function useTorphStyles() {
  * screen: counts, sizes, a status line. Skips the motion when the person prefers
  * reduced motion. Pass `className` to style it, like a `<span>`.
  */
-export function MorphText({ children, duration = 300, ease = EASE, ...rest }: Props) {
+export function MorphText({ children, duration = 160, ease = EASE, ...rest }: Props) {
   useTorphStyles();
   return (
     <TextMorph duration={duration} ease={ease} {...rest}>

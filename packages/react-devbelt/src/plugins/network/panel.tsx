@@ -128,7 +128,7 @@ function Body({ value, title }: { value: string | null; title: string }) {
         </DialogTrigger>
         <DialogContent
           data-react-grab-ignore
-          className="fixed inset-4 m-0 flex h-auto max-h-none w-auto max-w-none flex-col overflow-hidden rounded-xl border border-line bg-surface p-0 text-xs text-fg shadow-2xl transition-[opacity,scale] duration-200 backdrop:bg-scrim data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0 motion-reduce:transition-none"
+          className="fixed inset-4 m-0 flex h-auto max-h-none w-auto max-w-none flex-col overflow-hidden rounded-xl border border-line bg-surface p-0 text-xs text-fg shadow-2xl transition-[opacity,scale] duration-[240ms] ease-out data-ending-style:duration-[160ms] backdrop:bg-scrim data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0 motion-reduce:transition-none"
         >
           <div className="flex items-center gap-2 border-b border-line px-4 py-2.5">
             <DialogTitle className="min-w-0 flex-1 truncate text-sm font-semibold">

@@ -1,7 +1,7 @@
 // Icons stay gray and brighten only when their toggle is pressed; small text
 // (keys, counts) is white.
 export const toolbarItemClass =
-  "relative z-10 inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium text-fg transition-colors hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus [&_svg]:text-fg-icon [&_svg]:transition-colors data-pressed:[&_svg]:text-fg";
+  "relative z-10 inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium text-fg transition-colors duration-75 hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus [&_svg]:text-fg-icon [&_svg]:transition-colors [&_svg]:duration-75 data-pressed:[&_svg]:text-fg";
 
 export const tooltipClass =
   "m-0 flex items-center gap-2 rounded-md border border-line bg-surface-raised px-2 py-1 text-xs text-fg shadow-lg";

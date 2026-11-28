@@ -7,7 +7,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { motion } from "motion/react";
+import { MotionConfig, motion } from "motion/react";
 import { Button } from "@ui-sdk/react/button";
 import {
   Toolbar,
@@ -30,7 +30,7 @@ import { ItemMenu } from "./item-menu";
 import { MoreMenu } from "./more-menu";
 import { PluginBoundary } from "./plugin-boundary";
 import { PluginPopover } from "./plugin-popover";
-import { useToolbarTransition } from "./motion";
+import { spring } from "./springs";
 import { tooltipClass } from "./styles";
 import { ToolbarPortal, useMount, type Isolation } from "./toolbar-root";
 import {
@@ -171,8 +171,6 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [mount]);
 
-  const transition = useToolbarTransition();
-
   const toggleCollapsed = () =>
     setCollapsed((current) => {
       writeString(COLLAPSE_KEY, current ? "0" : "1");
@@ -196,6 +194,8 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
 
   return (
     <ToolbarContext.Provider value={api}>
+      {/* the OS reduced-motion setting drops transforms and layout moves; fades stay */}
+      <MotionConfig reducedMotion="user">
       <ToolbarPortal mount={mount}>
         {plugins.map((plugin) =>
           plugin.Overlay ? (
@@ -281,9 +281,9 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
             data-react-grab-ignore
             data-dock="chip"
             initial={false}
-            animate={{ bottom: collapsed ? "1rem" : "4.25rem" }}
-            transition={transition}
-            className="pointer-events-none fixed inset-x-0 z-[10000] mx-auto flex w-fit"
+            animate={{ y: collapsed ? 0 : "-3.25rem" }}
+            transition={spring.moderate}
+            className="pointer-events-none fixed inset-x-0 bottom-4 z-[10000] mx-auto flex w-fit"
           >
             <Button
               onPointerDown={dock.startDrag}
@@ -295,7 +295,7 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
               <motion.span
                 initial={false}
                 animate={{ rotate: collapsed ? 180 : 0 }}
-                transition={transition}
+                transition={spring.fast}
                 className="inline-flex"
               >
                 <ChevronDownIcon className="size-3.5 text-fg-icon" aria-hidden="true" />
@@ -304,7 +304,7 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
                 <motion.span
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={transition}
+                  transition={spring.fast}
                   className="inline-flex items-center gap-1.5"
                 >
                   {plugins.map((plugin) =>
@@ -324,7 +324,7 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
             data-dock="toolbar"
             initial={false}
             animate={{ y: collapsed ? "calc(100% + 1rem)" : 0 }}
-            transition={transition}
+            transition={collapsed ? spring.slow.exit : spring.slow}
             className="pointer-events-none fixed inset-x-0 bottom-4 z-[10000] mx-auto w-fit"
           >
           <Toolbar
@@ -402,6 +402,7 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
           </motion.div>
         </div>
       </ToolbarPortal>
+      </MotionConfig>
     </ToolbarContext.Provider>
   );
 }

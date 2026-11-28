@@ -109,7 +109,12 @@ These are still plain Tailwind scales, applied consistently:
   for data (URLs, headers, storage values), `tabular-nums` for changing numbers.
 - **Cursor:** the pointer on anything pressable (a base rule in `global.css`); `cursor-grab` on drag handles, `cursor-default` on menu items.
 - **Scrollbars:** `scrollbar-slim` (defined in `global.css`) on every scrolling area: a thin rounded `track` thumb on a transparent track, brighter on hover.
-- **Motion:** springs from `src/ui/motion.ts`. Respect `prefers-reduced-motion`.
+- **Motion:** the three Fluid Functionalism tiers in `src/ui/springs.ts`: `fast` (0.08s: colour fades,
+  the chevron, status text), `moderate` (0.16s: the chip, the shared pills, switch thumbs, text morphs) and
+  `slow` (0.24s, a little bounce: the toolbar, the size HUD, the fullscreen dialog). A dismissal uses the
+  tier's `.exit` tween. Never a hand-written duration. Move with `transform` and `opacity` only. The
+  toolbar sits in `<MotionConfig reducedMotion="user">`, so the OS setting drops movement and keeps fades;
+  CSS transitions carry `motion-reduce:transition-none` or stay colour-only.
 
 ## Exceptions
 

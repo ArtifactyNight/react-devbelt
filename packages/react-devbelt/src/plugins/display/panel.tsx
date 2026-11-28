@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
 import { Button } from "@ui-sdk/react/button";
 import {
   NumberInput,
@@ -9,12 +10,12 @@ import {
 } from "@ui-sdk/react/number-input";
 import {
   SegmentedControl,
-  SegmentedControlIndicator,
   SegmentedControlItem,
 } from "@ui-sdk/react/segmented-control";
 import { Switch, SwitchThumb } from "@ui-sdk/react/switch";
 
 import { CUSTOM_SIZE_LIMITS } from "../../core/viewports";
+import { spring } from "../../ui/springs";
 import { patchDisplay, presetOf, selectViewport, useViewportState } from "../viewport/store";
 
 export type LocaleOptions = {
@@ -42,9 +43,40 @@ export function writeLocale(locale: LocaleOptions, value: string) {
 
 const rowClass = "flex items-center justify-between gap-3 py-1.5";
 const switchClass =
-  "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-track p-0.5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus data-checked:bg-inverse data-disabled:opacity-40";
+  "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-track p-0.5 transition-colors duration-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus data-checked:bg-inverse data-disabled:opacity-40";
 const thumbClass =
-  "block size-4 rounded-full bg-inverse shadow transition-transform data-checked:translate-x-4 data-checked:bg-surface";
+  "block size-4 rounded-full bg-inverse shadow data-checked:bg-surface";
+
+/** A switch whose thumb glides on a transform spring. */
+function MotionSwitch({
+  checked,
+  disabled,
+  onCheckedChange,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <Switch
+      checked={checked}
+      disabled={disabled}
+      onCheckedChange={onCheckedChange}
+      className={switchClass}
+    >
+      <SwitchThumb
+        className={thumbClass}
+        render={
+          <motion.span
+            initial={false}
+            animate={{ x: checked ? 16 : 0 }}
+            transition={spring.moderate}
+          />
+        }
+      />
+    </Switch>
+  );
+}
 const sizeInputClass =
   "h-7 w-full min-w-0 rounded-md border border-line-strong bg-hover-subtle px-2 text-xs text-fg tabular-nums outline-none focus-visible:outline-2 focus-visible:outline-focus";
 
@@ -78,26 +110,20 @@ export function DisplayPanel({
             {framed ? "Swap width and height" : "Pick a device first"}
           </span>
         </span>
-        <Switch
+        <MotionSwitch
           checked={display.rotated}
           disabled={!framed}
           onCheckedChange={(rotated) => onChange({ rotated })}
-          className={switchClass}
-        >
-          <SwitchThumb className={thumbClass} />
-        </Switch>
+        />
       </label>
 
       {darkClass ? (
       <label className={rowClass}>
         Dark mode
-        <Switch
+        <MotionSwitch
           checked={display.dark}
           onCheckedChange={(dark) => onChange({ dark })}
-          className={switchClass}
-        >
-          <SwitchThumb className={thumbClass} />
-        </Switch>
+        />
       </label>
       ) : null}
 
@@ -108,13 +134,10 @@ export function DisplayPanel({
             Recent console errors and failed requests
           </span>
         </span>
-        <Switch
+        <MotionSwitch
           checked={display.attachProblems}
           onCheckedChange={(attachProblems) => onChange({ attachProblems })}
-          className={switchClass}
-        >
-          <SwitchThumb className={thumbClass} />
-        </Switch>
+        />
       </label>
 
       {localeOptions ? (
@@ -130,13 +153,20 @@ export function DisplayPanel({
           }}
           className="relative isolate inline-flex rounded-md border border-line-strong p-0.5"
         >
-          <SegmentedControlIndicator className="pointer-events-none absolute top-(--segmented-control-indicator-top) left-(--segmented-control-indicator-left) z-0 h-(--segmented-control-indicator-height) w-(--segmented-control-indicator-width) rounded bg-inverse transition-[top,left,width,height] duration-200" />
           {localeOptions.options.map((code) => (
             <SegmentedControlItem
               key={code}
               value={code}
               className="relative z-10 min-w-10 rounded px-2.5 py-1 text-xs font-medium uppercase outline-none focus-visible:outline-2 focus-visible:outline-focus data-checked:text-fg-inverse"
             >
+              {locale === code ? (
+                <motion.span
+                  layoutId="devbelt-locale-pill"
+                  aria-hidden="true"
+                  transition={spring.moderate}
+                  className="pointer-events-none absolute inset-0 -z-10 rounded bg-inverse"
+                />
+              ) : null}
               {code}
             </SegmentedControlItem>
           ))}

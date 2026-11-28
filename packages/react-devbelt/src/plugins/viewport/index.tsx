@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { registerShortcut } from "@ui-sdk/core/shortcuts";
 import { Toggle, ToggleGroup } from "@ui-sdk/react/toggle";
@@ -41,7 +41,7 @@ import {
   menuLabelClass,
   menuIconClass,
 } from "../../ui/more-menu";
-import { useToolbarTransition } from "../../ui/motion";
+import { spring } from "../../ui/springs";
 import { kbdClass, toolbarItemClass, tooltipClass } from "../../ui/styles";
 import {
   frameLoaded,
@@ -86,56 +86,16 @@ function useFrameScale(width?: number, height?: number) {
     : 1;
 }
 
-// A pill that slides to the pressed toggle. It measures the pressed button, so
-// it follows any width the label or key adds.
-function useSlidingIndicator(activeId: string) {
-  const groupRef = useRef<HTMLDivElement>(null);
-  const [box, setBox] = useState<{ left: number; width: number } | null>(null);
-  const [animate, setAnimate] = useState(false);
-
-  useLayoutEffect(() => {
-    const group = groupRef.current;
-    if (!group) return;
-    const measure = () => {
-      const target = group.querySelector<HTMLElement>("[data-pressed]");
-      if (target) {
-        setBox({ left: target.offsetLeft, width: target.offsetWidth });
-      }
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(group);
-    return () => observer.disconnect();
-  }, [activeId]);
-
-  // First placement snaps; later ones slide.
-  useEffect(() => {
-    if (box && !animate) setAnimate(true);
-  }, [box, animate]);
-
-  return { groupRef, box, animate };
-}
-
 function ViewportItem() {
   const state = useViewportState();
   const preset = presetOf(state);
-  const indicator = useSlidingIndicator(preset?.id ?? "full");
-  const transition = useToolbarTransition();
+  const activeId = preset?.id ?? "full";
 
   return (
-    <div ref={indicator.groupRef} className="relative flex items-center">
-      {indicator.box ? (
-        <motion.span
-          aria-hidden="true"
-          initial={false}
-          animate={{ x: indicator.box.left, width: indicator.box.width }}
-          transition={indicator.animate ? transition : { duration: 0 }}
-          className="pointer-events-none absolute inset-y-0 start-0 rounded-full bg-inverse shadow-sm"
-        />
-      ) : null}
+    <div className="relative flex items-center">
       <ToggleGroup
         aria-label="Viewport"
-        value={[preset?.id ?? "full"]}
+        value={[activeId]}
         deselectable={false}
         onValueChange={([value]) => {
           if (value) selectViewport(value);
@@ -146,8 +106,17 @@ function ViewportItem() {
           <Tooltip key={v.id} shortcut={v.keys}>
             <TooltipTrigger
               render={<Toggle value={v.id} />}
-              className={`${toolbarItemClass} px-3 duration-300 data-pressed:text-fg-inverse data-pressed:hover:bg-transparent`}
+              className={`${toolbarItemClass} px-3 data-pressed:text-fg-inverse data-pressed:hover:bg-transparent`}
             >
+              {/* one pill, shared by the toggles: it glides to the pressed one, on transforms only */}
+              {v.id === activeId ? (
+                <motion.span
+                  layoutId="devbelt-viewport-pill"
+                  aria-hidden="true"
+                  transition={spring.moderate}
+                  className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-inverse shadow-sm"
+                />
+              ) : null}
               {v.label}
             </TooltipTrigger>
             <TooltipContent side="top" sideOffset={8} className={tooltipClass}>
@@ -167,7 +136,6 @@ function ViewportItem() {
 }
 
 function ViewportOverlay() {
-  const transition = useToolbarTransition();
   const state = useViewportState();
   const preset = presetOf(state);
   const scale = useFrameScale(preset?.width, preset?.height);
@@ -217,7 +185,7 @@ function ViewportOverlay() {
                 ? { opacity: 0, scale: 0.95 }
                 : { opacity: 1, scale: 1 }
             }
-            transition={transition}
+            transition={hud.leaving ? spring.slow.exit : spring.slow}
             className="flex flex-col items-center gap-1 rounded-2xl bg-surface-overlay px-6 py-4 text-fg shadow-2xl ring-1 ring-line backdrop-blur-md"
           >
             <span className="text-2xl font-semibold tracking-tight">
