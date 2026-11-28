@@ -122,12 +122,13 @@ Create the array once at module level, not inside a component. With your own lis
 
 ### Opt-in plugins
 
-These are not in `defaultPlugins()`; add them by name: `[...defaultPlugins(), storage(), breakpoint()]`.
+These are not in `defaultPlugins()`; add them by name: `[...defaultPlugins(), storage(), breakpoint(), capture()]`.
 
 | Plugin | From | What it does |
 | --- | --- | --- |
 | `breakpoint()` | `react-devbelt/plugins` | Current breakpoint and width, outline-all-elements toggle |
 | `storage()` | `react-devbelt/plugins` | localStorage, sessionStorage and cookies, with Redaction |
+| `capture()` | `react-devbelt/plugins` | Screenshot (copied or saved as PNG) and screen recording (saved as a video) |
 | `tanstackQuery(client)` | `devbelt-plugin-tanstack-query` | TanStack Query v5 queries and mutations |
 
 Each has its own section below, except TanStack Query, which is documented in [its package](packages/devbelt-plugin-tanstack-query).
@@ -157,6 +158,17 @@ import { breakpoint } from "react-devbelt/plugins";
 
 breakpoint(); // Tailwind v4 breakpoints
 breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 }, base: "xs", outline: true });
+```
+
+### Screenshot and recording (opt-in)
+
+`capture()` adds a camera and a record button. The camera copies a PNG of the page without the toolbar (the device Frame's page while one is up); More tools also saves a screenshot or a full-page one. It is rendered from the DOM with [modern-screenshot](https://github.com/qq15725/modern-screenshot), loaded on first use, so it needs no permission prompt; cross-origin images without CORS headers come out blank. The record button uses the browser's own screen sharing: the browser asks what to share and shows its own indicator, and stopping saves a `.webm` (`.mp4` where that is all the browser can record). It is hidden where screen capture is not available. Paste a copied screenshot straight into an AI chat.
+
+```tsx
+import { capture } from "react-devbelt/plugins";
+
+capture(); // screenshots at the screen's pixel ratio
+capture({ scale: 1 }); // smaller files
 ```
 
 ### Storage (opt-in)

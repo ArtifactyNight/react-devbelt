@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DevBelt, type DevBeltPlugin, type PanelMode } from "react-devbelt";
 import {
   breakpoint,
+  capture,
   defaultPlugins,
   display,
   storage,
@@ -39,6 +40,8 @@ const plugins = [
   ),
   // Tailwind v4's breakpoints are the default; `outline` starts with the element outlines on
   pinned(breakpoint({ outline: false })),
+  // A camera (copies a screenshot) and a record button, through the browser's screen sharing
+  pinned(capture()),
   // `agent.write` lets a browser agent edit storage; without it those tools stay off
   { ...storage({ includeValuesInBundle: true }), agent: { write: true } },
   tanstackQuery(queryClient, { agent: { write: true } }),
