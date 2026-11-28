@@ -1053,6 +1053,35 @@ test("Grab can also open what it copied in an AI tool, and remembers the choice"
   expect(window.localStorage.getItem("devbelt:grab-open-in")).toBeNull();
 });
 
+test("right-clicking a pinned tool shows its own options and can unpin it", async () => {
+  const user = userEvent.setup();
+  render(<DevViewportSwitcher />);
+  const grab = screen.getByRole("button", { name: "Grab element" });
+
+  await user.pointer({ keys: "[MouseRight]", target: grab });
+
+  // the tool's own section from More tools, and the basics
+  expect(await screen.findByRole("menuitemradio", { name: "Copy only" })).toBeTruthy();
+  expect(screen.getByRole("menuitem", { name: "Run" })).toBeTruthy();
+
+  await user.click(screen.getByRole("menuitem", { name: "Unpin from toolbar" }));
+  expect(screen.queryByRole("button", { name: "Grab element" })).toBeNull();
+  expect(JSON.parse(window.localStorage.getItem("devbelt:layout")!).pinned.grab).toBe(false);
+});
+
+test("right-clicking a tool with a window can open it", async () => {
+  const user = userEvent.setup();
+  render(<DevViewportSwitcher />);
+
+  await user.pointer({
+    keys: "[MouseRight]",
+    target: screen.getByRole("button", { name: "Network requests" }),
+  });
+  await user.click(await screen.findByRole("menuitem", { name: "Open" }));
+
+  expect(windowEl("Network")).toBeTruthy();
+});
+
 test("a window is dragged by its header and keeps where it was left", async () => {
   const user = userEvent.setup();
   render(<DevViewportSwitcher />);

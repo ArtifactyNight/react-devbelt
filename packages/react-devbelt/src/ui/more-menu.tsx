@@ -32,7 +32,7 @@ type Props = {
   onReset: () => void;
 };
 
-const contentClass =
+export const menuContentClass =
   "m-0 max-h-(--available-height) min-w-56 scrollbar-slim overflow-y-auto rounded-xl border border-line bg-surface p-1 text-xs text-fg shadow-2xl";
 export const menuLabelClass =
   "px-2 pt-1.5 pb-1 text-[10px] tracking-wide text-fg-tertiary uppercase";
@@ -77,7 +77,7 @@ export function MoreMenu({
         side="top"
         sideOffset={10}
         data-react-grab-ignore
-        className={contentClass}
+        className={menuContentClass}
       >
         {runnable.length > 0 ? (
           <>

@@ -119,3 +119,15 @@
     background-color: var(--color-fg-disabled);
   }
 }
+
+/* Tailwind's reset leaves buttons with the arrow cursor. Everything the toolbar lets you press shows
+   the pointer; a utility such as `cursor-grab` or `cursor-default` still wins, being in a later layer. */
+@layer base {
+  [data-devbelt]
+    :where(button, [role="button"], [role="tab"], [role="switch"], [role="checkbox"], summary):not(
+      :disabled,
+      [aria-disabled="true"]
+    ) {
+    cursor: pointer;
+  }
+}

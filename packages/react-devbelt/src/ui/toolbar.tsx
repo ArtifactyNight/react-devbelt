@@ -26,6 +26,7 @@ import type { DevBeltPlugin, ToolbarApi } from "../plugin";
 import { ToolbarContext } from "./context";
 import { DefaultItem } from "./default-item";
 import { FloatingWindow } from "./floating-window";
+import { ItemMenu } from "./item-menu";
 import { MoreMenu } from "./more-menu";
 import { PluginBoundary } from "./plugin-boundary";
 import { PluginPopover } from "./plugin-popover";
@@ -356,16 +357,22 @@ function TopToolbar({ plugins, isolation, panelMode, aiTools }: ToolbarProps) {
 
             {pinned.map((plugin, index) => (
               <PluginBoundary key={plugin.id} plugin={plugin.id}>
-                {plugin.Item ? (
-                  <plugin.Item />
-                ) : (
-                  <DefaultItem
-                    plugin={plugin}
-                    api={api}
-                    open={layout.isOpen(plugin.id)}
-                    onToggle={() => layout.toggle(plugin.id)}
-                  />
-                )}
+                <ItemMenu
+                  plugin={plugin}
+                  onOpen={() => run(plugin)}
+                  onUnpin={() => layout.setPinned(plugin.id, false)}
+                >
+                  {plugin.Item ? (
+                    <plugin.Item />
+                  ) : (
+                    <DefaultItem
+                      plugin={plugin}
+                      api={api}
+                      open={layout.isOpen(plugin.id)}
+                      onToggle={() => layout.toggle(plugin.id)}
+                    />
+                  )}
+                </ItemMenu>
                 {plugin.separatorAfter && index < pinned.length - 1 ? (
                   <ToolbarSeparator className="mx-1 h-4 w-px bg-pressed" />
                 ) : null}
