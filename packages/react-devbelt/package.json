@@ -66,7 +66,7 @@
     "pretypecheck": "pnpm build:css",
     "typecheck": "tsc --noEmit",
     "check:package": "publint && attw --pack . --profile esm-only --exclude-entrypoints ./styles.css",
-    "prepack": "pnpm build && node ../../scripts/verify-types.mjs"
+    "prepack": "node ../../scripts/sync-readme.mjs && pnpm build && node ../../scripts/verify-types.mjs"
   },
   "peerDependencies": {
     "next": ">=15",
