@@ -32,7 +32,7 @@
     "pretypecheck": "pnpm --filter react-devbelt build",
     "typecheck": "tsc --noEmit",
     "check:package": "publint && attw --pack . --profile esm-only",
-    "prepack": "pnpm build"
+    "prepack": "pnpm build && node ../../scripts/verify-types.mjs"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.0.0",
