@@ -1179,6 +1179,22 @@ test("More tools lists the two shortcuts and runs them", async () => {
   expect(chip().getAttribute("aria-expanded")).toBe("false");
 });
 
+test("a window's header has no drag icon: the title is the keyboard's move button", async () => {
+  const user = userEvent.setup();
+  render(<DevViewportSwitcher />);
+  await user.click(screen.getByRole("button", { name: "Network requests" }));
+  const header = windowEl("Network").querySelector("header") as HTMLElement;
+
+  expect(
+    within(header)
+      .getAllByRole("button")
+      .map((b) => b.getAttribute("aria-label")),
+  ).toEqual(["Move Network", "Close Network"]);
+  // the title is the button's text, and the only icons are the tool's and Close
+  expect(within(header).getByRole("button", { name: "Move Network" }).textContent).toBe("Network");
+  expect(header.querySelectorAll("svg").length).toBe(2);
+});
+
 test("a window is dragged by its header and keeps where it was left", async () => {
   const user = userEvent.setup();
   render(<DevViewportSwitcher />);

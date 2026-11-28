@@ -2,7 +2,7 @@
 
 import { bindDrag } from "@ui-sdk/core";
 import { Button } from "@ui-sdk/react/button";
-import { GripHorizontalIcon, XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 import type { WindowSize } from "../plugin";
@@ -159,19 +159,19 @@ export function FloatingWindow({
         onPointerDown={startMove}
         className="flex shrink-0 cursor-grab touch-none items-center gap-2 border-b border-line bg-surface-header px-2 py-1.5 select-none active:cursor-grabbing"
       >
-        <Button
-          aria-label={`Move ${title}`}
-          title="Drag the header to move · Alt+arrows nudge · add Ctrl to resize"
-          onKeyDown={onKeyDown}
-          className={`${iconButtonClass} relative after:absolute after:-inset-1 size-6 cursor-grab`}
-        >
-          <GripHorizontalIcon className="size-3.5" aria-hidden="true" />
-        </Button>
         <span className="text-fg-icon" aria-hidden="true">
           {icon}
         </span>
-        <h2 className="min-w-0 flex-1 truncate text-xs font-semibold">
-          {title}
+        {/* The whole header drags the window. The title is also a button, so the keyboard can move it. */}
+        <h2 className="min-w-0 flex-1 text-xs font-semibold">
+          <Button
+            aria-label={`Move ${title}`}
+            title="Drag the header to move · Alt+arrows nudge · add Ctrl to resize"
+            onKeyDown={onKeyDown}
+            className="block w-full cursor-grab truncate rounded-md px-1 py-0.5 text-start focus-visible:outline-2 focus-visible:outline-focus active:cursor-grabbing"
+          >
+            {title}
+          </Button>
         </h2>
         <Button
           aria-label={`Close ${title}`}
@@ -182,21 +182,29 @@ export function FloatingWindow({
         </Button>
       </header>
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+      {/* Resize handles. Hovering (or dragging) one thickens that edge, so you can see what you grab. */}
       <div
         aria-hidden="true"
         onPointerDown={startResize("e")}
-        className="absolute inset-y-0 right-0 w-1.5 cursor-ew-resize touch-none"
-      />
+        className="group absolute inset-y-0 right-0 w-1.5 cursor-ew-resize touch-none"
+      >
+        <span className="pointer-events-none absolute inset-y-3 right-0 w-[3px] rounded-full bg-accent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-active:opacity-100" />
+      </div>
       <div
         aria-hidden="true"
         onPointerDown={startResize("s")}
-        className="absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize touch-none"
-      />
+        className="group absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize touch-none"
+      >
+        <span className="pointer-events-none absolute inset-x-3 bottom-0 h-[3px] rounded-full bg-accent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-active:opacity-100" />
+      </div>
       <div
         aria-hidden="true"
         onPointerDown={startResize("se")}
-        className="absolute right-0 bottom-0 size-6 cursor-nwse-resize touch-none"
-      />
+        className="group absolute right-0 bottom-0 size-6 cursor-nwse-resize touch-none"
+      >
+        {/* the corner arc follows the window's own rounded corner */}
+        <span className="pointer-events-none absolute right-0 bottom-0 size-4 rounded-br-xl border-r-[3px] border-b-[3px] border-accent opacity-0 transition-opacity duration-75 group-hover:opacity-100 group-active:opacity-100" />
+      </div>
     </section>
   );
 }
