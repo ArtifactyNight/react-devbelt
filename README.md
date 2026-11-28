@@ -128,7 +128,7 @@ These are not in `defaultPlugins()`; add them by name: `[...defaultPlugins(), st
 | --- | --- | --- |
 | `breakpoint()` | `react-devbelt/plugins` | Current breakpoint and width, outline-all-elements toggle |
 | `storage()` | `react-devbelt/plugins` | localStorage, sessionStorage and cookies, with Redaction |
-| `capture()` | `react-devbelt/plugins` | Screenshot (copied or saved as PNG) and screen recording (saved as a video) |
+| `capture()` | `react-devbelt/plugins` | Screenshot (page, region or full page; copied or saved as PNG) and screen recording (saved as a video) |
 | `tanstackQuery(client)` | `devbelt-plugin-tanstack-query` | TanStack Query v5 queries and mutations |
 
 Each has its own section below, except TanStack Query, which is documented in [its package](packages/devbelt-plugin-tanstack-query).
@@ -162,7 +162,7 @@ breakpoint({ breakpoints: { tablet: "48rem", desktop: 1200 }, base: "xs", outlin
 
 ### Screenshot and recording (opt-in)
 
-`capture()` adds a camera and a record button. The camera copies a PNG of the page without the toolbar (the device Frame's page while one is up); More tools also saves a screenshot or a full-page one. It is rendered from the DOM with [modern-screenshot](https://github.com/qq15725/modern-screenshot), loaded on first use, so it needs no permission prompt; cross-origin images without CORS headers come out blank. The record button uses the browser's own screen sharing: the browser asks what to share and shows its own indicator, and stopping saves a `.webm` (`.mp4` where that is all the browser can record). It is hidden where screen capture is not available. Paste a copied screenshot straight into an AI chat.
+`capture()` adds a camera, a region picker and a record button. The camera copies a PNG of the page without the toolbar (the device Frame's page while one is up). The crop button lets you drag over the page to copy just that region (Esc cancels; over a Frame, the part outside it is left out). More tools also saves a screenshot or a full-page one. It is rendered from the DOM with [modern-screenshot](https://github.com/qq15725/modern-screenshot), loaded on first use, so it needs no permission prompt; cross-origin images without CORS headers come out blank. The record button uses the browser's own screen sharing: the browser asks what to share and shows its own indicator, and stopping saves a `.webm` (`.mp4` where that is all the browser can record). It is hidden where screen capture is not available. Paste a copied screenshot straight into an AI chat.
 
 ```tsx
 import { capture } from "react-devbelt/plugins";

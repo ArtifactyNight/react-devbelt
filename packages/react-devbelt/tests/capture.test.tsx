@@ -26,6 +26,7 @@ document.head.append(
     textContent: "[popover] { display: block !important }",
   }),
 );
+Element.prototype.setPointerCapture = function () {};
 globalThis.ResizeObserver ??= class {
   observe() {}
   unobserve() {}
@@ -130,6 +131,89 @@ test("More tools saves a screenshot, and a full-page one covers the whole page",
   const [, options] = domToBlob.mock.calls[0] as unknown as [Element, Record<string, unknown>];
   // no cropping to the window: the page's own size
   expect(options.style).toBeUndefined();
+});
+
+const overlay = () => document.querySelector("[data-capture-region]") as HTMLElement | null;
+
+async function drag(
+  user: ReturnType<typeof userEvent.setup>,
+  from: [number, number],
+  to: [number, number],
+) {
+  const target = overlay()!;
+  await user.pointer([
+    { keys: "[MouseLeft>]", target, coords: { clientX: from[0], clientY: from[1] } },
+    { coords: { clientX: to[0], clientY: to[1] } },
+    { keys: "[/MouseLeft]", target, coords: { clientX: to[0], clientY: to[1] } },
+  ]);
+}
+
+test("dragging a region copies a screenshot of just that part", async () => {
+  const user = userEvent.setup();
+  renderToolbar();
+  expect(overlay()).toBeNull();
+
+  await user.click(screen.getByRole("button", { name: "Screenshot a region" }));
+  expect(overlay()).not.toBeNull();
+  await drag(user, [100, 50], [300, 200]);
+
+  expect(await screen.findByText("Screenshot copied")).toBeTruthy();
+  expect(overlay()).toBeNull();
+  expect(written).toHaveLength(1);
+  const [node, options] = domToBlob.mock.calls[0] as unknown as [
+    Element,
+    { width: number; height: number; style: { transform: string; transformOrigin: string } },
+  ];
+  expect(node).toBe(document.documentElement);
+  expect([options.width, options.height]).toEqual([200, 150]);
+  // the page slides so the region's corner is the image's corner
+  expect(options.style.transform).toBe("translate(-100px, -50px)");
+  expect(options.style.transformOrigin).toBe("0 0");
+});
+
+test("a region can be dragged in any direction", async () => {
+  const user = userEvent.setup();
+  renderToolbar();
+  await user.click(screen.getByRole("button", { name: "Screenshot a region" }));
+  await drag(user, [300, 200], [100, 50]);
+
+  await screen.findByText("Screenshot copied");
+  const [, options] = domToBlob.mock.calls[0] as unknown as [
+    Element,
+    { width: number; height: number; style: { transform: string } },
+  ];
+  expect([options.width, options.height]).toEqual([200, 150]);
+  expect(options.style.transform).toBe("translate(-100px, -50px)");
+});
+
+test("Escape or a tiny drag leaves the region picker without a screenshot", async () => {
+  const user = userEvent.setup();
+  renderToolbar();
+
+  await user.click(screen.getByRole("button", { name: "Screenshot a region" }));
+  await user.keyboard("{Escape}");
+  expect(overlay()).toBeNull();
+
+  await user.click(screen.getByRole("button", { name: "Screenshot a region" }));
+  await drag(user, [100, 100], [103, 102]);
+  expect(overlay()).toBeNull();
+
+  // the button toggles it too
+  await user.click(screen.getByRole("button", { name: "Screenshot a region" }));
+  expect(overlay()).not.toBeNull();
+  await user.click(screen.getByRole("button", { name: "Screenshot a region" }));
+  expect(overlay()).toBeNull();
+
+  expect(domToBlob).not.toHaveBeenCalled();
+  expect(written).toHaveLength(0);
+});
+
+test("More tools starts the region picker too", async () => {
+  const user = userEvent.setup();
+  renderToolbar();
+  await user.click(screen.getByRole("button", { name: "More tools" }));
+  await user.click(screen.getByRole("menuitem", { name: "Screenshot a region" }));
+  expect(overlay()).not.toBeNull();
 });
 
 test("a screenshot that cannot be made says so", async () => {
