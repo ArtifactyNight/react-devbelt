@@ -1,12 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import {
-  BotIcon,
-  MousePointer2Icon,
-  SparklesIcon,
-  SquareTerminalIcon,
-} from "lucide-react";
+import { SparklesIcon } from "lucide-react";
 
 import {
   describeAiResult,
@@ -14,19 +9,20 @@ import {
   type AiOpenResult,
   type AiTool,
 } from "../core/ai-tools";
+import { ClaudeCodeLogo, CodexLogo, CursorLogo } from "./ai-tool-icons";
 
 const FLASH_MS = 3_000;
 
 const AI_TOOL_ICONS = {
-  cursor: MousePointer2Icon,
-  "claude-code": SquareTerminalIcon,
-  codex: BotIcon,
+  cursor: CursorLogo,
+  "claude-code": ClaudeCodeLogo,
+  codex: CodexLogo,
 } as const;
 
-/** A menu icon for an AI tool; a tool the app adds gets a generic one. */
+/** The logo of a built-in AI tool for a menu; a tool the app adds gets a generic icon. */
 export function AiToolIcon({ id, className }: { id: string; className?: string }) {
   const Icon = AI_TOOL_ICONS[id as keyof typeof AI_TOOL_ICONS] ?? SparklesIcon;
-  return <Icon className={className} aria-hidden="true" />;
+  return <Icon className={className} />;
 }
 
 /** Opens `tool` with `prompt` and returns the line to show the person. */

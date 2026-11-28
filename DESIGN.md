@@ -117,6 +117,10 @@ One value sits outside the token set because it is injected into the host docume
 `--color-*` is not defined: the breakpoint Plugin's outline (`rgba(239, 68, 68, .6)` in
 `plugins/breakpoint/index.tsx`). Keep it the only one.
 
+Product logos are the other exception, taken from [svgl.app](https://svgl.app) rather than drawn: Cursor,
+Claude Code and Codex in `plugins/ai-tool-icons.tsx`, TanStack Query in its package. Single-colour logos
+use `currentColor` so they follow `fg-icon`; a logo with brand colours (Claude Code, TanStack Query) keeps them.
+
 ## Changing the system
 
 1. Edit `global.css`. Add the primitive first if the colour is new, then the semantic token.
